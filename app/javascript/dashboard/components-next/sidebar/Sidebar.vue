@@ -56,6 +56,12 @@ const isFeatureEnabledonAccount = useMapGetter(
   'accounts/isFeatureEnabledonAccount'
 );
 
+// Getter para o role do usuário atual
+const currentRole = useMapGetter('getCurrentRole');
+
+// Computed para verificar se é admin
+const isAdmin = computed(() => currentRole.value === 'administrator');
+
 const hasAdvancedAssignment = computed(() => {
   return isFeatureEnabledonAccount.value(
     accountId.value,
@@ -222,7 +228,7 @@ const newReportRoutes = () => [
 const reportRoutes = computed(() => newReportRoutes());
 
 const menuItems = computed(() => {
-  return [
+  const allItems = [
     {
       name: 'Inbox',
       label: t('SIDEBAR.INBOX'),
@@ -237,6 +243,7 @@ const menuItems = computed(() => {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),
       icon: 'i-lucide-message-circle',
+      adminOnly: true, // Flag para indicar que é só para admin
       children: [
         {
           name: 'All',
@@ -579,12 +586,6 @@ const menuItems = computed(() => {
           icon: 'i-lucide-briefcase',
           to: accountScopedRoute('general_settings_index'),
         },
-        // {
-        //   name: 'Settings Captain',
-        //   label: t('SIDEBAR.CAPTAIN_AI'),
-        //   icon: 'i-woot-captain',
-        //   to: accountScopedRoute('captain_settings_index'),
-        // },
         {
           name: 'Settings Agents',
           label: t('SIDEBAR.AGENTS'),
@@ -694,6 +695,14 @@ const menuItems = computed(() => {
       ],
     },
   ];
+
+  // Filtra itens marcados como adminOnly se o usuário não for admin
+  return allItems.filter(item => {
+    if (item.adminOnly && !isAdmin.value) {
+      return false;
+    }
+    return true;
+  });
 });
 </script>
 
