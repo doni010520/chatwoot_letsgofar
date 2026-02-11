@@ -34,9 +34,6 @@ export default {
       type: String,
       default: '00:00',
     },
-    // inbox prop is used in /mixins/inboxMixin,
-    // remove this props when refactoring to composable if not needed
-    // eslint-disable-next-line vue/no-unused-properties
     inbox: {
       type: Object,
       default: () => ({}),
@@ -97,7 +94,6 @@ export default {
       type: Number,
       required: true,
     },
-    // eslint-disable-next-line vue/no-unused-properties
     message: {
       type: String,
       default: '',
@@ -129,6 +125,7 @@ export default {
     'selectWhatsappTemplate',
     'selectContentTemplate',
     'toggleQuotedReply',
+    'openScheduleModal',
   ],
   setup() {
     const { setSignatureFlagForInbox, fetchSignatureFlagFromUISettings } =
@@ -139,10 +136,6 @@ export default {
     const keyboardEvents = {
       '$mod+Alt+KeyA': {
         action: () => {
-          // TODO: This is really hacky, we need to replace the file picker component with
-          // a custom one, where the logic and the component markup is isolated.
-          // Once we have the custom component, we can remove the hacky logic below.
-
           const uploadTriggerButton = document.querySelector(
             '#conversationAttachment'
           );
@@ -183,17 +176,11 @@ export default {
       if (this.isALineChannel) {
         return false;
       }
-      // Disable audio recorder for safari browser as recording is not supported
-      // const isSafari = /^((?!chrome|android|crios|fxios).)*safari/i.test(
-      //   navigator.userAgent
-      // );
-
       return (
         this.isFeatureEnabledonAccount(
           this.accountId,
           FEATURE_FLAGS.VOICE_RECORDER
         ) && this.showAudioRecorder
-        // !isSafari
       );
     },
     showAudioPlayStopButton() {
@@ -203,7 +190,6 @@ export default {
       return this.conversationType === 'instagram_direct_message';
     },
     allowedFileTypes() {
-      // Use default file types for private notes
       if (this.isOnPrivateNote) {
         return this.ALLOWED_FILE_TYPES;
       }
@@ -224,7 +210,6 @@ export default {
     },
     audioRecorderPlayStopIcon() {
       switch (this.recordingAudioState) {
-        // playing paused recording stopped inactive destroyed
         case 'playing':
           return 'i-ph-pause';
         case 'paused':
@@ -239,7 +224,6 @@ export default {
       return !this.isOnPrivateNote;
     },
     sendWithSignature() {
-      // channelType is sourced from inboxMixin
       return this.fetchSignatureFlagFromUISettings(this.channelType);
     },
     signatureToggleTooltip() {
@@ -381,6 +365,14 @@ export default {
           </h4>
         </div>
       </transition>
+      <NextButton
+        v-tooltip.top-end="'Agendar mensagem'"
+        icon="i-ph-clock"
+        slate
+        faded
+        sm
+        @click="$emit('openScheduleModal')"
+      />
       <NextButton
         v-if="enableInsertArticleInReply"
         v-tooltip.top-end="$t('HELP_CENTER.ARTICLE_SEARCH.OPEN_ARTICLE_SEARCH')"
