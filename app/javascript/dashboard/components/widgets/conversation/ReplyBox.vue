@@ -18,6 +18,7 @@ import CopilotEditorSection from './CopilotEditorSection.vue';
 import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
 import ReplyBoxBanner from './ReplyBoxBanner.vue';
 import QuotedEmailPreview from './QuotedEmailPreview.vue';
+import ScheduleMessageModal from './ScheduleMessageModal.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import AudioRecorder from 'dashboard/components/widgets/WootWriter/AudioRecorder.vue';
@@ -77,6 +78,7 @@ export default {
     QuotedEmailPreview,
     CopilotEditorSection,
     CopilotReplyBottomPanel,
+    ScheduleMessageModal,
   },
   mixins: [inboxMixin, fileUploadMixin, keyboardEventListenerMixins],
   props: {
@@ -127,6 +129,7 @@ export default {
       doAutoSaveDraft: () => {},
       showWhatsAppTemplatesModal: false,
       showContentTemplatesModal: false,
+      showScheduleModal: false,
       updateEditorSelectionWith: '',
       undefinedVariableMessage: '',
       showMentions: false,
@@ -162,8 +165,6 @@ export default {
       );
     },
     showWhatsappTemplates() {
-      // We support templates for API channels if someone updates templates manually via API
-      // That's why we don't explicitly check for channel type here
       const templates = this.$store.getters['inboxes/getWhatsAppTemplates'](
         this.inboxId
       );
@@ -419,11 +420,7 @@ export default {
     currentChat(conversation, oldConversation) {
       const { can_reply: canReply } = conversation;
       if (oldConversation && oldConversation.id !== conversation.id) {
-        // Only update email fields when switching to a completely different conversation (by ID)
-        // This prevents overwriting user input (e.g., CC/BCC fields) when performing actions
-        // like self-assign or other updates that do not actually change the conversation context
         this.setCCAndToEmailsFromLastChat();
-        // Reset Copilot editor state (includes cancelling ongoing generation)
         this.copilot.reset();
       }
 
@@ -439,11 +436,6 @@ export default {
 
       this.fetchAndSetReplyTo();
     },
-    // When moving from one conversation to another, the store may not have the
-    // list of all the messages. A fetch is subsequently made to get the messages.
-    // This watcher handles two main cases:
-    // 1. When switching conversations and messages are fetched/updated, ensures CC/BCC fields are set from the latest OUTGOING/INCOMING email (not activity/private messages).
-    // 2. Fixes and issue where CC/BCC fields could be reset/lost after assignment/activity actions or message mutations that did not represent a true email context change.
     lastEmail: {
       handler(lastEmail) {
         if (!lastEmail) return;
@@ -459,7 +451,6 @@ export default {
       }
     },
     message() {
-      // Autosave the current message draft.
       this.doAutoSaveDraft();
     },
     replyType(updatedReplyType, oldReplyType) {
@@ -470,8 +461,6 @@ export default {
 
   mounted() {
     this.getFromDraft();
-    // Don't use the keyboard listener mixin here as the events here are supposed to be
-    // working even if the editor is focussed.
     document.addEventListener('paste', this.onPaste);
     document.addEventListener('keydown', this.handleKeyEvents);
     this.setCCAndToEmailsFromLastChat();
@@ -486,9 +475,6 @@ export default {
     this.fetchAndSetReplyTo();
     emitter.on(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, this.fetchAndSetReplyTo);
 
-    // A hacky fix to solve the drag and drop
-    // Is showing on top of new conversation modal drag and drop
-    // TODO need to find a better solution
     emitter.on(
       BUS_EVENTS.NEW_CONVERSATION_MODAL,
       this.onNewConversationModalActive
@@ -508,9 +494,23 @@ export default {
     emitter.off(CMD_AI_ASSIST, this.executeCopilotAction);
   },
   methods: {
+    openScheduleModal() {
+      if (this.isMessageEmpty) {
+        useAlert('Digite uma mensagem antes de agendar');
+        return;
+      }
+      this.showScheduleModal = true;
+    },
+    closeScheduleModal() {
+      this.showScheduleModal = false;
+    },
+    onMessageScheduled() {
+      useAlert('Mensagem agendada com sucesso!');
+      this.clearMessage();
+      this.closeScheduleModal();
+    },
     handleInsert(article) {
       const { url, title } = article;
-      // Removing empty lines from the title
       const lines = title.split('\n');
       const nonEmptyLines = lines.filter(line => line.trim() !== '');
       const filteredMarkdown = nonEmptyLines.join(' ');
@@ -552,9 +552,7 @@ export default {
       return appendQuotedTextToMessage(message, quotedText, header);
     },
     resetRecorderAndClearAttachments() {
-      // Reset audio recorder UI state
       this.resetAudioRecorderInput();
-      // Reset attached files
       this.attachedFiles = [];
     },
     saveDraft(conversationId, replyType) {
@@ -578,7 +576,6 @@ export default {
         const messageFromStore =
           this.$store.getters['draftMessages/get'](key) || '';
 
-        // ensure that the message has signature set based on the ui setting
         this.message = this.toggleSignatureForDraft(messageFromStore);
       }
     },
@@ -652,10 +649,8 @@ export default {
       );
     },
     onPaste(e) {
-      // Don't handle paste if compose new conversation modal is open
       if (this.newConversationModalActive) return;
 
-      // Filter valid files (non-zero size)
       Array.from(e.clipboardData.files)
         .filter(file => file.size > 0)
         .filter(file => {
@@ -712,9 +707,6 @@ export default {
           this.isATwilioWhatsAppChannel ||
           this.isAWhatsAppCloudChannel ||
           this.is360DialogWhatsAppChannel;
-        // When users send messages containing both text and attachments on Instagram, Instagram treats them as separate messages.
-        // Although Chatwoot combines these into a single message, Instagram sends separate echo events for each component.
-        // This can create duplicate messages in Chatwoot. To prevent this issue, we'll handle text and attachments as separate messages.
         const isOnInstagram = this.isAnInstagramChannel;
         if ((isOnWhatsApp || isOnInstagram) && !this.isPrivate) {
           this.sendMessageAsMultipleMessages(this.message);
@@ -739,7 +731,6 @@ export default {
       });
     },
     sendMessageAnalyticsData(isPrivate) {
-      // Analytics data for message signature is enabled or not in channels
       return isPrivate
         ? useTrack(CONVERSATION_EVENTS.SENT_PRIVATE_NOTE)
         : useTrack(CONVERSATION_EVENTS.SENT_MESSAGE, {
@@ -804,9 +795,6 @@ export default {
     },
     replaceText(message) {
       if (this.sendWithSignature && !this.private) {
-        // if signature is enabled, append it to the message
-        // appendSignature ensures that the signature is not duplicated
-        // so we don't need to check if the signature is already present
         const effectiveChannelType = getEffectiveChannelType(
           this.channelType,
           this.inbox?.medium || ''
@@ -829,8 +817,6 @@ export default {
       }, 100);
     },
     setReplyMode(mode = REPLY_EDITOR_MODES.REPLY) {
-      // Clear attachments when switching between private note and reply modes
-      // This is to prevent from breaking the upload rules
       if (this.attachedFiles.length > 0) this.attachedFiles = [];
 
       const { can_reply: canReply } = this.currentChat;
@@ -856,7 +842,6 @@ export default {
     clearMessage() {
       this.message = '';
       if (this.sendWithSignature && !this.isPrivate) {
-        // if signature is enabled, append it to the message
         const effectiveChannelType = getEffectiveChannelType(
           this.channelType,
           this.inbox?.medium || ''
@@ -919,8 +904,6 @@ export default {
     onFinishRecorder(file) {
       this.recordingAudioState = 'stopped';
       this.hasRecordedAudio = true;
-      // Added a new key isRecordedAudio to the file to find it's and recorded audio
-      // Because to filter and show only non recorded audio and other attachments
       const autoRecordedFile = {
         ...file,
         isRecordedAudio: true,
@@ -990,15 +973,12 @@ export default {
 
           attachmentPayload = this.setReplyToInPayload(attachmentPayload);
           multipleMessagePayload.push(attachmentPayload);
-          // For WhatsApp, only the first attachment gets a caption
           if (!this.isAnInstagramChannel) caption = '';
         });
       }
 
       const hasNoAttachments =
         !this.attachedFiles || !this.attachedFiles.length;
-      // For Instagram, we need a separate text message
-      // For WhatsApp, we only need a text message if there are no attachments
       if (
         (this.isAnInstagramChannel && this.message) ||
         (!this.isAnInstagramChannel && hasNoAttachments)
@@ -1092,11 +1072,6 @@ export default {
       emitter.emit(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE);
     },
     onNewConversationModalActive(isActive) {
-      // Issue is if the new conversation modal is open and we drag and drop the file
-      // then the file is not getting attached to the new conversation modal
-      // and it is getting attached to the current conversation reply box
-      // so to fix this we are removing the drag and drop event listener from the current conversation reply box
-      // When new conversation modal is open
       this.newConversationModalActive = isActive;
     },
     onSearchPopoverClose() {
@@ -1110,7 +1085,6 @@ export default {
       this.isRecordingAudio = false;
       this.recordingAudioState = '';
       this.hasRecordedAudio = false;
-      // Only clear the recorded audio when we click toggle button.
       this.attachedFiles = this.attachedFiles.filter(
         file => !file?.isRecordedAudio
       );
@@ -1307,6 +1281,7 @@ export default {
         @replace-text="replaceText"
         @toggle-insert-article="toggleInsertArticle"
         @toggle-quoted-reply="toggleQuotedReply"
+        @open-schedule-modal="openScheduleModal"
       />
     </Transition>
 
@@ -1324,6 +1299,16 @@ export default {
       @close="hideContentTemplatesModal"
       @on-send="onSendContentTemplateReply"
       @cancel="hideContentTemplatesModal"
+    />
+
+    <ScheduleMessageModal
+      :show="showScheduleModal"
+      :message="message"
+      :conversation-id="conversationId"
+      :account-id="accountId"
+      :inbox-id="inboxId"
+      @close="closeScheduleModal"
+      @scheduled="onMessageScheduled"
     />
 
     <woot-confirm-modal
