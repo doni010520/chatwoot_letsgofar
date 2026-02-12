@@ -203,8 +203,9 @@ const userPermissions = computed(() => {
   return getUserPermissions(currentUser.value, currentAccountId.value);
 });
 
+// --- [INÍCIO DA MODIFICAÇÃO] ---
 const assigneeTabItems = computed(() => {
-  // 1. Gera a lista original de abas baseada nas permissões padrão
+  // 1. Gera a lista original de abas baseada nas permissões
   const tabs = filterItemsByPermission(
     ASSIGNEE_TYPE_TAB_PERMISSIONS,
     userPermissions.value,
@@ -215,14 +216,14 @@ const assigneeTabItems = computed(() => {
     count: conversationStats.value[countKey] || 0,
   }));
 
-  // 2. [MODIFICAÇÃO] Verifica se é admin. Se não for, remove a aba 'all' (Todos)
-  // Nota: Usamos currentUser.value porque estamos dentro do <script setup>
+  // 2. Se o usuário NÃO for administrador, remove a aba 'all' (Todos)
   if (currentUser.value?.role !== 'administrator') {
     return tabs.filter(tab => tab.key !== 'all');
   }
 
   return tabs;
 });
+// --- [FIM DA MODIFICAÇÃO] ---
 
 const showAssigneeInConversationCard = computed(() => {
   return (
@@ -994,11 +995,6 @@ watch(conversationFilters, (newVal, oldVal) => {
         class="overflow-auto w-full h-full"
       >
         <template #default="{ item, index, active }">
-          <!--
-            If we encounter resizing issues, we can set the `watchData` prop to true
-            this will deeply watch the entire object instead of just size dependencies
-            But it can impact performance
-          -->
           <DynamicScrollerItem
             :item="item"
             :active="active"
