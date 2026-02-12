@@ -204,7 +204,8 @@ const userPermissions = computed(() => {
 });
 
 const assigneeTabItems = computed(() => {
-  return filterItemsByPermission(
+  // 1. Gera a lista original de abas baseada nas permissões padrão
+  const tabs = filterItemsByPermission(
     ASSIGNEE_TYPE_TAB_PERMISSIONS,
     userPermissions.value,
     item => item.permissions
@@ -213,6 +214,14 @@ const assigneeTabItems = computed(() => {
     name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
     count: conversationStats.value[countKey] || 0,
   }));
+
+  // 2. [MODIFICAÇÃO] Verifica se é admin. Se não for, remove a aba 'all' (Todos)
+  // Nota: Usamos currentUser.value porque estamos dentro do <script setup>
+  if (currentUser.value?.role !== 'administrator') {
+    return tabs.filter(tab => tab.key !== 'all');
+  }
+
+  return tabs;
 });
 
 const showAssigneeInConversationCard = computed(() => {
