@@ -243,7 +243,7 @@ const menuItems = computed(() => {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),
       icon: 'i-lucide-message-circle',
-      adminOnly: true, // Flag para indicar que é só para admin
+      adminOnly: false, // Flag para indicar que é só para admin
       children: [
         {
           name: 'All',
