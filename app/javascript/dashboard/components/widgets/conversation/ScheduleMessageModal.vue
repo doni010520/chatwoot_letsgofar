@@ -91,7 +91,7 @@ export default {
     async onSchedule() {
       if (!this.scheduledDateTime) return;
 
-      const webhookUrl = 'SEU_WEBHOOK_N8N_AQUI'; // <-- TROCAR PELA URL DO SEU N8N
+      const webhookUrl = 'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-schedule';
 
       const payload = {
         conversation_id: this.conversationId,
