@@ -23,12 +23,12 @@
       </div>
 
       <div class="flex justify-end gap-2">
-        <woot-button variant="clear" @click="onClose">
-          Cancelar
-        </woot-button>
-        <woot-button @click="onSchedule" :disabled="!scheduledDateTime">
-          Agendar
-        </woot-button>
+       <woot-button variant="clear" class="cursor-pointer" @click="onClose">
+        Cancelar
+       </woot-button>
+       <woot-button class="cursor-pointer" :disabled="!scheduledDateTime" @click="onSchedule">
+        Agendar
+       </woot-button>
       </div>
     </div>
   </woot-modal>
