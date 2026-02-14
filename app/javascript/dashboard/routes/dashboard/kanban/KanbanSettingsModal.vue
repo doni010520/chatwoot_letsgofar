@@ -1,72 +1,72 @@
 <template>
-  <div class="modal-backdrop" @click.self="onClose">
-    <div class="modal-container">
+  <div class="settings-overlay" @click.self="onClose">
+    <div class="settings-modal">
       <!-- Header -->
-      <div class="modal-header">
-        <div>
+      <div class="settings-header">
+        <div class="settings-header__text">
           <h2>Configurações do Kanban</h2>
           <p>Gerencie seus pipelines e estágios</p>
         </div>
-        <button class="close-btn" @click="onClose">✕</button>
+        <button class="settings-close" @click="onClose">✕</button>
       </div>
 
       <!-- Content -->
-      <div class="modal-content">
+      <div class="settings-body">
         <!-- Pipelines Section -->
-        <div class="section">
-          <div class="section-header">
+        <div class="settings-section">
+          <div class="settings-section__header">
             <h3>Pipelines</h3>
-            <button class="btn btn-primary btn-sm" @click="openAddPipeline">
+            <button class="btn-primary-sm" @click="openAddPipeline">
               + Novo Pipeline
             </button>
           </div>
 
-          <div v-if="pipelines.length === 0" class="empty-state">
-            <p>Nenhum pipeline criado ainda.</p>
+          <div v-if="pipelines.length === 0" class="settings-empty">
+            Nenhum pipeline criado ainda.
           </div>
 
-          <div v-else class="pipeline-list">
+          <div v-else class="settings-list">
             <div
               v-for="p in pipelines"
               :key="p.id"
-              class="pipeline-item"
-              :class="{ 'pipeline-item--active': p.id === pipeline?.id }"
+              class="settings-item"
+              :class="{ 'settings-item--selected': p.id === pipeline?.id }"
             >
-              <div class="pipeline-info">
-                <span class="pipeline-name">{{ p.name }}</span>
-                <span class="pipeline-type">{{ getPipelineTypeLabel(p.pipeline_type) }}</span>
+              <div class="settings-item__info">
+                <strong>{{ p.name }}</strong>
+                <span>{{ getPipelineTypeLabel(p.pipeline_type) }}</span>
               </div>
-              <div class="pipeline-actions">
-                <button class="btn-icon" @click="editPipeline(p)" title="Editar">✏️</button>
-                <button class="btn-icon btn-icon--danger" @click="confirmDeletePipeline(p)" title="Excluir">🗑️</button>
+              <div class="settings-item__actions">
+                <button class="btn-icon" @click="editPipeline(p)">✏️</button>
+                <button class="btn-icon" @click="confirmDeletePipeline(p)">🗑️</button>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Stages Section -->
-        <div v-if="pipeline" class="section">
-          <div class="section-header">
+        <div v-if="pipeline" class="settings-section">
+          <div class="settings-section__header">
             <h3>Estágios de "{{ pipeline.name }}"</h3>
-            <button class="btn btn-primary btn-sm" @click="openAddStage">
+            <button class="btn-primary-sm" @click="openAddStage">
               + Novo Estágio
             </button>
           </div>
 
-          <div v-if="stages.length === 0" class="empty-state">
-            <p>Nenhum estágio criado ainda.</p>
+          <div v-if="stages.length === 0" class="settings-empty">
+            Nenhum estágio criado ainda.
           </div>
 
-          <div v-else class="stage-list">
-            <div v-for="stage in stages" :key="stage.id" class="stage-item">
-              <div class="stage-color" :style="{ backgroundColor: stage.color }"></div>
-              <div class="stage-info">
-                <span class="stage-name">{{ stage.name }}</span>
-                <span class="stage-position">Posição {{ stage.position }}</span>
+          <div v-else class="settings-list">
+            <div v-for="stage in stages" :key="stage.id" class="settings-item">
+              <div class="settings-item__color" :style="{ backgroundColor: stage.color }"></div>
+              <div class="settings-item__info">
+                <strong>{{ stage.name }}</strong>
+                <span>Posição {{ stage.position }}</span>
               </div>
-              <div class="stage-actions">
-                <button class="btn-icon" @click="editStage(stage)" title="Editar">✏️</button>
-                <button class="btn-icon btn-icon--danger" @click="confirmDeleteStage(stage)" title="Excluir">🗑️</button>
+              <div class="settings-item__actions">
+                <button class="btn-icon" @click="editStage(stage)">✏️</button>
+                <button class="btn-icon" @click="confirmDeleteStage(stage)">🗑️</button>
               </div>
             </div>
           </div>
@@ -74,44 +74,39 @@
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer">
-        <button class="btn btn-secondary" @click="onClose">Fechar</button>
+      <div class="settings-footer">
+        <button class="btn-secondary" @click="onClose">Fechar</button>
       </div>
     </div>
 
-    <!-- Pipeline Form Modal -->
-    <div v-if="showPipelineForm" class="modal-backdrop" @click.self="closePipelineForm">
+    <!-- Pipeline Form -->
+    <div v-if="showPipelineForm" class="settings-overlay" @click.self="closePipelineForm">
       <div class="form-modal">
-        <div class="form-header">
+        <div class="form-modal__header">
           <h3>{{ editingPipeline ? 'Editar Pipeline' : 'Novo Pipeline' }}</h3>
-          <button class="close-btn" @click="closePipelineForm">✕</button>
+          <button class="settings-close" @click="closePipelineForm">✕</button>
         </div>
-        <form @submit.prevent="savePipeline">
-          <div class="form-group">
-            <label for="pipeline-name">Nome</label>
+        <form class="form-modal__body" @submit.prevent="savePipeline">
+          <div class="form-field">
+            <label>Nome</label>
             <input
-              id="pipeline-name"
               v-model="pipelineForm.name"
               type="text"
               placeholder="Ex: Vendas Solar"
               required
             />
           </div>
-          <div class="form-group">
-            <label for="pipeline-type">Tipo</label>
-            <select id="pipeline-type" v-model="pipelineForm.pipeline_type">
+          <div class="form-field">
+            <label>Tipo</label>
+            <select v-model="pipelineForm.pipeline_type">
               <option value="conversations">Conversas</option>
               <option value="contacts">Contatos</option>
             </select>
-            <span class="form-hint">
-              Conversas: organiza chats pelo funil. Contatos: organiza contatos.
-            </span>
+            <small>Conversas: organiza chats pelo funil. Contatos: organiza contatos.</small>
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="closePipelineForm">
-              Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="isSaving">
+          <div class="form-modal__footer">
+            <button type="button" class="btn-secondary" @click="closePipelineForm">Cancelar</button>
+            <button type="submit" class="btn-primary" :disabled="isSaving">
               {{ isSaving ? 'Salvando...' : 'Salvar' }}
             </button>
           </div>
@@ -119,49 +114,37 @@
       </div>
     </div>
 
-    <!-- Stage Form Modal -->
-    <div v-if="showStageForm" class="modal-backdrop" @click.self="closeStageForm">
+    <!-- Stage Form -->
+    <div v-if="showStageForm" class="settings-overlay" @click.self="closeStageForm">
       <div class="form-modal">
-        <div class="form-header">
+        <div class="form-modal__header">
           <h3>{{ editingStage ? 'Editar Estágio' : 'Novo Estágio' }}</h3>
-          <button class="close-btn" @click="closeStageForm">✕</button>
+          <button class="settings-close" @click="closeStageForm">✕</button>
         </div>
-        <form @submit.prevent="saveStage">
-          <div class="form-group">
-            <label for="stage-name">Nome</label>
+        <form class="form-modal__body" @submit.prevent="saveStage">
+          <div class="form-field">
+            <label>Nome</label>
             <input
-              id="stage-name"
               v-model="stageForm.name"
               type="text"
               placeholder="Ex: Novo Lead"
               required
             />
           </div>
-          <div class="form-group">
-            <label for="stage-color">Cor</label>
-            <div class="color-input">
-              <input
-                id="stage-color"
-                v-model="stageForm.color"
-                type="color"
-              />
-              <span class="color-value">{{ stageForm.color }}</span>
+          <div class="form-field">
+            <label>Cor</label>
+            <div class="color-picker">
+              <input v-model="stageForm.color" type="color" />
+              <span>{{ stageForm.color }}</span>
             </div>
           </div>
-          <div class="form-group">
-            <label for="stage-position">Posição</label>
-            <input
-              id="stage-position"
-              v-model.number="stageForm.position"
-              type="number"
-              min="0"
-            />
+          <div class="form-field">
+            <label>Posição</label>
+            <input v-model.number="stageForm.position" type="number" min="0" />
           </div>
-          <div class="form-actions">
-            <button type="button" class="btn btn-secondary" @click="closeStageForm">
-              Cancelar
-            </button>
-            <button type="submit" class="btn btn-primary" :disabled="isSaving">
+          <div class="form-modal__footer">
+            <button type="button" class="btn-secondary" @click="closeStageForm">Cancelar</button>
+            <button type="submit" class="btn-primary" :disabled="isSaving">
               {{ isSaving ? 'Salvando...' : 'Salvar' }}
             </button>
           </div>
@@ -177,14 +160,8 @@ import KanbanAPI from 'dashboard/api/kanban';
 export default {
   name: 'KanbanSettingsModal',
   props: {
-    pipeline: {
-      type: Object,
-      default: null,
-    },
-    pipelines: {
-      type: Array,
-      default: () => [],
-    },
+    pipeline: { type: Object, default: null },
+    pipelines: { type: Array, default: () => [] },
   },
   emits: ['close', 'saved'],
   data() {
@@ -194,15 +171,8 @@ export default {
       editingPipeline: null,
       editingStage: null,
       isSaving: false,
-      pipelineForm: {
-        name: '',
-        pipeline_type: 'conversations',
-      },
-      stageForm: {
-        name: '',
-        color: '#6366F1',
-        position: 0,
-      },
+      pipelineForm: { name: '', pipeline_type: 'conversations' },
+      stageForm: { name: '', color: '#6366F1', position: 0 },
     };
   },
   computed: {
@@ -215,17 +185,11 @@ export default {
   },
   methods: {
     getPipelineTypeLabel(type) {
-      const types = {
-        conversations: 'Conversas',
-        contacts: 'Contatos',
-      };
-      return types[type] || type;
+      return type === 'conversations' ? 'Conversas' : 'Contatos';
     },
     onClose() {
       this.$emit('close');
     },
-
-    // Pipeline methods
     openAddPipeline() {
       this.editingPipeline = null;
       this.pipelineForm = { name: '', pipeline_type: 'conversations' };
@@ -233,10 +197,7 @@ export default {
     },
     editPipeline(p) {
       this.editingPipeline = p;
-      this.pipelineForm = {
-        name: p.name,
-        pipeline_type: p.pipeline_type,
-      };
+      this.pipelineForm = { name: p.name, pipeline_type: p.pipeline_type };
       this.showPipelineForm = true;
     },
     closePipelineForm() {
@@ -254,25 +215,21 @@ export default {
         this.closePipelineForm();
         this.$emit('saved');
       } catch (error) {
-        console.error('Error saving pipeline:', error);
         alert('Erro ao salvar pipeline: ' + (error.response?.data?.errors?.join(', ') || error.message));
       } finally {
         this.isSaving = false;
       }
     },
     async confirmDeletePipeline(p) {
-      if (confirm(`Excluir o pipeline "${p.name}"? Esta ação não pode ser desfeita.`)) {
+      if (confirm(`Excluir o pipeline "${p.name}"?`)) {
         try {
           await KanbanAPI.deletePipeline(this.accountId, p.id);
           this.$emit('saved');
         } catch (error) {
-          console.error('Error deleting pipeline:', error);
           alert('Erro ao excluir pipeline');
         }
       }
     },
-
-    // Stage methods
     openAddStage() {
       this.editingStage = null;
       this.stageForm = { name: '', color: '#6366F1', position: this.stages.length };
@@ -280,11 +237,7 @@ export default {
     },
     editStage(stage) {
       this.editingStage = stage;
-      this.stageForm = {
-        name: stage.name,
-        color: stage.color,
-        position: stage.position,
-      };
+      this.stageForm = { name: stage.name, color: stage.color, position: stage.position };
       this.showStageForm = true;
     },
     closeStageForm() {
@@ -302,19 +255,17 @@ export default {
         this.closeStageForm();
         this.$emit('saved');
       } catch (error) {
-        console.error('Error saving stage:', error);
         alert('Erro ao salvar estágio: ' + (error.response?.data?.errors?.join(', ') || error.message));
       } finally {
         this.isSaving = false;
       }
     },
     async confirmDeleteStage(stage) {
-      if (confirm(`Excluir o estágio "${stage.name}"? Esta ação não pode ser desfeita.`)) {
+      if (confirm(`Excluir o estágio "${stage.name}"?`)) {
         try {
           await KanbanAPI.deleteStage(this.accountId, this.pipeline.id, stage.id);
           this.$emit('saved');
         } catch (error) {
-          console.error('Error deleting stage:', error);
           alert('Erro ao excluir estágio');
         }
       }
@@ -323,220 +274,213 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
-.modal-backdrop {
+<style scoped>
+.settings-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 10000;
 }
 
-.modal-container {
-  background-color: var(--white);
+.settings-modal {
+  background-color: #1f2937;
   border-radius: 12px;
-  width: 600px;
+  width: 560px;
   max-width: 90vw;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid #374151;
 }
 
-.modal-header {
+.settings-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 24px;
-  border-bottom: 1px solid var(--s-100);
-
-  h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--s-900);
-    margin: 0;
-  }
-
-  p {
-    font-size: 13px;
-    color: var(--s-500);
-    margin: 4px 0 0 0;
-  }
+  padding: 20px 24px;
+  border-bottom: 1px solid #374151;
 }
 
-.close-btn {
+.settings-header__text h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f9fafb;
+  margin: 0 0 4px 0;
+}
+
+.settings-header__text p {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.settings-close {
   background: none;
   border: none;
   font-size: 20px;
-  color: var(--s-400);
+  color: #9ca3af;
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: var(--s-100);
-    color: var(--s-600);
-  }
 }
 
-.modal-content {
+.settings-close:hover {
+  background-color: #374151;
+  color: #f9fafb;
+}
+
+.settings-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px 24px;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  padding: 16px 24px;
-  border-top: 1px solid var(--s-100);
+.settings-section {
+  margin-bottom: 28px;
 }
 
-.section {
-  margin-bottom: 32px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
+.settings-section:last-child {
+  margin-bottom: 0;
 }
 
-.section-header {
+.settings-section__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
-
-  h3 {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--s-800);
-    margin: 0;
-  }
 }
 
-.empty-state {
-  padding: 24px;
+.settings-section__header h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f3f4f6;
+  margin: 0;
+}
+
+.settings-empty {
+  padding: 20px;
   text-align: center;
-  background-color: var(--s-50);
+  background-color: #111827;
   border-radius: 8px;
-
-  p {
-    color: var(--s-500);
-    margin: 0;
-    font-size: 14px;
-  }
+  color: #6b7280;
+  font-size: 14px;
 }
 
-.pipeline-list,
-.stage-list {
+.settings-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.pipeline-item,
-.stage-item {
+.settings-item {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background-color: var(--s-50);
+  background-color: #111827;
   border-radius: 8px;
-  border: 1px solid transparent;
-  transition: all 0.2s;
-
-  &:hover {
-    background-color: var(--s-75);
-  }
+  border: 1px solid #1f2937;
 }
 
-.pipeline-item--active {
-  background-color: var(--w-50);
-  border-color: var(--w-200);
+.settings-item--selected {
+  border-color: #3b82f6;
+  background-color: #1e3a5f;
 }
 
-.pipeline-info,
-.stage-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.pipeline-name,
-.stage-name {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--s-800);
-}
-
-.pipeline-type,
-.stage-position {
-  display: block;
-  font-size: 12px;
-  color: var(--s-500);
-  margin-top: 2px;
-}
-
-.pipeline-actions,
-.stage-actions {
-  display: flex;
-  gap: 4px;
-}
-
-.stage-color {
-  width: 20px;
-  height: 20px;
+.settings-item__color {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   margin-right: 12px;
   flex-shrink: 0;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
+.settings-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-item__info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f3f4f6;
+}
+
+.settings-item__info span {
+  display: block;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+.settings-item__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #374151;
+}
+
+/* Buttons */
+.btn-primary-sm {
+  padding: 6px 12px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-primary-sm:hover {
+  background-color: #2563eb;
+}
+
+.btn-primary {
+  padding: 10px 20px;
+  background-color: #3b82f6;
+  color: #fff;
+  border: none;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
 }
 
-.btn-primary {
-  background-color: var(--w-500);
-  color: var(--white);
-  border-color: var(--w-500);
+.btn-primary:hover {
+  background-color: #2563eb;
+}
 
-  &:hover:not(:disabled) {
-    background-color: var(--w-600);
-  }
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
-  background-color: var(--white);
-  color: var(--s-700);
-  border-color: var(--s-200);
-
-  &:hover:not(:disabled) {
-    background-color: var(--s-50);
-  }
+  padding: 10px 20px;
+  background-color: #374151;
+  color: #f3f4f6;
+  border: 1px solid #4b5563;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 13px;
+.btn-secondary:hover {
+  background-color: #4b5563;
 }
 
 .btn-icon {
@@ -546,118 +490,115 @@ export default {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s;
+}
 
-  &:hover {
-    background-color: var(--s-200);
-  }
-
-  &--danger:hover {
-    background-color: var(--r-100);
-  }
+.btn-icon:hover {
+  background-color: #374151;
 }
 
 /* Form Modal */
 .form-modal {
-  background-color: var(--white);
+  background-color: #1f2937;
   border-radius: 12px;
-  width: 420px;
+  width: 400px;
   max-width: 90vw;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  border: 1px solid #374151;
 }
 
-.form-header {
+.form-modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--s-100);
-
-  h3 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--s-900);
-    margin: 0;
-  }
+  padding: 16px 20px;
+  border-bottom: 1px solid #374151;
 }
 
-form {
-  padding: 24px;
+.form-modal__header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f9fafb;
+  margin: 0;
 }
 
-.form-group {
-  margin-bottom: 20px;
-
-  &:last-of-type {
-    margin-bottom: 0;
-  }
-
-  label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--s-700);
-    margin-bottom: 8px;
-  }
-
-  input[type="text"],
-  input[type="number"],
-  select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--s-200);
-    border-radius: 6px;
-    font-size: 14px;
-    color: var(--s-800);
-    background-color: var(--white);
-    transition: border-color 0.2s;
-
-    &:focus {
-      outline: none;
-      border-color: var(--w-500);
-    }
-
-    &::placeholder {
-      color: var(--s-400);
-    }
-  }
+.form-modal__body {
+  padding: 20px;
 }
 
-.form-hint {
+.form-field {
+  margin-bottom: 16px;
+}
+
+.form-field:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #d1d5db;
+  margin-bottom: 6px;
+}
+
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field select {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #f3f4f6;
+  box-sizing: border-box;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.form-field input::placeholder {
+  color: #6b7280;
+}
+
+.form-field small {
   display: block;
   font-size: 12px;
-  color: var(--s-500);
+  color: #6b7280;
   margin-top: 6px;
 }
 
-.color-input {
+.color-picker {
   display: flex;
   align-items: center;
   gap: 12px;
-
-  input[type="color"] {
-    width: 48px;
-    height: 48px;
-    padding: 4px;
-    border: 1px solid var(--s-200);
-    border-radius: 6px;
-    cursor: pointer;
-    background: none;
-  }
-
-  .color-value {
-    font-size: 14px;
-    color: var(--s-600);
-    font-family: monospace;
-  }
 }
 
-.form-actions {
+.color-picker input[type="color"] {
+  width: 48px;
+  height: 40px;
+  padding: 2px;
+  background-color: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.color-picker span {
+  font-size: 14px;
+  color: #9ca3af;
+  font-family: monospace;
+}
+
+.form-modal__footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--s-100);
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #374151;
 }
 </style>
