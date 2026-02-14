@@ -4,11 +4,9 @@
     :class="{ 'kanban-card--conversation': itemType === 'conversation' }"
   >
     <div class="kanban-card__header">
-      <Thumbnail
-        :src="thumbnailSrc"
-        :username="contactName"
-        size="24px"
-      />
+      <div class="kanban-card__avatar">
+        {{ getInitials(contactName) }}
+      </div>
       <div class="kanban-card__contact">
         <span class="kanban-card__name">{{ contactName }}</span>
         <span class="kanban-card__phone">{{ contactPhone }}</span>
@@ -58,24 +56,15 @@
         v-if="item.assignee"
         class="kanban-card__assignee"
       >
-        <Thumbnail
-          :src="item.assignee.thumbnail"
-          :username="item.assignee.name"
-          size="20px"
-        />
+        {{ getInitials(item.assignee.name) }}
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import Thumbnail from 'dashboard/components/widgets/Thumbnail.vue';
-
 export default {
   name: 'KanbanCard',
-  components: {
-    Thumbnail,
-  },
   props: {
     item: {
       type: Object,
@@ -99,12 +88,6 @@ export default {
       }
       return this.item.phone_number || this.item.email || '';
     },
-    thumbnailSrc() {
-      if (this.itemType === 'conversation') {
-        return this.item.contact?.thumbnail || '';
-      }
-      return this.item.thumbnail || '';
-    },
     statusLabel() {
       const statuses = {
         open: 'Aberto',
@@ -121,6 +104,15 @@ export default {
         style: 'currency',
         currency: 'BRL',
       }).format(value);
+    },
+    getInitials(name) {
+      if (!name) return '?';
+      return name
+        .split(' ')
+        .map(word => word[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
     },
   },
 };
@@ -146,6 +138,20 @@ export default {
     align-items: center;
     gap: var(--space-small);
     margin-bottom: var(--space-small);
+  }
+
+  &__avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--w-500);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-micro);
+    font-weight: var(--font-weight-medium);
+    flex-shrink: 0;
   }
 
   &__contact {
@@ -241,6 +247,16 @@ export default {
   }
 
   &__assignee {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--s-500);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: var(--font-weight-medium);
     flex-shrink: 0;
   }
 }
