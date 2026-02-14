@@ -24,6 +24,7 @@ import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 import KanbanStageSelector from 'dashboard/components/widgets/conversation/KanbanStageSelector.vue';
+import KanbanCrmFields from 'dashboard/components/widgets/conversation/KanbanCrmFields.vue';
 
 const props = defineProps({
   conversationId: {
@@ -97,6 +98,9 @@ const contactAdditionalAttributes = computed(
 );
 
 const currentKanbanStageId = computed(() => currentChat.value.kanban_stage_id);
+const currentDealValue = computed(() => currentChat.value.deal_value);
+const currentClosedWon = computed(() => currentChat.value.closed_won);
+const currentClosedReason = computed(() => currentChat.value.closed_reason);
 
 const getContactDetails = () => {
   if (contactId.value) {
@@ -129,6 +133,13 @@ const onKanbanStageUpdated = (stageId) => {
     currentChat.value.kanban_stage_id = stageId;
   }
 };
+const onCrmFieldsUpdated = (fields) => {
+  if (currentChat.value) {
+    if (fields.deal_value !== undefined) currentChat.value.deal_value = fields.deal_value;
+    if (fields.closed_won !== undefined) currentChat.value.closed_won = fields.closed_won;
+    if (fields.closed_reason !== undefined) currentChat.value.closed_reason = fields.closed_reason;
+  }
+};
 
 onMounted(() => {
   conversationSidebarItems.value = conversationSidebarItemsOrder.value;
@@ -146,7 +157,7 @@ onMounted(() => {
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     <div class="px-2 pb-8 list-group">
-      <div class="kanban-section">
+     <div class="kanban-section">
         <AccordionItem
           title="Kanban"
           :is-open="isContactSidebarItemOpen('is_kanban_open')"
@@ -156,6 +167,13 @@ onMounted(() => {
             :conversation-id="conversationId"
             :current-stage-id="currentKanbanStageId"
             @updated="onKanbanStageUpdated"
+          />
+          <KanbanCrmFields
+            :conversation-id="conversationId"
+            :initial-deal-value="currentDealValue"
+            :initial-closed-won="currentClosedWon"
+            :initial-closed-reason="currentClosedReason"
+            @updated="onCrmFieldsUpdated"
           />
         </AccordionItem>
       </div>
