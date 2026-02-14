@@ -25,7 +25,7 @@
         class="kanban-selector__select"
         @change="onStageChange"
       >
-        <option :value="null">Não atribuído</option>
+        <option :value="null">Selecione...</option>
         <option
           v-for="stage in stages"
           :key="stage.id"
@@ -66,6 +66,7 @@ export default {
     const selectedPipelineId = ref(null);
     const selectedStageId = ref(null);
     const isSaving = ref(false);
+    const isLoading = ref(true);
 
     const accountId = computed(() => {
       return store.getters.getCurrentAccountId;
@@ -77,23 +78,35 @@ export default {
       return pipeline?.kanban_stages || [];
     });
 
+    const findPipelineForStage = (stageId) => {
+      if (!stageId) return null;
+      for (const pipeline of pipelines.value) {
+        const stage = pipeline.kanban_stages?.find(s => s.id === stageId);
+        if (stage) {
+          return pipeline.id;
+        }
+      }
+      return null;
+    };
+
     const loadPipelines = async () => {
+      isLoading.value = true;
       try {
         const response = await KanbanAPI.getPipelines(accountId.value);
         pipelines.value = response.data.filter(p => p.pipeline_type === 'conversations');
         
+        // Se tem um estágio atual, encontra o pipeline correspondente
         if (props.currentStageId) {
-          for (const pipeline of pipelines.value) {
-            const stage = pipeline.kanban_stages?.find(s => s.id === props.currentStageId);
-            if (stage) {
-              selectedPipelineId.value = pipeline.id;
-              selectedStageId.value = props.currentStageId;
-              break;
-            }
+          const pipelineId = findPipelineForStage(props.currentStageId);
+          if (pipelineId) {
+            selectedPipelineId.value = pipelineId;
+            selectedStageId.value = props.currentStageId;
           }
         }
       } catch (error) {
         console.error('Erro ao carregar pipelines:', error);
+      } finally {
+        isLoading.value = false;
       }
     };
 
@@ -124,9 +137,19 @@ export default {
       }
     };
 
+    // Quando currentStageId mudar externamente, atualiza os selects
     watch(() => props.currentStageId, (newVal) => {
-      if (newVal !== selectedStageId.value) {
+      if (isLoading.value) return;
+      
+      if (newVal) {
+        const pipelineId = findPipelineForStage(newVal);
+        if (pipelineId && pipelineId !== selectedPipelineId.value) {
+          selectedPipelineId.value = pipelineId;
+        }
         selectedStageId.value = newVal;
+      } else {
+        selectedPipelineId.value = null;
+        selectedStageId.value = null;
       }
     });
 
