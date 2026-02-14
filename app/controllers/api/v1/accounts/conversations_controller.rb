@@ -136,6 +136,11 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     @conversation.save!
   end
 
+  def update_kanban_stage
+    @conversation.update!(kanban_stage_id: params[:kanban_stage_id])
+    render json: { success: true, kanban_stage_id: @conversation.kanban_stage_id }
+  end
+
   def destroy
     authorize @conversation, :destroy?
     ::DeleteObjectJob.perform_later(@conversation, Current.user, request.ip)
