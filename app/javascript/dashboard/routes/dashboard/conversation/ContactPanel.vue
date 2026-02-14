@@ -23,6 +23,7 @@ import ShopifyOrdersList from 'dashboard/components/widgets/conversation/Shopify
 import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader.vue';
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
+import KanbanStageSelector from 'dashboard/components/widgets/conversation/KanbanStageSelector.vue';
 
 const props = defineProps({
   conversationId: {
@@ -95,6 +96,8 @@ const contactAdditionalAttributes = computed(
   () => contact.value.additional_attributes || {}
 );
 
+const currentKanbanStageId = computed(() => currentChat.value.kanban_stage_id);
+
 const getContactDetails = () => {
   if (contactId.value) {
     store.dispatch('contacts/show', { id: contactId.value });
@@ -121,11 +124,17 @@ const closeContactPanel = () => {
   });
 };
 
+const onKanbanStageUpdated = (stageId) => {
+  // Atualiza o estado local da conversa
+  if (currentChat.value) {
+    currentChat.value.kanban_stage_id = stageId;
+  }
+};
+
 onMounted(() => {
   conversationSidebarItems.value = conversationSidebarItemsOrder.value;
   getContactDetails();
   store.dispatch('attributes/get', 0);
-  // Load integrations to ensure linear integration state is available
   store.dispatch('integrations/get', 'linear');
 });
 </script>
@@ -138,6 +147,21 @@ onMounted(() => {
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     <div class="px-2 pb-8 list-group">
+      <!-- Kanban Stage Selector - Fixo no topo -->
+      <div class="kanban-section">
+        <AccordionItem
+          title="Kanban"
+          :is-open="isContactSidebarItemOpen('is_kanban_open')"
+          @toggle="value => toggleSidebarUIState('is_kanban_open', value)"
+        >
+          <KanbanStageSelector
+            :conversation-id="conversationId"
+            :current-stage-id="currentKanbanStageId"
+            @updated="onKanbanStageUpdated"
+          />
+        </AccordionItem>
+      </div>
+
       <Draggable
         :list="conversationSidebarItems"
         animation="200"
@@ -262,63 +286,3 @@ onMounted(() => {
               :is-open="isContactSidebarItemOpen('is_linear_issues_open')"
               compact
               @toggle="
-                value => toggleSidebarUIState('is_linear_issues_open', value)
-              "
-            >
-              <LinearSetupCTA v-if="!isLinearConnected" />
-              <LinearIssuesList v-else :conversation-id="conversationId" />
-            </AccordionItem>
-          </div>
-          <div
-            v-else-if="
-              element.name === 'shopify_orders' && isShopifyFeatureEnabled
-            "
-          >
-            <AccordionItem
-              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.SHOPIFY_ORDERS')"
-              :is-open="isContactSidebarItemOpen('is_shopify_orders_open')"
-              compact
-              @toggle="
-                value => toggleSidebarUIState('is_shopify_orders_open', value)
-              "
-            >
-              <ShopifyOrdersList :contact-id="contactId" />
-            </AccordionItem>
-          </div>
-          <div v-else-if="element.name === 'contact_notes'">
-            <AccordionItem
-              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES')"
-              :is-open="isContactSidebarItemOpen('is_contact_notes_open')"
-              compact
-              @toggle="
-                value => toggleSidebarUIState('is_contact_notes_open', value)
-              "
-            >
-              <ContactNotes :contact-id="contactId" />
-            </AccordionItem>
-          </div>
-        </template>
-      </Draggable>
-    </div>
-  </div>
-</template>
-
-<style lang="scss" scoped>
-::v-deep {
-  .contact--profile {
-    @apply pb-3 border-b border-solid border-n-weak;
-  }
-
-  .conversation--actions .multiselect-wrap--small {
-    .multiselect {
-      @apply box-border pl-6;
-    }
-
-    .multiselect__element {
-      span {
-        @apply w-full;
-      }
-    }
-  }
-}
-</style>
