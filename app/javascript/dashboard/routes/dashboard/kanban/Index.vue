@@ -21,6 +21,13 @@
           </option>
         </select>
         <button
+          class="kanban-page__dashboard-btn"
+          @click="openDashboard"
+        >
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </button>
+        <button
           class="kanban-page__config-btn"
           @click="openSettings"
         >
@@ -169,6 +176,14 @@ export default {
     openSettings() {
       this.showSettings = true;
     },
+    openDashboard() {
+      this.$router.push({
+        name: 'kanban_dashboard',
+        params: {
+          accountId: this.accountId,
+        },
+      });
+    },
     onSettingsSaved() {
       this.showSettings = false;
       this.loadPipelines();
@@ -226,6 +241,29 @@ export default {
 
     &:focus {
       border-color: var(--w-500);
+    }
+  }
+
+  &__dashboard-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background-color: #3b82f6;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #2563eb;
+    }
+
+    .icon {
+      font-size: 16px;
     }
   }
 
