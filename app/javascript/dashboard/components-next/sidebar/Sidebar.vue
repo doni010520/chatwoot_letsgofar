@@ -323,6 +323,12 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'Kanban',
+      label: 'Kanban',
+      icon: 'i-lucide-kanban',
+      to: accountScopedRoute('kanban_board'),
+    },
+    {
       name: 'Captain',
       icon: 'i-woot-captain',
       label: t('SIDEBAR.CAPTAIN'),
