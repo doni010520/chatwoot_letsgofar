@@ -128,74 +128,120 @@ export default {
 
 <style lang="scss" scoped>
 .kanban-card {
-  @apply bg-white dark:bg-slate-700 rounded-lg p-3 shadow-sm border border-slate-200 dark:border-slate-600 cursor-pointer transition-all;
+  background-color: var(--white);
+  border-radius: var(--border-radius-normal);
+  padding: var(--space-small);
+  box-shadow: var(--shadow-small);
+  border: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
 
   &:hover {
-    @apply shadow-md border-woot-500;
+    box-shadow: var(--shadow-medium);
+    border-color: var(--w-500);
   }
 
   &__header {
-    @apply flex items-center gap-2 mb-2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
+    margin-bottom: var(--space-small);
   }
 
   &__contact {
-    @apply flex-1 min-w-0;
+    flex: 1;
+    min-width: 0;
   }
 
   &__name {
-    @apply block text-sm font-medium text-slate-800 dark:text-slate-100 truncate;
+    display: block;
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-body);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__phone {
-    @apply block text-xs text-slate-500 dark:text-slate-400 truncate;
+    display: block;
+    font-size: var(--font-size-mini);
+    color: var(--s-600);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__value {
-    @apply text-sm font-semibold text-green-600 dark:text-green-400 mb-2;
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-bold);
+    color: var(--g-500);
+    margin-bottom: var(--space-small);
   }
 
   &__labels {
-    @apply flex flex-wrap gap-1 mb-2;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-micro);
+    margin-bottom: var(--space-small);
   }
 
   &__label {
-    @apply text-xs text-white px-2 py-0.5 rounded truncate max-w-[100px];
+    font-size: var(--font-size-micro);
+    color: var(--white);
+    padding: var(--space-micro) var(--space-small);
+    border-radius: var(--border-radius-small);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
   }
 
   &__footer {
-    @apply flex items-center justify-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   &__meta {
-    @apply flex items-center gap-2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
   }
 
   &__status {
-    @apply text-xs px-2 py-0.5 rounded;
+    font-size: var(--font-size-micro);
+    padding: var(--space-micro) var(--space-small);
+    border-radius: var(--border-radius-small);
 
     &--open {
-      @apply bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300;
+      background-color: var(--g-100);
+      color: var(--g-700);
     }
 
     &--pending {
-      @apply bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300;
+      background-color: var(--y-100);
+      color: var(--y-700);
     }
 
     &--resolved {
-      @apply bg-slate-100 text-slate-600 dark:bg-slate-600 dark:text-slate-300;
+      background-color: var(--s-100);
+      color: var(--s-600);
     }
 
     &--snoozed {
-      @apply bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300;
+      background-color: var(--w-100);
+      color: var(--w-700);
     }
   }
 
   &__inbox {
-    @apply text-xs text-slate-500 dark:text-slate-400;
+    font-size: var(--font-size-micro);
+    color: var(--s-600);
   }
 
   &__assignee {
-    @apply flex-shrink-0;
+    flex-shrink: 0;
   }
 }
 </style>
