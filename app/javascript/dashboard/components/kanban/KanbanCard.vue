@@ -1,5 +1,5 @@
 <template>
-  <div class="kanban-card" @click="$emit('click')">
+  <div class="kanban-card" :class="cardClasses" @click="$emit('click')">
     <!-- Header com foto e info do contato -->
     <div class="kanban-card__header">
       <div class="kanban-card__avatar">
@@ -19,6 +19,11 @@
       </div>
     </div>
 
+    <!-- Valor do negócio -->
+    <div v-if="item.deal_value" class="kanban-card__value">
+      {{ formatCurrency(item.deal_value) }}
+    </div>
+
     <!-- ID da conversa -->
     <div v-if="itemType === 'conversation'" class="kanban-card__id">
       #{{ item.display_id }}
@@ -34,6 +39,14 @@
       </span>
       <span v-if="timeAgo" class="kanban-card__time">
         {{ timeAgo }}
+      </span>
+    </div>
+
+    <!-- Resultado (Ganho/Perdido) -->
+    <div v-if="item.closed_won !== null" class="kanban-card__result" :class="resultClass">
+      {{ item.closed_won ? '✓ Ganho' : '✗ Perdido' }}
+      <span v-if="!item.closed_won && item.closed_reason" class="kanban-card__reason">
+        - {{ item.closed_reason }}
       </span>
     </div>
 
@@ -104,6 +117,15 @@ export default {
       if (diffDays < 7) return `${diffDays}d`;
       return past.toLocaleDateString('pt-BR');
     },
+    cardClasses() {
+      return {
+        'kanban-card--won': this.item.closed_won === true,
+        'kanban-card--lost': this.item.closed_won === false,
+      };
+    },
+    resultClass() {
+      return this.item.closed_won ? 'kanban-card__result--won' : 'kanban-card__result--lost';
+    },
   },
   methods: {
     getInitials(name) {
@@ -114,6 +136,12 @@ export default {
         .join('')
         .substring(0, 2)
         .toUpperCase();
+    },
+    formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(value);
     },
   },
 };
@@ -134,6 +162,15 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-color: #3b82f6;
   transform: translateY(-1px);
+}
+
+.kanban-card--won {
+  border-left: 3px solid #10b981;
+}
+
+.kanban-card--lost {
+  border-left: 3px solid #ef4444;
+  opacity: 0.7;
 }
 
 .kanban-card__header {
@@ -192,6 +229,17 @@ export default {
   margin-top: 2px;
 }
 
+.kanban-card__value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #059669;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  background-color: #d1fae5;
+  border-radius: 4px;
+  display: inline-block;
+}
+
 .kanban-card__id {
   font-size: 11px;
   color: #9ca3af;
@@ -235,6 +283,28 @@ export default {
 .kanban-card__time {
   font-size: 11px;
   color: #9ca3af;
+}
+
+.kanban-card__result {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.kanban-card__result--won {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.kanban-card__result--lost {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.kanban-card__reason {
+  font-weight: 400;
 }
 
 .kanban-card__assignee {
