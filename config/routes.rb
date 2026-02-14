@@ -357,7 +357,7 @@ Rails.application.routes.draw do
           resources :upload, only: [:create]
 
           # Kanban
-          namespace :kanban do
+         namespace :kanban do
             resources :pipelines do
               resources :stages do
                 member do
@@ -367,6 +367,13 @@ Rails.application.routes.draw do
 
               resource :board, only: [:show], controller: 'board' do
                 patch :move
+              end
+
+              resource :reports, only: [], controller: 'reports' do
+                get :summary
+                get :won_lost_by_period
+                get :loss_reasons
+                get :top_performers
               end
             end
           end
