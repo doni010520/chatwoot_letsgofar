@@ -13,10 +13,12 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
                 conversations_for_stage(stage)
               end
 
+      stage_value = items.sum { |item| item[:deal_value].to_f }
+
       {
         stage: stage_json(stage),
         items: items,
-        totals: { count: items.size, value: 0 }
+        totals: { count: items.size, value: stage_value }
       }
     end
 
@@ -25,7 +27,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       board: board_data,
       totals: {
         count: board_data.sum { |col| col[:totals][:count] },
-        value: 0
+        value: board_data.sum { |col| col[:totals][:value] }
       }
     }
   end
@@ -69,6 +71,10 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       display_id: conv.display_id,
       status: conv.status,
       kanban_stage_id: conv.kanban_stage_id,
+      deal_value: conv.deal_value,
+      closed_won: conv.closed_won,
+      closed_reason: conv.closed_reason,
+      closed_at: conv.closed_at,
       contact: conv.contact ? {
         id: conv.contact.id,
         name: conv.contact.name,
