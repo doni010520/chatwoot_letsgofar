@@ -34,7 +34,6 @@
             >
               <div class="settings-item__info">
                 <strong>{{ p.name }}</strong>
-                <span>{{ getPipelineTypeLabel(p.pipeline_type) }}</span>
               </div>
               <div class="settings-item__actions">
                 <button class="btn-icon" @click="editPipeline(p)">✏️</button>
@@ -96,14 +95,7 @@
               required
             />
           </div>
-          <div class="form-field">
-            <label>Tipo</label>
-            <select v-model="pipelineForm.pipeline_type">
-              <option value="conversations">Conversas</option>
-              <option value="contacts">Contatos</option>
-            </select>
-            <small>Conversas: organiza chats pelo funil. Contatos: organiza contatos.</small>
-          </div>
+          <input type="hidden" v-model="pipelineForm.pipeline_type" />
           <div class="form-modal__footer">
             <button type="button" class="btn-secondary" @click="closePipelineForm">Cancelar</button>
             <button type="submit" class="btn-primary" :disabled="isSaving">
@@ -184,9 +176,6 @@ export default {
     },
   },
   methods: {
-    getPipelineTypeLabel(type) {
-      return type === 'conversations' ? 'Conversas' : 'Contatos';
-    },
     onClose() {
       this.$emit('close');
     },
@@ -197,7 +186,7 @@ export default {
     },
     editPipeline(p) {
       this.editingPipeline = p;
-      this.pipelineForm = { name: p.name, pipeline_type: p.pipeline_type };
+      this.pipelineForm = { name: p.name, pipeline_type: 'conversations' };
       this.showPipelineForm = true;
     },
     closePipelineForm() {
@@ -432,7 +421,6 @@ export default {
   border-top: 1px solid #374151;
 }
 
-/* Buttons */
 .btn-primary-sm {
   padding: 6px 12px;
   background-color: #3b82f6;
@@ -496,7 +484,6 @@ export default {
   background-color: #374151;
 }
 
-/* Form Modal */
 .form-modal {
   background-color: #1f2937;
   border-radius: 12px;
