@@ -125,7 +125,6 @@ const closeContactPanel = () => {
 };
 
 const onKanbanStageUpdated = (stageId) => {
-  // Atualiza o estado local da conversa
   if (currentChat.value) {
     currentChat.value.kanban_stage_id = stageId;
   }
@@ -147,7 +146,6 @@ onMounted(() => {
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     <div class="px-2 pb-8 list-group">
-      <!-- Kanban Stage Selector - Fixo no topo -->
       <div class="kanban-section">
         <AccordionItem
           title="Kanban"
@@ -161,7 +159,6 @@ onMounted(() => {
           />
         </AccordionItem>
       </div>
-
       <Draggable
         :list="conversationSidebarItems"
         animation="200"
@@ -180,9 +177,7 @@ onMounted(() => {
             <AccordionItem
               :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_ACTIONS')"
               :is-open="isContactSidebarItemOpen('is_conv_actions_open')"
-              @toggle="
-                value => toggleSidebarUIState('is_conv_actions_open', value)
-              "
+              @toggle="value => toggleSidebarUIState('is_conv_actions_open', value)"
             >
               <ConversationAction
                 :conversation-id="conversationId"
@@ -197,10 +192,7 @@ onMounted(() => {
             <AccordionItem
               :title="$t('CONVERSATION_PARTICIPANTS.SIDEBAR_TITLE')"
               :is-open="isContactSidebarItemOpen('is_conv_participants_open')"
-              @toggle="
-                value =>
-                  toggleSidebarUIState('is_conv_participants_open', value)
-              "
+              @toggle="value => toggleSidebarUIState('is_conv_participants_open', value)"
             >
               <ConversationParticipant
                 :conversation-id="conversationId"
@@ -213,9 +205,7 @@ onMounted(() => {
               :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_INFO')"
               :is-open="isContactSidebarItemOpen('is_conv_details_open')"
               compact
-              @toggle="
-                value => toggleSidebarUIState('is_conv_details_open', value)
-              "
+              @toggle="value => toggleSidebarUIState('is_conv_details_open', value)"
             >
               <ConversationInfo
                 :conversation-attributes="conversationAdditionalAttributes"
@@ -228,32 +218,23 @@ onMounted(() => {
               :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_ATTRIBUTES')"
               :is-open="isContactSidebarItemOpen('is_contact_attributes_open')"
               compact
-              @toggle="
-                value =>
-                  toggleSidebarUIState('is_contact_attributes_open', value)
-              "
+              @toggle="value => toggleSidebarUIState('is_contact_attributes_open', value)"
             >
               <CustomAttributes
                 attribute-type="contact_attribute"
                 attribute-from="conversation_contact_panel"
                 :contact-id="contact.id"
-                :empty-state-message="
-                  $t('CONVERSATION_CUSTOM_ATTRIBUTES.NO_RECORDS_FOUND')
-                "
+                :empty-state-message="$t('CONVERSATION_CUSTOM_ATTRIBUTES.NO_RECORDS_FOUND')"
               />
             </AccordionItem>
           </div>
           <div v-else-if="element.name === 'previous_conversation'">
             <AccordionItem
               v-if="contact.id"
-              :title="
-                $t('CONVERSATION_SIDEBAR.ACCORDION.PREVIOUS_CONVERSATION')
-              "
+              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.PREVIOUS_CONVERSATION')"
               :is-open="isContactSidebarItemOpen('is_previous_conv_open')"
               compact
-              @toggle="
-                value => toggleSidebarUIState('is_previous_conv_open', value)
-              "
+              @toggle="value => toggleSidebarUIState('is_previous_conv_open', value)"
             >
               <ContactConversations
                 :contact-id="contact.id"
@@ -275,14 +256,66 @@ onMounted(() => {
             </AccordionItem>
           </woot-feature-toggle>
           <div
-            v-else-if="
-              element.name === 'linear_issues' &&
-              isLinearFeatureEnabled &&
-              isLinearClientIdConfigured
-            "
+            v-else-if="element.name === 'linear_issues' && isLinearFeatureEnabled && isLinearClientIdConfigured"
           >
             <AccordionItem
               :title="$t('CONVERSATION_SIDEBAR.ACCORDION.LINEAR_ISSUES')"
               :is-open="isContactSidebarItemOpen('is_linear_issues_open')"
               compact
-              @toggle="
+              @toggle="value => toggleSidebarUIState('is_linear_issues_open', value)"
+            >
+              <LinearSetupCTA v-if="!isLinearConnected" />
+              <LinearIssuesList v-else :conversation-id="conversationId" />
+            </AccordionItem>
+          </div>
+          <div
+            v-else-if="element.name === 'shopify_orders' && isShopifyFeatureEnabled"
+          >
+            <AccordionItem
+              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.SHOPIFY_ORDERS')"
+              :is-open="isContactSidebarItemOpen('is_shopify_orders_open')"
+              compact
+              @toggle="value => toggleSidebarUIState('is_shopify_orders_open', value)"
+            >
+              <ShopifyOrdersList :contact-id="contactId" />
+            </AccordionItem>
+          </div>
+          <div v-else-if="element.name === 'contact_notes'">
+            <AccordionItem
+              :title="$t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_NOTES')"
+              :is-open="isContactSidebarItemOpen('is_contact_notes_open')"
+              compact
+              @toggle="value => toggleSidebarUIState('is_contact_notes_open', value)"
+            >
+              <ContactNotes :contact-id="contactId" />
+            </AccordionItem>
+          </div>
+        </template>
+      </Draggable>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.kanban-section {
+  margin-bottom: 12px;
+}
+
+::v-deep {
+  .contact--profile {
+    @apply pb-3 border-b border-solid border-n-weak;
+  }
+
+  .conversation--actions .multiselect-wrap--small {
+    .multiselect {
+      @apply box-border pl-6;
+    }
+
+    .multiselect__element {
+      span {
+        @apply w-full;
+      }
+    }
+  }
+}
+</style>
