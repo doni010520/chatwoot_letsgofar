@@ -62,6 +62,31 @@ class KanbanAPI extends ApiClient {
   updateCrmFields(accountId, conversationId, fields) {
     return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/update_crm_fields`, fields);
   }
+
+  // Reports
+  getReportSummary(accountId, pipelineId, startDate, endDate) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/reports/summary`, {
+      params: { start_date: startDate, end_date: endDate }
+    });
+  }
+
+  getWonLostByPeriod(accountId, pipelineId, startDate, endDate) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/reports/won_lost_by_period`, {
+      params: { start_date: startDate, end_date: endDate }
+    });
+  }
+
+  getLossReasons(accountId, pipelineId, startDate, endDate) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/reports/loss_reasons`, {
+      params: { start_date: startDate, end_date: endDate }
+    });
+  }
+
+  getTopPerformers(accountId, pipelineId, startDate, endDate) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/reports/top_performers`, {
+      params: { start_date: startDate, end_date: endDate }
+    });
+  }
 }
 
 export default new KanbanAPI();
