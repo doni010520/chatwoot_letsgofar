@@ -152,6 +152,7 @@ Rails.application.routes.draw do
               post :unread
               post :custom_attributes
               patch :update_kanban_stage
+              patch :update_crm_fields
               get :attachments
               get :inbox_assistant
               get :reporting_events if ChatwootApp.enterprise?
