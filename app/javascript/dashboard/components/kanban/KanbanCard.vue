@@ -1,63 +1,46 @@
 <template>
-  <div
-    class="kanban-card"
-    :class="{ 'kanban-card--conversation': itemType === 'conversation' }"
-  >
+  <div class="kanban-card" @click="$emit('click')">
+    <!-- Header com foto e info do contato -->
     <div class="kanban-card__header">
       <div class="kanban-card__avatar">
-        {{ getInitials(contactName) }}
+        <img
+          v-if="contactThumbnail"
+          :src="contactThumbnail"
+          :alt="contactName"
+          class="kanban-card__avatar-img"
+        />
+        <span v-else class="kanban-card__avatar-initials">
+          {{ getInitials(contactName) }}
+        </span>
       </div>
-      <div class="kanban-card__contact">
+      <div class="kanban-card__info">
         <span class="kanban-card__name">{{ contactName }}</span>
         <span class="kanban-card__phone">{{ contactPhone }}</span>
       </div>
     </div>
 
-    <div
-      v-if="item.value > 0"
-      class="kanban-card__value"
-    >
-      {{ formatCurrency(item.value) }}
+    <!-- ID da conversa -->
+    <div v-if="itemType === 'conversation'" class="kanban-card__id">
+      #{{ item.display_id }}
     </div>
 
-    <div
-      v-if="item.labels && item.labels.length > 0"
-      class="kanban-card__labels"
-    >
+    <!-- Status e tempo -->
+    <div class="kanban-card__footer">
       <span
-        v-for="label in item.labels.slice(0, 3)"
-        :key="label.id"
-        class="kanban-card__label"
-        :style="{ backgroundColor: label.color }"
+        class="kanban-card__status"
+        :class="`kanban-card__status--${item.status}`"
       >
-        {{ label.title }}
+        {{ statusLabel }}
+      </span>
+      <span v-if="timeAgo" class="kanban-card__time">
+        {{ timeAgo }}
       </span>
     </div>
 
-    <div class="kanban-card__footer">
-      <div
-        v-if="itemType === 'conversation'"
-        class="kanban-card__meta"
-      >
-        <span
-          class="kanban-card__status"
-          :class="`kanban-card__status--${item.status}`"
-        >
-          {{ statusLabel }}
-        </span>
-        <span
-          v-if="item.inbox"
-          class="kanban-card__inbox"
-        >
-          {{ item.inbox.name }}
-        </span>
-      </div>
-      <div
-        v-if="item.assignee"
-        class="kanban-card__assignee"
-      >
-        {{ getInitials(item.assignee.name) }}
-      </div>
+    <!-- Assignee -->
+    <div v-if="item.assignee" class="kanban-card__assignee">
+      <span class="kanban-card__assignee-label">Atribuído:</span>
+      <span class="kanban-card__assignee-name">{{ item.assignee.name }}</span>
     </div>
   </div>
 </template>
@@ -75,6 +58,7 @@ export default {
       default: 'conversation',
     },
   },
+  emits: ['click'],
   computed: {
     contactName() {
       if (this.itemType === 'conversation') {
@@ -88,6 +72,12 @@ export default {
       }
       return this.item.phone_number || this.item.email || '';
     },
+    contactThumbnail() {
+      if (this.itemType === 'conversation') {
+        return this.item.contact?.thumbnail || this.item.contact?.avatar_url || null;
+      }
+      return this.item.thumbnail || this.item.avatar_url || null;
+    },
     statusLabel() {
       const statuses = {
         open: 'Aberto',
@@ -97,14 +87,25 @@ export default {
       };
       return statuses[this.item.status] || this.item.status;
     },
+    timeAgo() {
+      const date = this.item.last_activity_at;
+      if (!date) return null;
+      
+      const now = new Date();
+      const past = new Date(date);
+      const diffMs = now - past;
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMins / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffMins < 1) return 'Agora';
+      if (diffMins < 60) return `${diffMins}min`;
+      if (diffHours < 24) return `${diffHours}h`;
+      if (diffDays < 7) return `${diffDays}d`;
+      return past.toLocaleDateString('pt-BR');
+    },
   },
   methods: {
-    formatCurrency(value) {
-      return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-      }).format(value);
-    },
     getInitials(name) {
       if (!name) return '?';
       return name
@@ -118,146 +119,140 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 .kanban-card {
-  background-color: var(--white);
-  border-radius: var(--border-radius-normal);
-  padding: var(--space-small);
-  box-shadow: var(--shadow-small);
-  border: 1px solid var(--color-border-light);
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
   cursor: pointer;
   transition: all 0.2s ease;
+}
 
-  &:hover {
-    box-shadow: var(--shadow-medium);
-    border-color: var(--w-500);
-  }
+.kanban-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-small);
-    margin-bottom: var(--space-small);
-  }
+.kanban-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
 
-  &__avatar {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--w-500);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--font-size-micro);
-    font-weight: var(--font-weight-medium);
-    flex-shrink: 0;
-  }
+.kanban-card__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+  background-color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  &__contact {
-    flex: 1;
-    min-width: 0;
-  }
+.kanban-card__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 
-  &__name {
-    display: block;
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-medium);
-    color: var(--color-body);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.kanban-card__avatar-initials {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
 
-  &__phone {
-    display: block;
-    font-size: var(--font-size-mini);
-    color: var(--s-600);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+.kanban-card__info {
+  flex: 1;
+  min-width: 0;
+}
 
-  &__value {
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-bold);
-    color: var(--g-500);
-    margin-bottom: var(--space-small);
-  }
+.kanban-card__name {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
-  &__labels {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-micro);
-    margin-bottom: var(--space-small);
-  }
+.kanban-card__phone {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
 
-  &__label {
-    font-size: var(--font-size-micro);
-    color: var(--white);
-    padding: var(--space-micro) var(--space-small);
-    border-radius: var(--border-radius-small);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100px;
-  }
+.kanban-card__id {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
 
-  &__footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+.kanban-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
 
-  &__meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-small);
-  }
+.kanban-card__status {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
 
-  &__status {
-    font-size: var(--font-size-micro);
-    padding: var(--space-micro) var(--space-small);
-    border-radius: var(--border-radius-small);
+.kanban-card__status--open {
+  background-color: #d1fae5;
+  color: #065f46;
+}
 
-    &--open {
-      background-color: var(--g-100);
-      color: var(--g-700);
-    }
+.kanban-card__status--pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
 
-    &--pending {
-      background-color: var(--y-100);
-      color: var(--y-700);
-    }
+.kanban-card__status--resolved {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
 
-    &--resolved {
-      background-color: var(--s-100);
-      color: var(--s-600);
-    }
+.kanban-card__status--snoozed {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
 
-    &--snoozed {
-      background-color: var(--w-100);
-      color: var(--w-700);
-    }
-  }
+.kanban-card__time {
+  font-size: 11px;
+  color: #9ca3af;
+}
 
-  &__inbox {
-    font-size: var(--font-size-micro);
-    color: var(--s-600);
-  }
+.kanban-card__assignee {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6b7280;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+}
 
-  &__assignee {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: var(--s-500);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: var(--font-weight-medium);
-    flex-shrink: 0;
-  }
+.kanban-card__assignee-label {
+  color: #9ca3af;
+}
+
+.kanban-card__assignee-name {
+  color: #4b5563;
+  font-weight: 500;
 }
 </style>
