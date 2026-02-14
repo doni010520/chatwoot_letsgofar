@@ -1,147 +1,169 @@
 <template>
-  <div class="modal-overlay" @click.self="onClose">
-    <div class="kanban-settings">
-      <div class="kanban-settings__header">
-        <h2>Configurações do Kanban</h2>
-        <button class="kanban-settings__close" @click="onClose">✕</button>
+  <div class="modal-backdrop" @click.self="onClose">
+    <div class="modal-container">
+      <!-- Header -->
+      <div class="modal-header">
+        <div>
+          <h2>Configurações do Kanban</h2>
+          <p>Gerencie seus pipelines e estágios</p>
+        </div>
+        <button class="close-btn" @click="onClose">✕</button>
       </div>
 
-      <div class="kanban-settings__content">
-        <!-- Criar novo pipeline -->
-        <div class="kanban-settings__section">
-          <div class="kanban-settings__section-header">
+      <!-- Content -->
+      <div class="modal-content">
+        <!-- Pipelines Section -->
+        <div class="section">
+          <div class="section-header">
             <h3>Pipelines</h3>
-            <button class="btn btn--primary btn--small" @click="showAddPipeline = true">
+            <button class="btn btn-primary btn-sm" @click="openAddPipeline">
               + Novo Pipeline
             </button>
           </div>
-          
-          <div class="kanban-settings__pipelines">
+
+          <div v-if="pipelines.length === 0" class="empty-state">
+            <p>Nenhum pipeline criado ainda.</p>
+          </div>
+
+          <div v-else class="pipeline-list">
             <div
               v-for="p in pipelines"
               :key="p.id"
-              class="kanban-settings__pipeline"
-              :class="{ 'kanban-settings__pipeline--active': p.id === pipeline?.id }"
+              class="pipeline-item"
+              :class="{ 'pipeline-item--active': p.id === pipeline?.id }"
             >
-              <span class="kanban-settings__pipeline-name">{{ p.name }}</span>
-              <span class="kanban-settings__pipeline-type">{{ getPipelineTypeLabel(p.pipeline_type) }}</span>
-              <button class="btn btn--icon" @click="editPipeline(p)">✏️</button>
-              <button class="btn btn--icon btn--danger" @click="confirmDeletePipeline(p)">🗑️</button>
+              <div class="pipeline-info">
+                <span class="pipeline-name">{{ p.name }}</span>
+                <span class="pipeline-type">{{ getPipelineTypeLabel(p.pipeline_type) }}</span>
+              </div>
+              <div class="pipeline-actions">
+                <button class="btn-icon" @click="editPipeline(p)" title="Editar">✏️</button>
+                <button class="btn-icon btn-icon--danger" @click="confirmDeletePipeline(p)" title="Excluir">🗑️</button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Estágios do Pipeline selecionado -->
-        <div v-if="pipeline" class="kanban-settings__section">
-          <div class="kanban-settings__section-header">
+        <!-- Stages Section -->
+        <div v-if="pipeline" class="section">
+          <div class="section-header">
             <h3>Estágios de "{{ pipeline.name }}"</h3>
-            <button class="btn btn--primary btn--small" @click="openAddStage">
+            <button class="btn btn-primary btn-sm" @click="openAddStage">
               + Novo Estágio
             </button>
           </div>
 
-          <div v-if="stages.length === 0" class="kanban-settings__empty">
-            Nenhum estágio criado ainda.
+          <div v-if="stages.length === 0" class="empty-state">
+            <p>Nenhum estágio criado ainda.</p>
           </div>
 
-          <div v-else class="kanban-settings__stages">
-            <div
-              v-for="stage in stages"
-              :key="stage.id"
-              class="kanban-settings__stage"
-            >
-              <span
-                class="kanban-settings__stage-color"
-                :style="{ backgroundColor: stage.color }"
-              ></span>
-              <span class="kanban-settings__stage-name">{{ stage.name }}</span>
-              <span class="kanban-settings__stage-position">#{{ stage.position }}</span>
-              <button class="btn btn--icon" @click="editStage(stage)">✏️</button>
-              <button class="btn btn--icon btn--danger" @click="confirmDeleteStage(stage)">🗑️</button>
+          <div v-else class="stage-list">
+            <div v-for="stage in stages" :key="stage.id" class="stage-item">
+              <div class="stage-color" :style="{ backgroundColor: stage.color }"></div>
+              <div class="stage-info">
+                <span class="stage-name">{{ stage.name }}</span>
+                <span class="stage-position">Posição {{ stage.position }}</span>
+              </div>
+              <div class="stage-actions">
+                <button class="btn-icon" @click="editStage(stage)" title="Editar">✏️</button>
+                <button class="btn-icon btn-icon--danger" @click="confirmDeleteStage(stage)" title="Excluir">🗑️</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="kanban-settings__footer">
-        <button class="btn" @click="onClose">Fechar</button>
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" @click="onClose">Fechar</button>
       </div>
     </div>
 
-    <!-- Modal: Criar/Editar Pipeline -->
-    <div v-if="showAddPipeline || editingPipeline" class="modal-overlay" @click.self="closePipelineModal">
-      <div class="stage-form">
-        <div class="stage-form__header">
+    <!-- Pipeline Form Modal -->
+    <div v-if="showPipelineForm" class="modal-backdrop" @click.self="closePipelineForm">
+      <div class="form-modal">
+        <div class="form-header">
           <h3>{{ editingPipeline ? 'Editar Pipeline' : 'Novo Pipeline' }}</h3>
-          <button class="kanban-settings__close" @click="closePipelineModal">✕</button>
+          <button class="close-btn" @click="closePipelineForm">✕</button>
         </div>
         <form @submit.prevent="savePipeline">
           <div class="form-group">
-            <label>Nome</label>
+            <label for="pipeline-name">Nome</label>
             <input
+              id="pipeline-name"
               v-model="pipelineForm.name"
               type="text"
-              placeholder="Nome do pipeline"
+              placeholder="Ex: Vendas Solar"
               required
             />
           </div>
           <div class="form-group">
-            <label>Tipo</label>
-            <select v-model="pipelineForm.pipeline_type">
+            <label for="pipeline-type">Tipo</label>
+            <select id="pipeline-type" v-model="pipelineForm.pipeline_type">
               <option value="conversations">Conversas</option>
               <option value="contacts">Contatos</option>
             </select>
+            <span class="form-hint">
+              Conversas: organiza chats pelo funil. Contatos: organiza contatos.
+            </span>
           </div>
-          <div class="stage-form__actions">
-            <button type="submit" class="btn btn--primary" :disabled="isSaving">
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="closePipelineForm">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" :disabled="isSaving">
               {{ isSaving ? 'Salvando...' : 'Salvar' }}
             </button>
-            <button type="button" class="btn" @click="closePipelineModal">Cancelar</button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Modal: Criar/Editar Stage -->
-    <div v-if="showAddStage || editingStage" class="modal-overlay" @click.self="closeStageModal">
-      <div class="stage-form">
-        <div class="stage-form__header">
+    <!-- Stage Form Modal -->
+    <div v-if="showStageForm" class="modal-backdrop" @click.self="closeStageForm">
+      <div class="form-modal">
+        <div class="form-header">
           <h3>{{ editingStage ? 'Editar Estágio' : 'Novo Estágio' }}</h3>
-          <button class="kanban-settings__close" @click="closeStageModal">✕</button>
+          <button class="close-btn" @click="closeStageForm">✕</button>
         </div>
         <form @submit.prevent="saveStage">
           <div class="form-group">
-            <label>Nome</label>
+            <label for="stage-name">Nome</label>
             <input
+              id="stage-name"
               v-model="stageForm.name"
               type="text"
-              placeholder="Nome do estágio"
+              placeholder="Ex: Novo Lead"
               required
             />
           </div>
           <div class="form-group">
-            <label>Cor</label>
-            <div class="color-picker">
+            <label for="stage-color">Cor</label>
+            <div class="color-input">
               <input
+                id="stage-color"
                 v-model="stageForm.color"
                 type="color"
               />
-              <span>{{ stageForm.color }}</span>
+              <span class="color-value">{{ stageForm.color }}</span>
             </div>
           </div>
           <div class="form-group">
-            <label>Posição</label>
+            <label for="stage-position">Posição</label>
             <input
+              id="stage-position"
               v-model.number="stageForm.position"
               type="number"
               min="0"
             />
           </div>
-          <div class="stage-form__actions">
-            <button type="submit" class="btn btn--primary" :disabled="isSaving">
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" @click="closeStageForm">
+              Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary" :disabled="isSaving">
               {{ isSaving ? 'Salvando...' : 'Salvar' }}
             </button>
-            <button type="button" class="btn" @click="closeStageModal">Cancelar</button>
           </div>
         </form>
       </div>
@@ -167,9 +189,9 @@ export default {
   emits: ['close', 'saved'],
   data() {
     return {
-      showAddPipeline: false,
+      showPipelineForm: false,
+      showStageForm: false,
       editingPipeline: null,
-      showAddStage: false,
       editingStage: null,
       isSaving: false,
       pipelineForm: {
@@ -204,44 +226,42 @@ export default {
     },
 
     // Pipeline methods
+    openAddPipeline() {
+      this.editingPipeline = null;
+      this.pipelineForm = { name: '', pipeline_type: 'conversations' };
+      this.showPipelineForm = true;
+    },
     editPipeline(p) {
       this.editingPipeline = p;
       this.pipelineForm = {
         name: p.name,
         pipeline_type: p.pipeline_type,
       };
+      this.showPipelineForm = true;
     },
-    closePipelineModal() {
-      this.showAddPipeline = false;
+    closePipelineForm() {
+      this.showPipelineForm = false;
       this.editingPipeline = null;
-      this.pipelineForm = {
-        name: '',
-        pipeline_type: 'conversations',
-      };
     },
     async savePipeline() {
       this.isSaving = true;
       try {
         if (this.editingPipeline) {
-          await KanbanAPI.updatePipeline(
-            this.accountId,
-            this.editingPipeline.id,
-            this.pipelineForm
-          );
+          await KanbanAPI.updatePipeline(this.accountId, this.editingPipeline.id, this.pipelineForm);
         } else {
           await KanbanAPI.createPipeline(this.accountId, this.pipelineForm);
         }
-        this.closePipelineModal();
+        this.closePipelineForm();
         this.$emit('saved');
       } catch (error) {
         console.error('Error saving pipeline:', error);
-        alert('Erro ao salvar pipeline');
+        alert('Erro ao salvar pipeline: ' + (error.response?.data?.errors?.join(', ') || error.message));
       } finally {
         this.isSaving = false;
       }
     },
     async confirmDeletePipeline(p) {
-      if (confirm(`Tem certeza que deseja excluir o pipeline "${p.name}"?`)) {
+      if (confirm(`Excluir o pipeline "${p.name}"? Esta ação não pode ser desfeita.`)) {
         try {
           await KanbanAPI.deletePipeline(this.accountId, p.id);
           this.$emit('saved');
@@ -254,8 +274,9 @@ export default {
 
     // Stage methods
     openAddStage() {
-      this.stageForm.position = this.stages.length;
-      this.showAddStage = true;
+      this.editingStage = null;
+      this.stageForm = { name: '', color: '#6366F1', position: this.stages.length };
+      this.showStageForm = true;
     },
     editStage(stage) {
       this.editingStage = stage;
@@ -264,44 +285,31 @@ export default {
         color: stage.color,
         position: stage.position,
       };
+      this.showStageForm = true;
     },
-    closeStageModal() {
-      this.showAddStage = false;
+    closeStageForm() {
+      this.showStageForm = false;
       this.editingStage = null;
-      this.stageForm = {
-        name: '',
-        color: '#6366F1',
-        position: 0,
-      };
     },
     async saveStage() {
       this.isSaving = true;
       try {
         if (this.editingStage) {
-          await KanbanAPI.updateStage(
-            this.accountId,
-            this.pipeline.id,
-            this.editingStage.id,
-            this.stageForm
-          );
+          await KanbanAPI.updateStage(this.accountId, this.pipeline.id, this.editingStage.id, this.stageForm);
         } else {
-          await KanbanAPI.createStage(
-            this.accountId,
-            this.pipeline.id,
-            this.stageForm
-          );
+          await KanbanAPI.createStage(this.accountId, this.pipeline.id, this.stageForm);
         }
-        this.closeStageModal();
+        this.closeStageForm();
         this.$emit('saved');
       } catch (error) {
         console.error('Error saving stage:', error);
-        alert('Erro ao salvar estágio');
+        alert('Erro ao salvar estágio: ' + (error.response?.data?.errors?.join(', ') || error.message));
       } finally {
         this.isSaving = false;
       }
     },
     async confirmDeleteStage(stage) {
-      if (confirm(`Tem certeza que deseja excluir o estágio "${stage.name}"?`)) {
+      if (confirm(`Excluir o estágio "${stage.name}"? Esta ação não pode ser desfeita.`)) {
         try {
           await KanbanAPI.deleteStage(this.accountId, this.pipeline.id, stage.id);
           this.$emit('saved');
@@ -316,263 +324,340 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.modal-overlay {
+.modal-backdrop {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 
-.kanban-settings {
+.modal-container {
   background-color: var(--white);
-  border-radius: var(--border-radius-large);
+  border-radius: 12px;
   width: 600px;
   max-width: 90vw;
   max-height: 80vh;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--space-normal);
-    border-bottom: 1px solid var(--s-100);
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid var(--s-100);
 
-    h2 {
-      margin: 0;
-      font-size: var(--font-size-large);
-      color: var(--s-800);
-    }
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--s-900);
+    margin: 0;
   }
 
-  &__close {
-    background: none;
-    border: none;
-    font-size: var(--font-size-large);
-    cursor: pointer;
+  p {
+    font-size: 13px;
     color: var(--s-500);
-    padding: var(--space-small);
-
-    &:hover {
-      color: var(--s-800);
-    }
-  }
-
-  &__content {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--space-normal);
-  }
-
-  &__section {
-    margin-bottom: var(--space-large);
-
-    h3 {
-      margin: 0;
-      font-size: var(--font-size-default);
-      color: var(--s-800);
-    }
-  }
-
-  &__section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-small);
-  }
-
-  &__pipelines,
-  &__stages {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-small);
-  }
-
-  &__pipeline,
-  &__stage {
-    display: flex;
-    align-items: center;
-    gap: var(--space-small);
-    padding: var(--space-small);
-    background-color: var(--s-50);
-    border-radius: var(--border-radius-normal);
-  }
-
-  &__pipeline--active {
-    background-color: var(--w-50);
-    border: 1px solid var(--w-200);
-  }
-
-  &__pipeline-name,
-  &__stage-name {
-    flex: 1;
-    font-weight: var(--font-weight-medium);
-    color: var(--s-800);
-  }
-
-  &__pipeline-type {
-    font-size: var(--font-size-small);
-    color: var(--s-500);
-  }
-
-  &__stage-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  &__stage-position {
-    font-size: var(--font-size-small);
-    color: var(--s-500);
-  }
-
-  &__empty {
-    padding: var(--space-normal);
-    text-align: center;
-    color: var(--s-500);
-  }
-
-  &__footer {
-    display: flex;
-    justify-content: flex-end;
-    padding: var(--space-normal);
-    border-top: 1px solid var(--s-100);
+    margin: 4px 0 0 0;
   }
 }
 
-.stage-form {
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--s-400);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--s-100);
+    color: var(--s-600);
+  }
+}
+
+.modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid var(--s-100);
+}
+
+.section {
+  margin-bottom: 32px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--s-800);
+    margin: 0;
+  }
+}
+
+.empty-state {
+  padding: 24px;
+  text-align: center;
+  background-color: var(--s-50);
+  border-radius: 8px;
+
+  p {
+    color: var(--s-500);
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.pipeline-list,
+.stage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pipeline-item,
+.stage-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: var(--s-50);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+
+  &:hover {
+    background-color: var(--s-75);
+  }
+}
+
+.pipeline-item--active {
+  background-color: var(--w-50);
+  border-color: var(--w-200);
+}
+
+.pipeline-info,
+.stage-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pipeline-name,
+.stage-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--s-800);
+}
+
+.pipeline-type,
+.stage-position {
+  display: block;
+  font-size: 12px;
+  color: var(--s-500);
+  margin-top: 2px;
+}
+
+.pipeline-actions,
+.stage-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.stage-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background-color: var(--w-500);
+  color: var(--white);
+  border-color: var(--w-500);
+
+  &:hover:not(:disabled) {
+    background-color: var(--w-600);
+  }
+}
+
+.btn-secondary {
   background-color: var(--white);
-  border-radius: var(--border-radius-large);
-  width: 400px;
+  color: var(--s-700);
+  border-color: var(--s-200);
+
+  &:hover:not(:disabled) {
+    background-color: var(--s-50);
+  }
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btn-icon {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--s-200);
+  }
+
+  &--danger:hover {
+    background-color: var(--r-100);
+  }
+}
+
+/* Form Modal */
+.form-modal {
+  background-color: var(--white);
+  border-radius: 12px;
+  width: 420px;
   max-width: 90vw;
-  padding: var(--space-normal);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
 
-  &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: var(--space-normal);
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--s-100);
 
-    h3 {
-      margin: 0;
-      font-size: var(--font-size-medium);
-      color: var(--s-800);
-    }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--s-900);
+    margin: 0;
   }
+}
 
-  &__actions {
-    display: flex;
-    gap: var(--space-small);
-    justify-content: flex-end;
-    margin-top: var(--space-normal);
-  }
+form {
+  padding: 24px;
 }
 
 .form-group {
-  margin-bottom: var(--space-normal);
+  margin-bottom: 20px;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
 
   label {
     display: block;
-    margin-bottom: var(--space-micro);
-    font-size: var(--font-size-small);
-    font-weight: var(--font-weight-medium);
+    font-size: 13px;
+    font-weight: 500;
     color: var(--s-700);
+    margin-bottom: 8px;
   }
 
-  input,
+  input[type="text"],
+  input[type="number"],
   select {
     width: 100%;
-    padding: var(--space-small);
+    padding: 10px 12px;
     border: 1px solid var(--s-200);
-    border-radius: var(--border-radius-normal);
-    font-size: var(--font-size-default);
+    border-radius: 6px;
+    font-size: 14px;
     color: var(--s-800);
+    background-color: var(--white);
+    transition: border-color 0.2s;
 
     &:focus {
       outline: none;
       border-color: var(--w-500);
     }
+
+    &::placeholder {
+      color: var(--s-400);
+    }
   }
 }
 
-.color-picker {
+.form-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--s-500);
+  margin-top: 6px;
+}
+
+.color-input {
   display: flex;
   align-items: center;
-  gap: var(--space-small);
+  gap: 12px;
 
   input[type="color"] {
-    width: 40px;
-    height: 40px;
-    padding: 0;
+    width: 48px;
+    height: 48px;
+    padding: 4px;
     border: 1px solid var(--s-200);
-    border-radius: var(--border-radius-normal);
+    border-radius: 6px;
     cursor: pointer;
+    background: none;
   }
 
-  span {
-    font-size: var(--font-size-small);
+  .color-value {
+    font-size: 14px;
     color: var(--s-600);
+    font-family: monospace;
   }
 }
 
-.btn {
-  padding: var(--space-small) var(--space-normal);
-  border-radius: var(--border-radius-normal);
-  border: 1px solid var(--s-200);
-  background-color: var(--white);
-  color: var(--s-800);
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background-color: var(--s-50);
-  }
-
-  &--primary {
-    background-color: var(--w-500);
-    border-color: var(--w-500);
-    color: var(--white);
-
-    &:hover {
-      background-color: var(--w-600);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-  }
-
-  &--small {
-    padding: var(--space-micro) var(--space-small);
-    font-size: var(--font-size-mini);
-  }
-
-  &--icon {
-    padding: var(--space-micro);
-    background: transparent;
-    border: none;
-
-    &:hover {
-      background-color: var(--s-100);
-    }
-  }
-
-  &--danger {
-    &:hover {
-      background-color: var(--r-50);
-    }
-  }
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--s-100);
 }
 </style>
