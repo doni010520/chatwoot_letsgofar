@@ -6,18 +6,14 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
   def show
     stages = @pipeline.kanban_stages.ordered
 
-    # Coluna "Não Atribuído" primeiro
-    board_data = [unassigned_column]
-
-    # Depois as colunas dos estágios
-    stages.each do |stage|
+    board_data = stages.map do |stage|
       items = if @pipeline.pipeline_type == 'contacts'
                 contacts_for_stage(stage)
               else
                 conversations_for_stage(stage)
               end
 
-      board_data << {
+      {
         stage: stage_json(stage),
         items: items,
         totals: { count: items.size, value: 0 }
@@ -55,50 +51,14 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     @pipeline = Current.account.kanban_pipelines.find(params[:pipeline_id])
   end
 
-  def unassigned_column
-    items = if @pipeline.pipeline_type == 'contacts'
-              unassigned_contacts
-            else
-              unassigned_conversations
-            end
-
-    {
-      stage: {
-        id: nil,
-        name: 'Não Atribuído',
-        color: '#6B7280',
-        position: -1
-      },
-      items: items,
-      totals: { count: items.size, value: 0 }
-    }
-  end
-
-  def unassigned_conversations
-    Current.account.conversations
-           .where(kanban_stage_id: nil)
-           .includes(:contact, :assignee)
-           .order(last_activity_at: :desc)
-           .limit(100)
-           .map { |conv| conversation_json(conv) }
-  end
-
-  def unassigned_contacts
-    Current.account.contacts
-           .where(kanban_stage_id: nil)
-           .order(updated_at: :desc)
-           .limit(100)
-           .map { |contact| contact_json(contact) }
-  end
-
   def conversations_for_stage(stage)
-    stage.conversations.includes(:contact, :assignee).limit(50).map do |conv|
+    stage.conversations.includes(:contact, :assignee).limit(100).map do |conv|
       conversation_json(conv)
     end
   end
 
   def contacts_for_stage(stage)
-    stage.contacts.limit(50).map do |contact|
+    stage.contacts.limit(100).map do |contact|
       contact_json(contact)
     end
   end
