@@ -73,7 +73,8 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
         id: conv.contact.id,
         name: conv.contact.name,
         email: conv.contact.email,
-        phone_number: conv.contact.phone_number
+        phone_number: conv.contact.phone_number,
+        thumbnail: conv.contact.avatar_url
       } : nil,
       assignee: conv.assignee ? {
         id: conv.assignee.id,
@@ -89,6 +90,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       name: contact.name,
       email: contact.email,
       phone_number: contact.phone_number,
+      thumbnail: contact.avatar_url,
       kanban_stage_id: contact.kanban_stage_id
     }
   end
