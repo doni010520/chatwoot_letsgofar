@@ -141,6 +141,19 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
     render json: { success: true, kanban_stage_id: @conversation.kanban_stage_id }
   end
 
+  def update_crm_fields
+    permitted = params.permit(:deal_value, :closed_at, :closed_won, :closed_reason, :kanban_stage_id)
+    @conversation.update!(permitted)
+    render json: {
+      success: true,
+      deal_value: @conversation.deal_value,
+      closed_at: @conversation.closed_at,
+      closed_won: @conversation.closed_won,
+      closed_reason: @conversation.closed_reason,
+      kanban_stage_id: @conversation.kanban_stage_id
+    }
+  end
+
   def destroy
     authorize @conversation, :destroy?
     ::DeleteObjectJob.perform_later(@conversation, Current.user, request.ip)
