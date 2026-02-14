@@ -6,18 +6,17 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::Kanban::B
 
   def index
     @stages = @pipeline.kanban_stages.ordered
-    render json: @stages, each_serializer: KanbanStageSerializer
+    render json: stages_json(@stages)
   end
 
   def show
-    render json: @stage, serializer: KanbanStageSerializer
+    render json: stage_json(@stage)
   end
 
   def create
     @stage = @pipeline.kanban_stages.new(stage_params)
-
     if @stage.save
-      render json: @stage, serializer: KanbanStageSerializer, status: :created
+      render json: stage_json(@stage), status: :created
     else
       render json: { errors: @stage.errors.full_messages }, status: :unprocessable_entity
     end
@@ -25,7 +24,7 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::Kanban::B
 
   def update
     if @stage.update(stage_params)
-      render json: @stage, serializer: KanbanStageSerializer
+      render json: stage_json(@stage)
     else
       render json: { errors: @stage.errors.full_messages }, status: :unprocessable_entity
     end
@@ -39,8 +38,7 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::Kanban::B
   def reorder
     new_position = params[:position].to_i
     @stage.reorder_to(new_position)
-
-    render json: @pipeline.kanban_stages.ordered, each_serializer: KanbanStageSerializer
+    render json: stages_json(@pipeline.kanban_stages.ordered)
   end
 
   private
@@ -55,5 +53,21 @@ class Api::V1::Accounts::Kanban::StagesController < Api::V1::Accounts::Kanban::B
 
   def stage_params
     params.require(:stage).permit(:name, :position, :color)
+  end
+
+  def stages_json(stages)
+    stages.map { |s| stage_json(s) }
+  end
+
+  def stage_json(stage)
+    {
+      id: stage.id,
+      name: stage.name,
+      color: stage.color,
+      position: stage.position,
+      pipeline_id: stage.kanban_pipeline_id,
+      created_at: stage.created_at,
+      updated_at: stage.updated_at
+    }
   end
 end
