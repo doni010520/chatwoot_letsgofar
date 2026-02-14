@@ -53,11 +53,14 @@ class KanbanAPI extends ApiClient {
     return window.axios.patch(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/board/move`, data);
   }
 
-  // Novo método para atualizar estágio de uma conversa diretamente
   updateConversationStage(accountId, conversationId, stageId) {
     return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/update_kanban_stage`, {
       kanban_stage_id: stageId
     });
+  }
+
+  updateCrmFields(accountId, conversationId, fields) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/update_crm_fields`, fields);
   }
 }
 
