@@ -56,6 +56,7 @@ class Contact < ApplicationRecord
             format: { with: /\+[1-9]\d{1,14}\z/, message: I18n.t('errors.contacts.phone_number.invalid') }
 
   belongs_to :account
+  belongs_to :kanban_stage, optional: true  # KANBAN
   has_many :conversations, dependent: :destroy_async
   has_many :contact_inboxes, dependent: :destroy_async
   has_many :csat_survey_responses, dependent: :destroy_async
@@ -70,6 +71,8 @@ class Contact < ApplicationRecord
 
   enum contact_type: { visitor: 0, lead: 1, customer: 2 }
 
+  scope :in_kanban, -> { where.not(kanban_stage_id: nil) }  # KANBAN
+  scope :not_in_kanban, -> { where(kanban_stage_id: nil) }  # KANBAN
   scope :order_on_last_activity_at, lambda { |direction|
     order(
       Arel::Nodes::SqlLiteral.new(

@@ -115,6 +115,7 @@ class Account < ApplicationRecord
   has_many :tiktok_channels, dependent: :destroy_async, class_name: '::Channel::Tiktok'
   has_many :hooks, dependent: :destroy_async, class_name: 'Integrations::Hook'
   has_many :inboxes, dependent: :destroy_async
+  has_many :kanban_pipelines, dependent: :destroy  # KANBAN
   has_many :labels, dependent: :destroy_async
   has_many :line_channels, dependent: :destroy_async, class_name: '::Channel::Line'
   has_many :mentions, dependent: :destroy_async
@@ -161,6 +162,11 @@ class Account < ApplicationRecord
                                     taggable_type: 'Conversation',
                                     taggable_id: conversation_ids)
                              .map { |tagging| tagging.tag.name }
+  end
+
+  # KANBAN
+  def default_kanban_pipeline
+    kanban_pipelines.find_by(is_default: true) || kanban_pipelines.first
   end
 
   def webhook_data

@@ -353,11 +353,26 @@ Rails.application.routes.draw do
           end
 
           resources :upload, only: [:create]
+
+          # Kanban
+          namespace :kanban do
+            resources :pipelines do
+              resources :stages do
+                member do
+                  patch :reorder
+                end
+              end
+
+              resource :board, only: [:show], controller: 'board' do
+                patch :move
+              end
+            end
+          end
         end
       end
       # end of account scoped api routes
       # ----------------------------------
-
+      
       namespace :integrations do
         resources :webhooks, only: [:create]
       end
