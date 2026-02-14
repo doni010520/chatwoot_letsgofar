@@ -20,14 +20,12 @@
             {{ pipeline.name }}
           </option>
         </select>
-        <woot-button
-          icon="settings"
-          variant="smooth"
-          color-scheme="secondary"
+        <button
+          class="kanban-page__button"
           @click="openSettings"
         >
-          Configurações
-        </woot-button>
+          ⚙️ Configurações
+        </button>
       </div>
     </header>
 
@@ -37,6 +35,19 @@
     >
       <spinner />
       <span>Carregando...</span>
+    </div>
+
+    <div
+      v-else-if="!currentPipeline"
+      class="kanban-page__empty"
+    >
+      <p>Nenhum pipeline encontrado.</p>
+      <button
+        class="kanban-page__button kanban-page__button--primary"
+        @click="openSettings"
+      >
+        + Criar Pipeline
+      </button>
     </div>
 
     <KanbanBoard
@@ -50,6 +61,7 @@
     <KanbanSettingsModal
       v-if="showSettings"
       :pipeline="currentPipeline"
+      :pipelines="pipelines"
       @close="showSettings = false"
       @saved="onSettingsSaved"
     />
@@ -173,32 +185,92 @@ export default {
 
 <style lang="scss" scoped>
 .kanban-page {
-  @apply flex flex-col h-full bg-slate-25 dark:bg-slate-900;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--s-25);
 
   &__header {
-    @apply flex items-center justify-between p-4 bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-normal);
+    background-color: var(--white);
+    border-bottom: 1px solid var(--s-100);
   }
 
   &__title {
     h1 {
-      @apply text-xl font-bold text-slate-800 dark:text-slate-100;
+      font-size: var(--font-size-large);
+      font-weight: var(--font-weight-bold);
+      color: var(--s-800);
+      margin: 0;
     }
 
     p {
-      @apply text-sm text-slate-500 dark:text-slate-400;
+      font-size: var(--font-size-small);
+      color: var(--s-500);
+      margin: var(--space-micro) 0 0 0;
     }
   }
 
   &__actions {
-    @apply flex items-center gap-3;
+    display: flex;
+    align-items: center;
+    gap: var(--space-small);
   }
 
   &__select {
-    @apply px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100;
+    padding: var(--space-small) var(--space-normal);
+    border-radius: var(--border-radius-normal);
+    border: 1px solid var(--s-200);
+    background-color: var(--white);
+    color: var(--s-800);
+    cursor: pointer;
   }
 
-  &__loading {
-    @apply flex-1 flex flex-col items-center justify-center gap-4 text-slate-500 dark:text-slate-400;
+  &__button {
+    padding: var(--space-small) var(--space-normal);
+    border-radius: var(--border-radius-normal);
+    border: 1px solid var(--s-200);
+    background-color: var(--white);
+    color: var(--s-800);
+    font-size: var(--font-size-small);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--s-50);
+      border-color: var(--s-300);
+    }
+
+    &--primary {
+      background-color: var(--w-500);
+      border-color: var(--w-500);
+      color: var(--white);
+
+      &:hover {
+        background-color: var(--w-600);
+        border-color: var(--w-600);
+      }
+    }
+  }
+
+  &__loading,
+  &__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-normal);
+    color: var(--s-500);
+  }
+
+  &__empty p {
+    font-size: var(--font-size-default);
+    margin: 0;
   }
 }
 </style>
