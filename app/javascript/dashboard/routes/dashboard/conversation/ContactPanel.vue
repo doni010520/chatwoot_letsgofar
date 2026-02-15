@@ -23,11 +23,9 @@ import ShopifyOrdersList from 'dashboard/components/widgets/conversation/Shopify
 import SidebarActionsHeader from 'dashboard/components-next/SidebarActionsHeader.vue';
 import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/IssuesList.vue';
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
-import KanbanStageSelector from 'dashboard/components/widgets/conversation/KanbanStageSelector.vue';
-import KanbanCrmFields from 'dashboard/components/widgets/conversation/KanbanCrmFields.vue';
+import CrmSection from 'dashboard/components/widgets/conversation/CrmSection.vue';
 import KanbanTasks from 'dashboard/components/widgets/conversation/KanbanTasks.vue';
 import KanbanHistory from 'dashboard/components/widgets/conversation/KanbanHistory.vue';
-import KanbanCustomFields from 'dashboard/components/widgets/conversation/KanbanCustomFields.vue';
 
 const props = defineProps({
   conversationId: {
@@ -138,16 +136,16 @@ const closeContactPanel = () => {
   });
 };
 
-const onKanbanStageUpdated = (stageId) => {
+const onCrmUpdated = (data) => {
   if (currentChat.value) {
-    currentChat.value.kanban_stage_id = stageId;
+    if (data.stageId !== undefined) currentChat.value.kanban_stage_id = data.stageId;
+    if (data.deal_value !== undefined) currentChat.value.deal_value = data.deal_value;
+    if (data.closed_won !== undefined) currentChat.value.closed_won = data.closed_won;
+    if (data.closed_reason !== undefined) currentChat.value.closed_reason = data.closed_reason;
   }
-};
-const onCrmFieldsUpdated = (fields) => {
-  if (currentChat.value) {
-    if (fields.deal_value !== undefined) currentChat.value.deal_value = fields.deal_value;
-    if (fields.closed_won !== undefined) currentChat.value.closed_won = fields.closed_won;
-    if (fields.closed_reason !== undefined) currentChat.value.closed_reason = fields.closed_reason;
+  // Refresh history
+  if (historyRef.value) {
+    historyRef.value.refresh();
   }
 };
 
@@ -167,28 +165,26 @@ onMounted(() => {
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     <div class="px-2 pb-8 list-group">
-      <div class="kanban-section">
+      <!-- CRM Section (antigo Kanban + Campos do Lead unificados) -->
+      <div class="crm-sidebar-section">
         <AccordionItem
-          title="Kanban"
+          title="CRM"
           :is-open="isContactSidebarItemOpen('is_kanban_open')"
           @toggle="value => toggleSidebarUIState('is_kanban_open', value)"
         >
-          <KanbanStageSelector
+          <CrmSection
             :conversation-id="conversationId"
             :current-stage-id="currentKanbanStageId"
-            @updated="onKanbanStageUpdated"
-          />
-          <KanbanCrmFields
-            :conversation-id="conversationId"
             :initial-deal-value="currentDealValue"
             :initial-closed-won="currentClosedWon"
             :initial-closed-reason="currentClosedReason"
-            @updated="onCrmFieldsUpdated"
+            @updated="onCrmUpdated"
           />
         </AccordionItem>
       </div>
 
-      <div class="kanban-section">
+      <!-- Tarefas -->
+      <div class="crm-sidebar-section">
         <AccordionItem
           title="Tarefas"
           :is-open="isContactSidebarItemOpen('is_kanban_tasks_open')"
@@ -201,7 +197,8 @@ onMounted(() => {
         </AccordionItem>
       </div>
 
-      <div class="kanban-section">
+      <!-- Histórico -->
+      <div class="crm-sidebar-section">
         <AccordionItem
           title="Histórico"
           :is-open="isContactSidebarItemOpen('is_kanban_history_open')"
@@ -213,15 +210,8 @@ onMounted(() => {
           />
         </AccordionItem>
       </div>
-      <div class="kanban-section">
-        <AccordionItem
-          title="Campos do Lead"
-          :is-open="isContactSidebarItemOpen('is_kanban_custom_fields_open')"
-          @toggle="value => toggleSidebarUIState('is_kanban_custom_fields_open', value)"
-        >
-          <KanbanCustomFields :conversation-id="conversationId" />
-        </AccordionItem>
-      </div>
+
+      <!-- Removido: "Campos do Lead" - agora está integrado no CrmSection acima -->
 
       <Draggable
         :list="conversationSidebarItems"
@@ -361,7 +351,7 @@ onMounted(() => {
 </template>
 
 <style lang="scss" scoped>
-.kanban-section {
+.crm-sidebar-section {
   margin-bottom: 12px;
 }
 
