@@ -11,6 +11,8 @@
         :custom-fields-config="customFieldsConfig"
         @move="handleMove"
         @card-click="handleCardClick"
+        @mark-won="handleMarkWon"
+        @mark-lost="handleMarkLost"
       />
     </div>
   </div>
@@ -38,7 +40,7 @@ export default {
       default: () => [],
     },
   },
-  emits: ['move', 'card-click'],
+  emits: ['move', 'card-click', 'mark-won', 'mark-lost'],
   methods: {
     getColumnItems(column) {
       if (Array.isArray(column.items)) {
@@ -59,6 +61,12 @@ export default {
     handleCardClick(payload) {
       this.$emit('card-click', payload);
     },
+    handleMarkWon(payload) {
+      this.$emit('mark-won', payload);
+    },
+    handleMarkLost(payload) {
+      this.$emit('mark-lost', payload);
+    },
   },
 };
 </script>
@@ -66,6 +74,7 @@ export default {
 <style lang="scss" scoped>
 .kanban-board {
   @apply flex-1 overflow-hidden;
+
   &__columns {
     @apply flex h-full gap-4 overflow-x-auto p-4;
     scroll-behavior: smooth;
