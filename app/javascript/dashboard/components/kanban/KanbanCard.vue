@@ -61,12 +61,30 @@
       </span>
     </div>
 
-    <!-- Resultado (Ganho/Perdido) -->
-    <div v-if="item.closed_won !== null" class="kanban-card__result" :class="resultClass">
+    <!-- Resultado (Ganho/Perdido) - Se já foi marcado -->
+    <div v-if="item.closed_won !== null && item.closed_won !== undefined" class="kanban-card__result" :class="resultClass">
       {{ item.closed_won ? '✓ Ganho' : '✗ Perdido' }}
       <span v-if="!item.closed_won && item.closed_reason" class="kanban-card__reason">
         - {{ item.closed_reason }}
       </span>
+    </div>
+
+    <!-- Botões Ganho/Perdido - Se ainda não foi marcado -->
+    <div v-else class="kanban-card__actions">
+      <button 
+        class="kanban-card__action-btn kanban-card__action-btn--won"
+        title="Marcar como Ganho"
+        @click.stop="markAsWon"
+      >
+        ✓ Ganho
+      </button>
+      <button 
+        class="kanban-card__action-btn kanban-card__action-btn--lost"
+        title="Marcar como Perdido"
+        @click.stop="markAsLost"
+      >
+        ✗ Perdido
+      </button>
     </div>
 
     <!-- Tarefas -->
@@ -82,6 +100,41 @@
     <div v-if="item.assignee" class="kanban-card__assignee">
       <span class="kanban-card__assignee-label">Atribuído:</span>
       <span class="kanban-card__assignee-name">{{ item.assignee.name }}</span>
+    </div>
+
+    <!-- Modal de Motivo de Perda -->
+    <div v-if="showLossReasonModal" class="kanban-card__modal-overlay" @click.stop="closeLossModal">
+      <div class="kanban-card__modal" @click.stop>
+        <h4>Motivo da Perda</h4>
+        <select v-model="selectedLossReason" class="kanban-card__modal-select">
+          <option value="">Selecione...</option>
+          <option value="Preço">Preço</option>
+          <option value="Concorrência">Concorrência</option>
+          <option value="Timing">Timing / Não é o momento</option>
+          <option value="Sem resposta">Sem resposta</option>
+          <option value="Desistiu">Desistiu</option>
+          <option value="Outro">Outro</option>
+        </select>
+        <input
+          v-if="selectedLossReason === 'Outro'"
+          v-model="customLossReason"
+          type="text"
+          placeholder="Especifique o motivo..."
+          class="kanban-card__modal-input"
+        />
+        <div class="kanban-card__modal-actions">
+          <button class="kanban-card__modal-btn kanban-card__modal-btn--cancel" @click.stop="closeLossModal">
+            Cancelar
+          </button>
+          <button 
+            class="kanban-card__modal-btn kanban-card__modal-btn--confirm" 
+            :disabled="!canConfirmLoss"
+            @click.stop="confirmLoss"
+          >
+            Confirmar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -103,10 +156,13 @@ export default {
       default: () => [],
     },
   },
-  emits: ['click', 'dragstart'],
+  emits: ['click', 'dragstart', 'mark-won', 'mark-lost'],
   data() {
     return {
       isDragging: false,
+      showLossReasonModal: false,
+      selectedLossReason: '',
+      customLossReason: '',
     };
   },
   computed: {
@@ -176,6 +232,11 @@ export default {
           value: this.item.custom_fields[field.field_key],
         }));
     },
+    canConfirmLoss() {
+      if (!this.selectedLossReason) return false;
+      if (this.selectedLossReason === 'Outro' && !this.customLossReason.trim()) return false;
+      return true;
+    },
   },
   methods: {
     onDragStart(event) {
@@ -222,6 +283,29 @@ export default {
           return value;
       }
     },
+    markAsWon() {
+      this.$emit('mark-won', { itemId: this.item.id, itemType: this.itemType });
+    },
+    markAsLost() {
+      this.showLossReasonModal = true;
+    },
+    closeLossModal() {
+      this.showLossReasonModal = false;
+      this.selectedLossReason = '';
+      this.customLossReason = '';
+    },
+    confirmLoss() {
+      const reason = this.selectedLossReason === 'Outro' 
+        ? this.customLossReason.trim() 
+        : this.selectedLossReason;
+      
+      this.$emit('mark-lost', { 
+        itemId: this.item.id, 
+        itemType: this.itemType,
+        reason: reason
+      });
+      this.closeLossModal();
+    },
   },
 };
 </script>
@@ -236,6 +320,7 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   user-select: none;
+  position: relative;
 }
 
 .kanban-card:hover {
@@ -427,6 +512,128 @@ export default {
   font-weight: 400;
 }
 
+/* Botões de Ação Ganho/Perdido */
+.kanban-card__actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.kanban-card__action-btn {
+  flex: 1;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kanban-card__action-btn--won {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.kanban-card__action-btn--won:hover {
+  background-color: #10b981;
+  color: white;
+}
+
+.kanban-card__action-btn--lost {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.kanban-card__action-btn--lost:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Modal de Motivo de Perda */
+.kanban-card__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.kanban-card__modal {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.kanban-card__modal h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  color: #1f2937;
+}
+
+.kanban-card__modal-select,
+.kanban-card__modal-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.kanban-card__modal-select:focus,
+.kanban-card__modal-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.kanban-card__modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.kanban-card__modal-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kanban-card__modal-btn--cancel {
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+.kanban-card__modal-btn--cancel:hover {
+  background: #f3f4f6;
+}
+
+.kanban-card__modal-btn--confirm {
+  background: #ef4444;
+  border: none;
+  color: white;
+}
+
+.kanban-card__modal-btn--confirm:hover {
+  background: #dc2626;
+}
+
+.kanban-card__modal-btn--confirm:disabled {
+  background: #fca5a5;
+  cursor: not-allowed;
+}
+
 /* Tarefas */
 .kanban-card__tasks {
   display: flex;
@@ -474,30 +681,40 @@ export default {
 }
 
 /* Dark mode support */
-:deep(.dark) .kanban-card,
 .dark .kanban-card {
   background-color: #1f2937;
   border-color: #374151;
 }
 
-:deep(.dark) .kanban-card__name,
 .dark .kanban-card__name {
   color: #f9fafb;
 }
 
-:deep(.dark) .kanban-card__phone,
 .dark .kanban-card__phone {
   color: #9ca3af;
 }
 
-:deep(.dark) .kanban-card__custom-fields,
 .dark .kanban-card__custom-fields {
   background-color: #374151;
   border-color: #4b5563;
 }
 
-:deep(.dark) .kanban-card__custom-field-value,
 .dark .kanban-card__custom-field-value {
+  color: #f9fafb;
+}
+
+.dark .kanban-card__modal {
+  background-color: #1f2937;
+}
+
+.dark .kanban-card__modal h4 {
+  color: #f9fafb;
+}
+
+.dark .kanban-card__modal-select,
+.dark .kanban-card__modal-input {
+  background-color: #374151;
+  border-color: #4b5563;
   color: #f9fafb;
 }
 </style>
