@@ -82,6 +82,7 @@
       <KanbanBoard
         :board="board"
         :pipeline-type="currentPipeline?.pipeline_type || 'conversations'"
+        :custom-fields-config="availableFilters.custom_fields"
         @move="handleMove"
         @card-click="handleCardClick"
       />
@@ -460,3 +461,4 @@ export default {
   }
 }
 </style>
+
