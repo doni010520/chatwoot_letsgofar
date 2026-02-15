@@ -32,7 +32,7 @@
         </select>
       </div>
 
-      <!-- Valor Mínimo -->
+      <!-- Valor Mínimo/Máximo -->
       <div class="filter-item filter-item--value">
         <span class="filter-prefix">R$</span>
         <input
@@ -64,30 +64,35 @@
 
       <!-- Valor do Campo Personalizado -->
       <div v-if="selectedCustomField" class="filter-item">
-        <template v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'">
-          <select v-model="localFilters.custom_value" class="filter-select" @change="applyFilters">
-            <option value="">Todos</option>
-            <option v-for="opt in selectedFieldOptions" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
-        </template>
-        <template v-else-if="selectedFieldType === 'checkbox'">
-          <select v-model="localFilters.custom_value" class="filter-select" @change="applyFilters">
-            <option value="">Todos</option>
-            <option value="true">Sim</option>
-            <option value="false">Não</option>
-          </select>
-        </template>
-        <template v-else>
-          <input
-            v-model="localFilters.custom_value"
-            type="text"
-            placeholder="Valor..."
-            class="filter-input"
-            @input="debouncedApply"
-          />
-        </template>
+        <select
+          v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'"
+          v-model="localFilters.custom_value"
+          class="filter-select"
+          @change="applyFilters"
+        >
+          <option value="">Todos</option>
+          <option v-for="opt in selectedFieldOptions" :key="opt" :value="opt">
+            {{ opt }}
+          </option>
+        </select>
+        <select
+          v-else-if="selectedFieldType === 'checkbox'"
+          v-model="localFilters.custom_value"
+          class="filter-select"
+          @change="applyFilters"
+        >
+          <option value="">Todos</option>
+          <option value="true">Sim</option>
+          <option value="false">Não</option>
+        </select>
+        <input
+          v-else
+          v-model="localFilters.custom_value"
+          type="text"
+          placeholder="Valor..."
+          class="filter-input"
+          @input="debouncedApply"
+        />
       </div>
 
       <!-- Limpar Filtros -->
@@ -129,7 +134,6 @@
 
 <script>
 import { ref, computed, watch } from 'vue';
-import { debounce } from 'lodash';
 
 export default {
   name: 'KanbanFilters',
@@ -160,6 +164,7 @@ export default {
     });
 
     const selectedCustomField = ref('');
+    let debounceTimer = null;
 
     const selectedFieldType = computed(() => {
       if (!selectedCustomField.value) return null;
@@ -192,7 +197,6 @@ export default {
         delete filters.custom_value;
       }
 
-      // Remove empty values
       Object.keys(filters).forEach(key => {
         if (!filters[key]) delete filters[key];
       });
@@ -200,7 +204,10 @@ export default {
       emit('filter-change', filters);
     };
 
-    const debouncedApply = debounce(applyFilters, 400);
+    const debouncedApply = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(applyFilters, 400);
+    };
 
     const clearFilters = () => {
       localFilters.value = {
@@ -258,12 +265,11 @@ export default {
       const min = localFilters.value.min_value;
       const max = localFilters.value.max_value;
       if (min && max) return `R$ ${min} - R$ ${max}`;
-      if (min) return `≥ R$ ${min}`;
-      if (max) return `≤ R$ ${max}`;
+      if (min) return `>= R$ ${min}`;
+      if (max) return `<= R$ ${max}`;
       return '';
     };
 
-    // Sync with parent filters
     watch(() => props.filters, (newFilters) => {
       if (newFilters) {
         Object.assign(localFilters.value, newFilters);
@@ -376,7 +382,6 @@ export default {
   background-color: #4b5563;
 }
 
-/* Filtros Ativos */
 .filters-active {
   display: flex;
   align-items: center;
@@ -415,14 +420,4 @@ export default {
 .filter-tag button:hover {
   opacity: 1;
 }
-
-/* Responsivo */
-@media (max-width: 768px) {
-  .filters-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-item {
-    width: 100%;
-  }
+</style>
