@@ -64,13 +64,14 @@ const actions = {
     }
   },
 
-  async fetchBoard({ commit }, { accountId, pipelineId }) {
+  async fetchBoard({ commit }, { accountId, pipelineId, filters = {} }) {
     commit('SET_UI_FLAG', { isLoading: true });
     try {
-      const response = await KanbanAPI.getBoard(accountId, pipelineId);
+      const response = await KanbanAPI.getBoard(accountId, pipelineId, filters);
       commit('SET_CURRENT_PIPELINE', response.data.pipeline);
       commit('SET_BOARD', response.data.board);
       commit('SET_BOARD_TOTALS', response.data.totals);
+      return response.data;
     } catch (error) {
       console.error('Error fetching board:', error);
       throw error;
@@ -214,4 +215,5 @@ export default {
   getters,
   actions,
   mutations,
+
 };
