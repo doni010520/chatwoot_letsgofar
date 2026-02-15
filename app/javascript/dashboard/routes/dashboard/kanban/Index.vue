@@ -21,6 +21,15 @@
           </option>
         </select>
         <button
+          class="kanban-page__filter-btn"
+          :class="{ 'kanban-page__filter-btn--active': showFilters }"
+          @click="showFilters = !showFilters"
+        >
+          <span class="icon">🔍</span>
+          <span>Filtros</span>
+          <span v-if="hasActiveFilters" class="filter-badge">●</span>
+        </button>
+        <button
           class="kanban-page__dashboard-btn"
           @click="openDashboard"
         >
@@ -37,6 +46,15 @@
       </div>
     </header>
 
+    <!-- Filtros -->
+    <KanbanFilters
+      v-if="showFilters && currentPipeline"
+      :assignees="availableFilters.assignees"
+      :custom-fields="availableFilters.custom_fields"
+      :filters="activeFilters"
+      @filter-change="onFilterChange"
+    />
+
     <div v-if="uiFlags.isLoading" class="kanban-page__loading">
       <spinner />
       <span>Carregando...</span>
@@ -52,13 +70,22 @@
       </div>
     </div>
 
-    <KanbanBoard
-      v-else
-      :board="board"
-      :pipeline-type="currentPipeline?.pipeline_type || 'conversations'"
-      @move="handleMove"
-      @card-click="handleCardClick"
-    />
+    <template v-else>
+      <!-- Indicador de resultados filtrados -->
+      <div v-if="hasActiveFilters" class="kanban-page__filter-info">
+        <span>Exibindo resultados filtrados</span>
+        <span class="kanban-page__totals">
+          {{ boardTotals.count }} cards · R$ {{ formatCurrency(boardTotals.value) }}
+        </span>
+      </div>
+
+      <KanbanBoard
+        :board="board"
+        :pipeline-type="currentPipeline?.pipeline_type || 'conversations'"
+        @move="handleMove"
+        @card-click="handleCardClick"
+      />
+    </template>
 
     <KanbanSettingsModal
       v-if="showSettings"
@@ -74,6 +101,7 @@
 import { mapGetters, mapActions } from 'vuex';
 import Spinner from 'shared/components/Spinner.vue';
 import KanbanBoard from 'dashboard/components/kanban/KanbanBoard.vue';
+import KanbanFilters from 'dashboard/components/kanban/KanbanFilters.vue';
 import KanbanSettingsModal from './KanbanSettingsModal.vue';
 
 export default {
@@ -81,12 +109,23 @@ export default {
   components: {
     Spinner,
     KanbanBoard,
+    KanbanFilters,
     KanbanSettingsModal,
   },
   data() {
     return {
       selectedPipelineId: null,
       showSettings: false,
+      showFilters: false,
+      activeFilters: {},
+      availableFilters: {
+        assignees: [],
+        custom_fields: [],
+      },
+      boardTotals: {
+        count: 0,
+        value: 0,
+      },
     };
   },
   computed: {
@@ -110,6 +149,9 @@ export default {
     },
     accountId() {
       return this.$route.params.accountId;
+    },
+    hasActiveFilters() {
+      return Object.keys(this.activeFilters).some(key => this.activeFilters[key]);
     },
   },
   watch: {
@@ -135,12 +177,29 @@ export default {
     },
     async loadBoard() {
       if (!this.selectedPipelineId) return;
-      await this.fetchBoard({
+      
+      const response = await this.fetchBoard({
         accountId: this.accountId,
         pipelineId: this.selectedPipelineId,
+        filters: this.activeFilters,
       });
+
+      // Atualizar filtros disponíveis e totais
+      if (response) {
+        if (response.available_filters) {
+          this.availableFilters = response.available_filters;
+        }
+        if (response.totals) {
+          this.boardTotals = response.totals;
+        }
+      }
     },
     onPipelineChange() {
+      this.activeFilters = {};
+      this.loadBoard();
+    },
+    onFilterChange(filters) {
+      this.activeFilters = filters;
       this.loadBoard();
     },
     async handleMove({ itemId, itemType, fromStageId, toStageId }) {
@@ -187,6 +246,12 @@ export default {
     onSettingsSaved() {
       this.showSettings = false;
       this.loadPipelines();
+    },
+    formatCurrency(value) {
+      return Number(value || 0).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
     },
   },
 };
@@ -244,6 +309,43 @@ export default {
     }
   }
 
+  &__filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--s-200);
+    background-color: var(--white);
+    color: var(--s-700);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+
+    &:hover {
+      background-color: var(--s-50);
+      border-color: var(--s-300);
+    }
+
+    &--active {
+      background-color: #eff6ff;
+      border-color: #3b82f6;
+      color: #3b82f6;
+    }
+
+    .icon {
+      font-size: 16px;
+    }
+
+    .filter-badge {
+      color: #ef4444;
+      font-size: 10px;
+      margin-left: -4px;
+    }
+  }
+
   &__dashboard-btn {
     display: flex;
     align-items: center;
@@ -289,6 +391,21 @@ export default {
     .icon {
       font-size: 16px;
     }
+  }
+
+  &__filter-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 24px;
+    background-color: #eff6ff;
+    border-bottom: 1px solid #bfdbfe;
+    font-size: 13px;
+    color: #1e40af;
+  }
+
+  &__totals {
+    font-weight: 600;
   }
 
   &__loading {
