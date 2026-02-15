@@ -121,6 +121,36 @@ class KanbanAPI extends ApiClient {
   completeTask(accountId, conversationId, taskId) {
     return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_tasks/${taskId}/complete`);
   }
+
+  // Custom Fields
+  getCustomFields(accountId, pipelineId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/custom_fields`);
+  }
+
+  createCustomField(accountId, pipelineId, data) {
+    return window.axios.post(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/custom_fields`, data);
+  }
+
+  updateCustomField(accountId, pipelineId, fieldId, data) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/custom_fields/${fieldId}`, data);
+  }
+
+  deleteCustomField(accountId, pipelineId, fieldId) {
+    return window.axios.delete(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/custom_fields/${fieldId}`);
+  }
+
+  // Custom Field Values (per conversation)
+  getCustomFieldValues(accountId, conversationId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_custom_field_values`);
+  }
+
+  updateCustomFieldValues(accountId, conversationId, fields) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_custom_field_values`, { fields });
+  }
+
+  bulkUpdateCustomFieldValues(accountId, conversationId, values) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_custom_field_values/bulk_update`, { values });
+  }
 }
 
 export default new KanbanAPI();
