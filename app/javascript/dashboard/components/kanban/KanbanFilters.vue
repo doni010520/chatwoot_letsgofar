@@ -131,6 +131,10 @@
         Status: {{ getStatusLabel(localFilters.deal_status) }}
         <button @click="removeFilter('deal_status')">×</button>
       </span>
+      <span v-if="localFilters.tasks_filter" class="filter-tag">
+        Tarefas: {{ getTasksFilterLabel(localFilters.tasks_filter) }}
+        <button @click="removeFilter('tasks_filter')">×</button>
+      </span>
       <span v-if="localFilters.min_value || localFilters.max_value" class="filter-tag">
         Valor: {{ formatValueRange() }}
         <button @click="removeValueFilters">×</button>
@@ -168,6 +172,7 @@ export default {
       search: '',
       assignee_id: '',
       deal_status: '',
+      tasks_filter: '',
       min_value: '',
       max_value: '',
       custom_field: '',
@@ -193,11 +198,12 @@ export default {
       return localFilters.value.search ||
         localFilters.value.assignee_id ||
         localFilters.value.deal_status ||
+        localFilters.value.tasks_filter ||
         localFilters.value.min_value ||
         localFilters.value.max_value ||
         (selectedCustomField.value && localFilters.value.custom_value);
     });
-
+    
     const applyFilters = () => {
       const filters = { ...localFilters.value };
       
@@ -220,11 +226,12 @@ export default {
       debounceTimer = setTimeout(applyFilters, 400);
     };
 
-    const clearFilters = () => {
+   const clearFilters = () => {
       localFilters.value = {
         search: '',
         assignee_id: '',
         deal_status: '',
+        tasks_filter: '',
         min_value: '',
         max_value: '',
         custom_field: '',
@@ -266,6 +273,16 @@ export default {
       const labels = { open: 'Em aberto', won: 'Ganhos', lost: 'Perdidos' };
       return labels[status] || status;
     };
+    
+    const getTasksFilterLabel = (filter) => {
+      const labels = {
+        with_tasks: 'Com pendentes',
+        overdue: 'Atrasadas',
+        due_today: 'Vencendo hoje',
+        no_tasks: 'Sem tarefas'
+      };
+      return labels[filter] || filter;
+    };
 
     const getCustomFieldName = () => {
       const field = props.customFields.find(f => f.field_key === selectedCustomField.value);
@@ -290,7 +307,7 @@ export default {
       }
     }, { immediate: true });
 
-    return {
+   return {
       localFilters,
       selectedCustomField,
       selectedFieldType,
@@ -305,6 +322,7 @@ export default {
       onCustomFieldSelect,
       getAssigneeName,
       getStatusLabel,
+      getTasksFilterLabel,
       getCustomFieldName,
       formatValueRange,
     };
