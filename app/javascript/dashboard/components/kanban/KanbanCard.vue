@@ -214,7 +214,7 @@ export default {
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
-  cursor: pointer;
+  cursor: grab;
   transition: all 0.2s ease;
 }
 
@@ -222,6 +222,14 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-color: #3b82f6;
   transform: translateY(-1px);
+}
+
+.kanban-card:active {
+  cursor: grabbing;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  opacity: 0.9;
 }
 
 .kanban-card--won {
