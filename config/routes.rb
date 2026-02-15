@@ -165,6 +165,9 @@ Rails.application.routes.draw do
                 patch :complete
               end
             end
+            resource :kanban_custom_field_values, only: [:show, :update], controller: 'kanban/custom_field_values' do
+              patch :bulk_update
+            end
           end
 
           resources :search, only: [:index] do
@@ -364,10 +367,16 @@ Rails.application.routes.draw do
 
           resources :upload, only: [:create]
 
-          # Kanban
+         # Kanban
          namespace :kanban do
             resources :pipelines do
               resources :stages do
+                member do
+                  patch :reorder
+                end
+              end
+
+              resources :custom_fields do
                 member do
                   patch :reorder
                 end
