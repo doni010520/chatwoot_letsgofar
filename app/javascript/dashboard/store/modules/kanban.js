@@ -102,6 +102,26 @@ const actions = {
     }
   },
 
+  async markAsWon({ commit }, { accountId, conversationId }) {
+    try {
+      await KanbanAPI.updateCrmFields(accountId, conversationId, { closed_won: true });
+      commit('UPDATE_ITEM_STATUS', { itemId: conversationId, closedWon: true, closedReason: null });
+    } catch (error) {
+      console.error('Error marking as won:', error);
+      throw error;
+    }
+  },
+
+  async markAsLost({ commit }, { accountId, conversationId, reason }) {
+    try {
+      await KanbanAPI.updateCrmFields(accountId, conversationId, { closed_won: false, closed_reason: reason });
+      commit('UPDATE_ITEM_STATUS', { itemId: conversationId, closedWon: false, closedReason: reason });
+    } catch (error) {
+      console.error('Error marking as lost:', error);
+      throw error;
+    }
+  },
+
   async createStage({ dispatch }, { accountId, pipelineId, stageData }) {
     try {
       await KanbanAPI.createStage(accountId, pipelineId, stageData);
@@ -197,7 +217,7 @@ const mutations = {
     }
     targetItems.push(movedItem);
 
-    // Update totals
+    // Update totals - using deal_value (not value)
     if (fromColumn.totals) {
       fromColumn.totals.count = Math.max(0, (fromColumn.totals.count || 0) - 1);
       fromColumn.totals.value = Math.max(0, (fromColumn.totals.value || 0) - (movedItem.deal_value || 0));
@@ -205,6 +225,23 @@ const mutations = {
     if (toColumn.totals) {
       toColumn.totals.count = (toColumn.totals.count || 0) + 1;
       toColumn.totals.value = (toColumn.totals.value || 0) + (movedItem.deal_value || 0);
+    }
+  },
+
+  UPDATE_ITEM_STATUS($state, { itemId, closedWon, closedReason }) {
+    // Procura o item em todas as colunas e atualiza
+    for (const column of $state.board) {
+      let items = column.items;
+      if (!Array.isArray(items)) {
+        items = items.conversations || [];
+      }
+      
+      const item = items.find(i => i.id === itemId);
+      if (item) {
+        item.closed_won = closedWon;
+        item.closed_reason = closedReason;
+        break;
+      }
     }
   },
 };
@@ -215,6 +252,4 @@ export default {
   getters,
   actions,
   mutations,
-
 };
-
