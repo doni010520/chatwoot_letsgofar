@@ -12,14 +12,16 @@
     />
     <div class="kanban-column__cards">
       <KanbanCard
-  v-for="item in items"
-  :key="item.id"
-  :item="item"
-  :item-type="getItemType(item)"
-  :custom-fields-config="customFieldsConfig"
-  @dragstart="handleDragStart($event, item)"
-  @click="handleCardClick(item)"
-/>
+        v-for="item in items"
+        :key="item.id"
+        :item="item"
+        :item-type="getItemType(item)"
+        :custom-fields-config="customFieldsConfig"
+        @dragstart="handleDragStart($event, item)"
+        @click="handleCardClick(item)"
+        @mark-won="handleMarkWon"
+        @mark-lost="handleMarkLost"
+      />
       <div
         v-if="items.length === 0"
         class="kanban-column__empty"
@@ -62,7 +64,7 @@ export default {
       default: () => [],
     },
   },
-  emits: ['move', 'card-click'],
+  emits: ['move', 'card-click', 'mark-won', 'mark-lost'],
   data() {
     return {
       isDragOver: false,
@@ -111,6 +113,12 @@ export default {
         itemType: this.getItemType(item),
       });
     },
+    handleMarkWon(payload) {
+      this.$emit('mark-won', payload);
+    },
+    handleMarkLost(payload) {
+      this.$emit('mark-lost', payload);
+    },
   },
 };
 </script>
@@ -138,4 +146,3 @@ export default {
   }
 }
 </style>
-
