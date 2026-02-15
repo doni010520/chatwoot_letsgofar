@@ -87,6 +87,40 @@ class KanbanAPI extends ApiClient {
       params: { start_date: startDate, end_date: endDate }
     });
   }
+
+  // Activities
+  getActivities(accountId, conversationId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_activities`);
+  }
+
+  createActivity(accountId, conversationId, data) {
+    return window.axios.post(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_activities`, data);
+  }
+
+  deleteActivity(accountId, conversationId, activityId) {
+    return window.axios.delete(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_activities/${activityId}`);
+  }
+
+  // Tasks
+  getTasks(accountId, conversationId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_tasks`);
+  }
+
+  createTask(accountId, conversationId, data) {
+    return window.axios.post(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_tasks`, data);
+  }
+
+  updateTask(accountId, conversationId, taskId, data) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_tasks/${taskId}`, data);
+  }
+
+  deleteTask(accountId, conversationId, taskId) {
+    return window.axios.delete(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_tasks/${taskId}`);
+  }
+
+  completeTask(accountId, conversationId, taskId) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_tasks/${taskId}/complete`);
+  }
 }
 
 export default new KanbanAPI();
