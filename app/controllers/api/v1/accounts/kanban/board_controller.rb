@@ -119,7 +119,24 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
         conversations = conversations.where(id: conversation_ids)
       end
     end
-
+   # Filtro por tarefas
+    if params[:tasks_filter].present?
+      case params[:tasks_filter]
+      when 'with_tasks'
+        conversation_ids = KanbanTask.where(status: ['pending', 'in_progress']).pluck(:conversation_id).uniq
+        conversations = conversations.where(id: conversation_ids)
+      when 'overdue'
+        conversation_ids = KanbanTask.where(status: ['pending', 'in_progress']).where('due_at < ?', Time.current).pluck(:conversation_id).uniq
+        conversations = conversations.where(id: conversation_ids)
+      when 'due_today'
+        today = Time.current.beginning_of_day..Time.current.end_of_day
+        conversation_ids = KanbanTask.where(status: ['pending', 'in_progress']).where(due_at: today).pluck(:conversation_id).uniq
+        conversations = conversations.where(id: conversation_ids)
+      when 'no_tasks'
+        conversation_ids = KanbanTask.where(status: ['pending', 'in_progress']).pluck(:conversation_id).uniq
+        conversations = conversations.where.not(id: conversation_ids)
+      end
+    end
     conversations.limit(100).map do |conv|
       conversation_json(conv)
     end
@@ -234,4 +251,5 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 end
+
 
