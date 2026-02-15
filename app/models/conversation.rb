@@ -126,6 +126,7 @@ class Conversation < ApplicationRecord
 
   after_update_commit :execute_after_update_commit_callbacks
   after_update_commit :log_kanban_changes
+  after_update_commit :trigger_kanban_automations
   after_create_commit :notify_conversation_creation
   after_create_commit :load_attributes_created_by_db_triggers
 
@@ -314,6 +315,41 @@ class Conversation < ApplicationRecord
       }
     )
   end
+
+  def trigger_kanban_automations
+    return unless kanban_stage_id.present?
+
+    # Trigger: stage_changed
+    if saved_change_to_kanban_stage_id?
+      old_stage_id, new_stage_id = saved_change_to_kanban_stage_id
+      
+      if old_stage_id.nil? && new_stage_id.present?
+        new_stage = KanbanStage.find_by(id: new_stage_id)
+        KanbanAutomationService.on_conversation_added(self, new_stage, Current.user) if new_stage
+      else
+        old_stage = KanbanStage.find_by(id: old_stage_id)
+        new_stage = KanbanStage.find_by(id: new_stage_id)
+        KanbanAutomationService.on_stage_changed(self, old_stage, new_stage, Current.user)
+      end
+    end
+
+    # Trigger: deal_value_changed
+    if saved_change_to_deal_value?
+      old_value, new_value = saved_change_to_deal_value
+      KanbanAutomationService.on_value_changed(self, old_value, new_value, Current.user)
+    end
+
+    # Trigger: deal_won
+    if saved_change_to_closed_won? && closed_won == true
+      KanbanAutomationService.on_deal_won(self, Current.user)
+    end
+
+    # Trigger: deal_lost
+    if saved_change_to_closed_won? && closed_won == false
+      KanbanAutomationService.on_deal_lost(self, closed_reason, Current.user)
+    end
+  end
+  
   def handle_resolved_status_change
     # When conversation is resolved, clear waiting_since using update_column to avoid callbacks
     return unless saved_change_to_status? && status == 'resolved'
