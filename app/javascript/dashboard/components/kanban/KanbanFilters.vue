@@ -1,0 +1,428 @@
+<template>
+  <div class="kanban-filters">
+    <div class="filters-row">
+      <!-- Busca -->
+      <div class="filter-item filter-item--search">
+        <input
+          v-model="localFilters.search"
+          type="text"
+          placeholder="🔍 Buscar contato..."
+          class="filter-input"
+          @input="debouncedApply"
+        />
+      </div>
+
+      <!-- Vendedor -->
+      <div class="filter-item">
+        <select v-model="localFilters.assignee_id" class="filter-select" @change="applyFilters">
+          <option value="">👤 Todos os vendedores</option>
+          <option v-for="user in assignees" :key="user.id" :value="user.id">
+            {{ user.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Status -->
+      <div class="filter-item">
+        <select v-model="localFilters.deal_status" class="filter-select" @change="applyFilters">
+          <option value="">📊 Todos os status</option>
+          <option value="open">🔵 Em aberto</option>
+          <option value="won">🟢 Ganhos</option>
+          <option value="lost">🔴 Perdidos</option>
+        </select>
+      </div>
+
+      <!-- Valor Mínimo -->
+      <div class="filter-item filter-item--value">
+        <span class="filter-prefix">R$</span>
+        <input
+          v-model="localFilters.min_value"
+          type="number"
+          placeholder="Mín"
+          class="filter-input filter-input--small"
+          @input="debouncedApply"
+        />
+        <span class="filter-separator">-</span>
+        <input
+          v-model="localFilters.max_value"
+          type="number"
+          placeholder="Máx"
+          class="filter-input filter-input--small"
+          @input="debouncedApply"
+        />
+      </div>
+
+      <!-- Campos Personalizados -->
+      <div v-if="customFields.length > 0" class="filter-item">
+        <select v-model="selectedCustomField" class="filter-select" @change="onCustomFieldSelect">
+          <option value="">🏷️ Campo personalizado</option>
+          <option v-for="field in customFields" :key="field.field_key" :value="field.field_key">
+            {{ field.name }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Valor do Campo Personalizado -->
+      <div v-if="selectedCustomField" class="filter-item">
+        <template v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'">
+          <select v-model="localFilters.custom_value" class="filter-select" @change="applyFilters">
+            <option value="">Todos</option>
+            <option v-for="opt in selectedFieldOptions" :key="opt" :value="opt">
+              {{ opt }}
+            </option>
+          </select>
+        </template>
+        <template v-else-if="selectedFieldType === 'checkbox'">
+          <select v-model="localFilters.custom_value" class="filter-select" @change="applyFilters">
+            <option value="">Todos</option>
+            <option value="true">Sim</option>
+            <option value="false">Não</option>
+          </select>
+        </template>
+        <template v-else>
+          <input
+            v-model="localFilters.custom_value"
+            type="text"
+            placeholder="Valor..."
+            class="filter-input"
+            @input="debouncedApply"
+          />
+        </template>
+      </div>
+
+      <!-- Limpar Filtros -->
+      <button
+        v-if="hasActiveFilters"
+        class="filter-clear"
+        @click="clearFilters"
+      >
+        ✕ Limpar
+      </button>
+    </div>
+
+    <!-- Indicador de filtros ativos -->
+    <div v-if="hasActiveFilters" class="filters-active">
+      <span class="filters-active__label">Filtros ativos:</span>
+      <span v-if="localFilters.search" class="filter-tag">
+        Busca: "{{ localFilters.search }}"
+        <button @click="removeFilter('search')">×</button>
+      </span>
+      <span v-if="localFilters.assignee_id" class="filter-tag">
+        Vendedor: {{ getAssigneeName(localFilters.assignee_id) }}
+        <button @click="removeFilter('assignee_id')">×</button>
+      </span>
+      <span v-if="localFilters.deal_status" class="filter-tag">
+        Status: {{ getStatusLabel(localFilters.deal_status) }}
+        <button @click="removeFilter('deal_status')">×</button>
+      </span>
+      <span v-if="localFilters.min_value || localFilters.max_value" class="filter-tag">
+        Valor: {{ formatValueRange() }}
+        <button @click="removeValueFilters">×</button>
+      </span>
+      <span v-if="selectedCustomField && localFilters.custom_value" class="filter-tag">
+        {{ getCustomFieldName() }}: {{ localFilters.custom_value }}
+        <button @click="removeCustomFilter">×</button>
+      </span>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, computed, watch } from 'vue';
+import { debounce } from 'lodash';
+
+export default {
+  name: 'KanbanFilters',
+  props: {
+    assignees: {
+      type: Array,
+      default: () => [],
+    },
+    customFields: {
+      type: Array,
+      default: () => [],
+    },
+    filters: {
+      type: Object,
+      default: () => ({}),
+    },
+  },
+  emits: ['filter-change'],
+  setup(props, { emit }) {
+    const localFilters = ref({
+      search: '',
+      assignee_id: '',
+      deal_status: '',
+      min_value: '',
+      max_value: '',
+      custom_field: '',
+      custom_value: '',
+    });
+
+    const selectedCustomField = ref('');
+
+    const selectedFieldType = computed(() => {
+      if (!selectedCustomField.value) return null;
+      const field = props.customFields.find(f => f.field_key === selectedCustomField.value);
+      return field?.field_type;
+    });
+
+    const selectedFieldOptions = computed(() => {
+      if (!selectedCustomField.value) return [];
+      const field = props.customFields.find(f => f.field_key === selectedCustomField.value);
+      return field?.select_options || [];
+    });
+
+    const hasActiveFilters = computed(() => {
+      return localFilters.value.search ||
+        localFilters.value.assignee_id ||
+        localFilters.value.deal_status ||
+        localFilters.value.min_value ||
+        localFilters.value.max_value ||
+        (selectedCustomField.value && localFilters.value.custom_value);
+    });
+
+    const applyFilters = () => {
+      const filters = { ...localFilters.value };
+      
+      if (selectedCustomField.value && filters.custom_value) {
+        filters.custom_field = selectedCustomField.value;
+      } else {
+        delete filters.custom_field;
+        delete filters.custom_value;
+      }
+
+      // Remove empty values
+      Object.keys(filters).forEach(key => {
+        if (!filters[key]) delete filters[key];
+      });
+
+      emit('filter-change', filters);
+    };
+
+    const debouncedApply = debounce(applyFilters, 400);
+
+    const clearFilters = () => {
+      localFilters.value = {
+        search: '',
+        assignee_id: '',
+        deal_status: '',
+        min_value: '',
+        max_value: '',
+        custom_field: '',
+        custom_value: '',
+      };
+      selectedCustomField.value = '';
+      applyFilters();
+    };
+
+    const removeFilter = (key) => {
+      localFilters.value[key] = '';
+      applyFilters();
+    };
+
+    const removeValueFilters = () => {
+      localFilters.value.min_value = '';
+      localFilters.value.max_value = '';
+      applyFilters();
+    };
+
+    const removeCustomFilter = () => {
+      selectedCustomField.value = '';
+      localFilters.value.custom_field = '';
+      localFilters.value.custom_value = '';
+      applyFilters();
+    };
+
+    const onCustomFieldSelect = () => {
+      localFilters.value.custom_value = '';
+      localFilters.value.custom_field = selectedCustomField.value;
+    };
+
+    const getAssigneeName = (id) => {
+      const user = props.assignees.find(u => u.id === parseInt(id));
+      return user?.name || id;
+    };
+
+    const getStatusLabel = (status) => {
+      const labels = { open: 'Em aberto', won: 'Ganhos', lost: 'Perdidos' };
+      return labels[status] || status;
+    };
+
+    const getCustomFieldName = () => {
+      const field = props.customFields.find(f => f.field_key === selectedCustomField.value);
+      return field?.name || selectedCustomField.value;
+    };
+
+    const formatValueRange = () => {
+      const min = localFilters.value.min_value;
+      const max = localFilters.value.max_value;
+      if (min && max) return `R$ ${min} - R$ ${max}`;
+      if (min) return `≥ R$ ${min}`;
+      if (max) return `≤ R$ ${max}`;
+      return '';
+    };
+
+    // Sync with parent filters
+    watch(() => props.filters, (newFilters) => {
+      if (newFilters) {
+        Object.assign(localFilters.value, newFilters);
+        if (newFilters.custom_field) {
+          selectedCustomField.value = newFilters.custom_field;
+        }
+      }
+    }, { immediate: true });
+
+    return {
+      localFilters,
+      selectedCustomField,
+      selectedFieldType,
+      selectedFieldOptions,
+      hasActiveFilters,
+      applyFilters,
+      debouncedApply,
+      clearFilters,
+      removeFilter,
+      removeValueFilters,
+      removeCustomFilter,
+      onCustomFieldSelect,
+      getAssigneeName,
+      getStatusLabel,
+      getCustomFieldName,
+      formatValueRange,
+    };
+  },
+};
+</script>
+
+<style scoped>
+.kanban-filters {
+  padding: 12px 16px;
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+}
+
+.filters-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+}
+
+.filter-item--search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.filter-item--value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-input,
+.filter-select {
+  padding: 8px 12px;
+  background-color: #111827;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #f3f4f6;
+  font-size: 13px;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.filter-input::placeholder {
+  color: #6b7280;
+}
+
+.filter-input--small {
+  width: 80px;
+}
+
+.filter-prefix {
+  color: #9ca3af;
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+.filter-separator {
+  color: #6b7280;
+  margin: 0 2px;
+}
+
+.filter-clear {
+  padding: 8px 12px;
+  background-color: #374151;
+  border: none;
+  border-radius: 6px;
+  color: #f3f4f6;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.filter-clear:hover {
+  background-color: #4b5563;
+}
+
+/* Filtros Ativos */
+.filters-active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.filters-active__label {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: #3b82f6;
+  border-radius: 4px;
+  font-size: 12px;
+  color: white;
+}
+
+.filter-tag button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.filter-tag button:hover {
+  opacity: 1;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-item {
+    width: 100%;
+  }
