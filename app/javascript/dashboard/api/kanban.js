@@ -153,7 +153,18 @@ class KanbanAPI extends ApiClient {
   bulkUpdateCustomFieldValues(accountId, conversationId, values) {
     return window.axios.patch(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_custom_field_values/bulk_update`, { values });
   }
+
+  // User Tasks (global)
+  getUserTasksSummary(accountId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/user_tasks/summary`);
+  }
+
+  getUserTasks(accountId, filter = null) {
+    const params = filter ? { filter } : {};
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/user_tasks`, { params });
+  }
 }
 
 export default new KanbanAPI();
+
 
