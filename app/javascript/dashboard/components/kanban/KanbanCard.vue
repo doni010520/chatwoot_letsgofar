@@ -62,6 +62,15 @@
       </span>
     </div>
 
+    <!-- Tarefas -->
+    <div v-if="hasTasks" class="kanban-card__tasks">
+      <span class="kanban-card__tasks-icon">📋</span>
+      <span class="kanban-card__tasks-count">{{ item.tasks.pending }}</span>
+      <span v-if="item.tasks.overdue > 0" class="kanban-card__tasks-overdue">
+        ({{ item.tasks.overdue }} atrasada{{ item.tasks.overdue > 1 ? 's' : '' }})
+      </span>
+    </div>
+
     <!-- Assignee -->
     <div v-if="item.assignee" class="kanban-card__assignee">
       <span class="kanban-card__assignee-label">Atribuído:</span>
@@ -141,6 +150,9 @@ export default {
     },
     resultClass() {
       return this.item.closed_won ? 'kanban-card__result--won' : 'kanban-card__result--lost';
+    },
+    hasTasks() {
+      return this.item.tasks && this.item.tasks.pending > 0;
     },
     visibleCustomFields() {
       if (!this.item.custom_fields || !this.customFieldsConfig) return [];
@@ -385,6 +397,33 @@ export default {
 
 .kanban-card__reason {
   font-weight: 400;
+}
+
+/* Tarefas */
+.kanban-card__tasks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+}
+
+.kanban-card__tasks-icon {
+  font-size: 12px;
+}
+
+.kanban-card__tasks-count {
+  font-weight: 600;
+  color: #374151;
+}
+
+.kanban-card__tasks-overdue {
+  color: #ef4444;
+  font-weight: 500;
 }
 
 .kanban-card__assignee {
