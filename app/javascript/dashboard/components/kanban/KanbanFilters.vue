@@ -32,7 +32,7 @@
         </select>
       </div>
 
-       <!-- Tarefas -->
+      <!-- Tarefas -->
       <div class="filter-item">
         <select v-model="localFilters.tasks_filter" class="filter-select" @change="applyFilters">
           <option value="">📋 Todas as tarefas</option>
@@ -106,6 +106,17 @@
         />
       </div>
 
+      <!-- Ordenação -->
+      <div class="filter-item filter-item--sort">
+        <select v-model="localFilters.sort_by" class="filter-select" @change="applyFilters">
+          <option value="last_activity">🕐 Última atividade</option>
+          <option value="value_desc">💰 Maior valor</option>
+          <option value="value_asc">💰 Menor valor</option>
+          <option value="newest">📅 Mais recentes</option>
+          <option value="oldest">📅 Mais antigos</option>
+        </select>
+      </div>
+
       <!-- Limpar Filtros -->
       <button
         v-if="hasActiveFilters"
@@ -177,6 +188,7 @@ export default {
       max_value: '',
       custom_field: '',
       custom_value: '',
+      sort_by: 'last_activity',
     });
 
     const selectedCustomField = ref('');
@@ -203,10 +215,10 @@ export default {
         localFilters.value.max_value ||
         (selectedCustomField.value && localFilters.value.custom_value);
     });
-    
+
     const applyFilters = () => {
       const filters = { ...localFilters.value };
-      
+
       if (selectedCustomField.value && filters.custom_value) {
         filters.custom_field = selectedCustomField.value;
       } else {
@@ -214,9 +226,14 @@ export default {
         delete filters.custom_value;
       }
 
+      // Manter sort_by mesmo se vazio
+      const sortBy = filters.sort_by || 'last_activity';
+
       Object.keys(filters).forEach(key => {
-        if (!filters[key]) delete filters[key];
+        if (!filters[key] && key !== 'sort_by') delete filters[key];
       });
+
+      filters.sort_by = sortBy;
 
       emit('filter-change', filters);
     };
@@ -226,7 +243,7 @@ export default {
       debounceTimer = setTimeout(applyFilters, 400);
     };
 
-   const clearFilters = () => {
+    const clearFilters = () => {
       localFilters.value = {
         search: '',
         assignee_id: '',
@@ -236,6 +253,7 @@ export default {
         max_value: '',
         custom_field: '',
         custom_value: '',
+        sort_by: 'last_activity',
       };
       selectedCustomField.value = '';
       applyFilters();
@@ -273,7 +291,7 @@ export default {
       const labels = { open: 'Em aberto', won: 'Ganhos', lost: 'Perdidos' };
       return labels[status] || status;
     };
-    
+
     const getTasksFilterLabel = (filter) => {
       const labels = {
         with_tasks: 'Com pendentes',
@@ -307,7 +325,7 @@ export default {
       }
     }, { immediate: true });
 
-   return {
+    return {
       localFilters,
       selectedCustomField,
       selectedFieldType,
@@ -359,6 +377,10 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.filter-item--sort {
+  margin-left: auto;
 }
 
 .filter-input,
