@@ -368,6 +368,7 @@ Rails.application.routes.draw do
           resources :upload, only: [:create]
 
         # Kanban
+         # Kanban
           namespace :kanban do
             # Tarefas do usuário (global)
             resource :user_tasks, only: [], controller: 'user_tasks' do
@@ -392,6 +393,7 @@ Rails.application.routes.draw do
 
               resource :board, only: [:show], controller: 'board' do
                 patch :move
+                get :export
               end
 
               resource :reports, only: [], controller: 'reports' do
