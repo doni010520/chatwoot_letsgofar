@@ -3,7 +3,8 @@
 class KanbanPipeline < ApplicationRecord
   belongs_to :account
   has_many :kanban_stages, -> { order(position: :asc) }, dependent: :destroy, inverse_of: :kanban_pipeline
-
+  has_many :kanban_custom_fields, -> { order(position: :asc) }, dependent: :destroy
+  
   enum pipeline_type: { conversations: 0, contacts: 1, both: 2 }
 
   validates :name, presence: true, uniqueness: { scope: :account_id }
@@ -47,4 +48,5 @@ class KanbanPipeline < ApplicationRecord
       kanban_stages.create!(stage_attrs)
     end
   end
+
 end
