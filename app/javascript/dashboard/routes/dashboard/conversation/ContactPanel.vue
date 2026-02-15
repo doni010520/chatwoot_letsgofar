@@ -103,6 +103,13 @@ const currentKanbanStageId = computed(() => currentChat.value.kanban_stage_id);
 const currentDealValue = computed(() => currentChat.value.deal_value);
 const currentClosedWon = computed(() => currentChat.value.closed_won);
 const currentClosedReason = computed(() => currentChat.value.closed_reason);
+const historyRef = ref(null);
+
+const onTaskChanged = () => {
+  if (historyRef.value) {
+    historyRef.value.refresh();
+  }
+};
 
 const getContactDetails = () => {
   if (contactId.value) {
