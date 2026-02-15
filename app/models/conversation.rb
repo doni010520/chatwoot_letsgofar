@@ -118,6 +118,7 @@ class Conversation < ApplicationRecord
   has_many :reporting_events, dependent: :destroy_async
   has_many :kanban_activities, dependent: :destroy_async
   has_many :kanban_tasks, dependent: :destroy_async
+  has_many :kanban_custom_field_values, dependent: :destroy_async
 
   before_save :ensure_snooze_until_reset
   before_create :determine_conversation_status
