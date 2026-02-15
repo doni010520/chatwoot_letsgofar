@@ -10,7 +10,6 @@ class Api::V1::Accounts::Kanban::CustomFieldValuesController < Api::V1::Accounts
 
   def update
     results = []
-
     params[:fields]&.each do |field_data|
       field = KanbanCustomField.find_by(id: field_data[:field_id])
       next unless field
@@ -52,8 +51,19 @@ class Api::V1::Accounts::Kanban::CustomFieldValuesController < Api::V1::Accounts
   end
 
   def values_json
-    pipeline = @conversation.kanban_stage&.kanban_pipeline
-    return { fields: [], values: {} } unless pipeline
+    stage = @conversation.kanban_stage
+    pipeline = stage&.kanban_pipeline
+
+    # Sempre retorna has_pipeline para o frontend saber se está no CRM
+    unless pipeline
+      return {
+        has_pipeline: false,
+        stage: nil,
+        pipeline: nil,
+        fields: [],
+        values: {}
+      }
+    end
 
     fields = pipeline.kanban_custom_fields.ordered
     values = @conversation.kanban_custom_field_values.includes(:kanban_custom_field)
@@ -67,6 +77,16 @@ class Api::V1::Accounts::Kanban::CustomFieldValuesController < Api::V1::Accounts
     end
 
     {
+      has_pipeline: true,
+      stage: {
+        id: stage.id,
+        name: stage.name,
+        color: stage.color
+      },
+      pipeline: {
+        id: pipeline.id,
+        name: pipeline.name
+      },
       fields: fields.map { |f| field_json(f) },
       values: values_hash
     }
