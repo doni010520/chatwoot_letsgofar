@@ -1,70 +1,72 @@
 <template>
   <div class="kanban-page">
     <header class="kanban-page__header">
-      <div class="kanban-page__title">
-        <h1>CRM</h1>
-        <p v-if="currentPipeline">{{ currentPipeline.name }}</p>
-      </div>
-      <div class="kanban-page__actions">
-        <select
-          v-if="pipelines.length > 1"
-          v-model="selectedPipelineId"
-          class="kanban-page__select"
-          @change="onPipelineChange"
-        >
-          <option
-            v-for="pipeline in pipelines"
-            :key="pipeline.id"
-            :value="pipeline.id"
+      <div class="kanban-page__header-content">
+        <div class="kanban-page__title">
+          <h1>CRM</h1>
+          <p v-if="currentPipeline">{{ currentPipeline.name }}</p>
+        </div>
+        <div class="kanban-page__actions">
+          <select
+            v-if="pipelines.length > 1"
+            v-model="selectedPipelineId"
+            class="kanban-page__btn kanban-page__select"
+            @change="onPipelineChange"
           >
-            {{ pipeline.name }}
-          </option>
-        </select>
-        <button
-          class="kanban-page__filter-btn"
-          :class="{ 'kanban-page__filter-btn--active': showFilters }"
-          @click="showFilters = !showFilters"
-        >
-          <span class="icon">🔍</span>
-          <span>Filtros</span>
-          <span v-if="hasActiveFilters" class="filter-badge">●</span>
-        </button>
-        <button
-          class="kanban-page__import-btn"
-          @click="showImportModal = true"
-        >
-          <span class="icon">📤</span>
-          <span>Importar</span>
-        </button>
-        <button
-          class="kanban-page__export-btn"
-          :disabled="isExporting"
-          @click="exportBoard"
-        >
-          <span class="icon">📥</span>
-          <span>{{ isExporting ? 'Exportando...' : 'Exportar' }}</span>
-        </button>
-        <button
-          class="kanban-page__dashboard-btn"
-          @click="openDashboard"
-        >
-          <span class="icon">📊</span>
-          <span>Dashboard</span>
-        </button>
-        <button
-          class="kanban-page__automations-btn"
-          @click="showAutomations = true"
-        >
-          <span class="icon">⚡</span>
-          <span>Automações</span>
-        </button>
-        <button
-          class="kanban-page__config-btn"
-          @click="openSettings"
-        >
-          <span class="icon">⚙️</span>
-          <span>Configurações</span>
-        </button>
+            <option
+              v-for="pipeline in pipelines"
+              :key="pipeline.id"
+              :value="pipeline.id"
+            >
+              {{ pipeline.name }}
+            </option>
+          </select>
+          <button
+            class="kanban-page__btn"
+            :class="{ 'kanban-page__btn--active': showFilters }"
+            @click="showFilters = !showFilters"
+          >
+            <span class="icon">🔍</span>
+            <span>Filtros</span>
+            <span v-if="hasActiveFilters" class="filter-badge">●</span>
+          </button>
+          <button
+            class="kanban-page__btn kanban-page__btn--purple"
+            @click="showImportModal = true"
+          >
+            <span class="icon">📤</span>
+            <span>Importar</span>
+          </button>
+          <button
+            class="kanban-page__btn kanban-page__btn--green"
+            :disabled="isExporting"
+            @click="exportBoard"
+          >
+            <span class="icon">📥</span>
+            <span>{{ isExporting ? 'Exportando...' : 'Exportar' }}</span>
+          </button>
+          <button
+            class="kanban-page__btn kanban-page__btn--blue"
+            @click="openDashboard"
+          >
+            <span class="icon">📊</span>
+            <span>Dashboard</span>
+          </button>
+          <button
+            class="kanban-page__btn kanban-page__btn--yellow"
+            @click="showAutomations = true"
+          >
+            <span class="icon">⚡</span>
+            <span>Automações</span>
+          </button>
+          <button
+            class="kanban-page__btn"
+            @click="openSettings"
+          >
+            <span class="icon">⚙️</span>
+            <span>Configurações</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -104,9 +106,12 @@
       <KanbanBoard
         :board="board"
         :pipeline-type="currentPipeline?.pipeline_type || 'conversations'"
-        :custom-fields-config="availableFilters.custom_fields"
+        :custom-fields-config="customFieldsConfig"
         @move="handleMove"
         @card-click="handleCardClick"
+        @mark-won="handleMarkWon"
+        @mark-lost="handleMarkLost"
+        @remove="handleRemove"
       />
     </template>
 
@@ -169,6 +174,7 @@ export default {
         assignees: [],
         custom_fields: [],
       },
+      customFieldsConfig: [],
       boardTotals: {
         count: 0,
         value: 0,
@@ -214,6 +220,8 @@ export default {
       'fetchPipelines',
       'fetchBoard',
       'moveItem',
+      'markAsWon',
+      'markAsLost',
     ]),
     async loadPipelines() {
       await this.fetchPipelines(this.accountId);
@@ -231,13 +239,16 @@ export default {
         filters: this.activeFilters,
       });
 
-      // Atualizar filtros disponíveis e totais
+      // Atualizar filtros disponíveis, totais e config de campos
       if (response) {
         if (response.available_filters) {
           this.availableFilters = response.available_filters;
         }
         if (response.totals) {
           this.boardTotals = response.totals;
+        }
+        if (response.custom_fields_config) {
+          this.customFieldsConfig = response.custom_fields_config;
         }
       }
     },
@@ -277,6 +288,36 @@ export default {
             contactId: item.id,
           },
         });
+      }
+    },
+    async handleMarkWon({ itemId }) {
+      try {
+        await this.markAsWon({
+          accountId: this.accountId,
+          conversationId: itemId,
+        });
+      } catch (error) {
+        console.error('Erro ao marcar como ganho:', error);
+      }
+    },
+    async handleMarkLost({ itemId, reason }) {
+      try {
+        await this.markAsLost({
+          accountId: this.accountId,
+          conversationId: itemId,
+          reason,
+        });
+      } catch (error) {
+        console.error('Erro ao marcar como perdido:', error);
+      }
+    },
+    async handleRemove({ itemId, itemType }) {
+      try {
+        await KanbanAPI.updateConversationStage(this.accountId, itemId, null);
+        // Recarregar o board para refletir a mudança
+        this.loadBoard();
+      } catch (error) {
+        console.error('Erro ao remover do CRM:', error);
       }
     },
     async exportBoard() {
@@ -344,12 +385,15 @@ export default {
   background-color: var(--s-25);
 
   &__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     padding: 16px 24px;
     background-color: var(--white);
     border-bottom: 1px solid var(--s-100);
+  }
+
+  &__header-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   &__title {
@@ -370,183 +414,111 @@ export default {
   &__actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  &__select {
-    padding: 8px 12px;
-    border-radius: 6px;
-    border: 1px solid var(--s-200);
-    background-color: var(--white);
-    color: var(--s-800);
-    font-size: 14px;
-    cursor: pointer;
-    outline: none;
-
-    &:focus {
-      border-color: var(--w-500);
-    }
-  }
-
-  &__filter-btn {
+  /* Estilo Glass para todos os botões */
+  &__btn {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid var(--s-200);
-    background-color: var(--white);
-    color: var(--s-700);
-    font-size: 14px;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     position: relative;
+    
+    /* Glass effect base */
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    color: var(--s-700);
 
     &:hover {
-      background-color: var(--s-50);
-      border-color: var(--s-300);
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
     }
 
     &--active {
-      background-color: #eff6ff;
-      border-color: #3b82f6;
-      color: #3b82f6;
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #2563eb;
     }
 
-    .icon {
-      font-size: 16px;
+    &--purple {
+      background: rgba(139, 92, 246, 0.1);
+      border-color: rgba(139, 92, 246, 0.25);
+      color: #7c3aed;
+
+      &:hover {
+        background: rgba(139, 92, 246, 0.2);
+        border-color: rgba(139, 92, 246, 0.4);
+      }
     }
 
-    .filter-badge {
-      color: #ef4444;
-      font-size: 10px;
-      margin-left: -4px;
-    }
-  }
+    &--green {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.25);
+      color: #059669;
 
-  &__import-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid #8b5cf6;
-    background-color: #f5f3ff;
-    color: #6d28d9;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: #ede9fe;
-      border-color: #7c3aed;
+      &:hover {
+        background: rgba(16, 185, 129, 0.2);
+        border-color: rgba(16, 185, 129, 0.4);
+      }
     }
 
-    .icon {
-      font-size: 16px;
+    &--blue {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #2563eb;
+
+      &:hover {
+        background: rgba(59, 130, 246, 0.25);
+        border-color: rgba(59, 130, 246, 0.5);
+      }
     }
-  }
 
-  &__export-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid #10b981;
-    background-color: #ecfdf5;
-    color: #065f46;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+    &--yellow {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: #d97706;
 
-    &:hover:not(:disabled) {
-      background-color: #d1fae5;
-      border-color: #059669;
+      &:hover {
+        background: rgba(245, 158, 11, 0.2);
+        border-color: rgba(245, 158, 11, 0.4);
+      }
     }
 
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      transform: none;
     }
 
     .icon {
-      font-size: 16px;
+      font-size: 14px;
+    }
+
+    .filter-badge {
+      color: #ef4444;
+      font-size: 10px;
+      margin-left: -2px;
     }
   }
 
-  &__dashboard-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    background-color: #3b82f6;
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: #2563eb;
-    }
-
-    .icon {
-      font-size: 16px;
-    }
-  }
-
-  &__automations-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid #f59e0b;
-    background-color: #fffbeb;
-    color: #b45309;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: #fef3c7;
-      border-color: #d97706;
-    }
-
-    .icon {
-      font-size: 16px;
-    }
-  }
-
-  &__config-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid var(--s-200);
-    background-color: var(--white);
-    color: var(--s-700);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background-color: var(--s-50);
-      border-color: var(--s-300);
-    }
-
-    .icon {
-      font-size: 16px;
-    }
+  &__select {
+    min-width: 140px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
   }
 
   &__filter-info {
@@ -613,6 +585,70 @@ export default {
     &:hover {
       background-color: var(--w-600);
     }
+  }
+}
+
+/* Dark mode */
+.dark .kanban-page {
+  &__header {
+    background-color: #1a1d26;
+    border-bottom-color: #2d3343;
+  }
+
+  &__title {
+    h1 {
+      color: var(--s-100);
+    }
+    p {
+      color: var(--s-400);
+    }
+  }
+
+  &__btn {
+    background: rgba(30, 35, 45, 0.8);
+    border-color: rgba(60, 70, 85, 0.5);
+    color: var(--s-200);
+
+    &:hover {
+      background: rgba(40, 45, 55, 0.9);
+      border-color: rgba(70, 80, 95, 0.6);
+    }
+
+    &--active {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+    }
+
+    &--purple {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: #a78bfa;
+    }
+
+    &--green {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #34d399;
+    }
+
+    &--blue {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+    }
+
+    &--yellow {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #fbbf24;
+    }
+  }
+
+  &__filter-info {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-bottom-color: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
   }
 }
 </style>
