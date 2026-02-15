@@ -25,6 +25,7 @@ import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/I
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 import KanbanStageSelector from 'dashboard/components/widgets/conversation/KanbanStageSelector.vue';
 import KanbanCrmFields from 'dashboard/components/widgets/conversation/KanbanCrmFields.vue';
+import KanbanTimeline from 'dashboard/components/widgets/conversation/KanbanTimeline.vue';
 
 const props = defineProps({
   conversationId: {
@@ -157,7 +158,7 @@ onMounted(() => {
     />
     <ContactInfo :contact="contact" :channel-type="channelType" />
     <div class="px-2 pb-8 list-group">
-     <div class="kanban-section">
+      <div class="kanban-section">
         <AccordionItem
           title="Kanban"
           :is-open="isContactSidebarItemOpen('is_kanban_open')"
@@ -177,6 +178,17 @@ onMounted(() => {
           />
         </AccordionItem>
       </div>
+
+      <div class="kanban-section">
+        <AccordionItem
+          title="Atividades & Tarefas"
+          :is-open="isContactSidebarItemOpen('is_kanban_timeline_open')"
+          @toggle="value => toggleSidebarUIState('is_kanban_timeline_open', value)"
+        >
+          <KanbanTimeline :conversation-id="conversationId" />
+        </AccordionItem>
+      </div>
+
       <Draggable
         :list="conversationSidebarItems"
         animation="200"
