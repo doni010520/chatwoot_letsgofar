@@ -8,6 +8,7 @@
         :items="getColumnItems(column)"
         :totals="column.totals"
         :pipeline-type="pipelineType"
+        :custom-fields-config="customFieldsConfig"
         @move="handleMove"
         @card-click="handleCardClick"
       />
@@ -31,6 +32,10 @@ export default {
     pipelineType: {
       type: String,
       default: 'conversations',
+    },
+    customFieldsConfig: {
+      type: Array,
+      default: () => [],
     },
   },
   emits: ['move', 'card-click'],
@@ -61,7 +66,6 @@ export default {
 <style lang="scss" scoped>
 .kanban-board {
   @apply flex-1 overflow-hidden;
-
   &__columns {
     @apply flex h-full gap-4 overflow-x-auto p-4;
     scroll-behavior: smooth;
