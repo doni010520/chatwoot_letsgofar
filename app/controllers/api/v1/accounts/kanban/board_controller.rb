@@ -166,10 +166,13 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 
-  def conversation_json(conv)
+ def conversation_json(conv)
     custom_field_values = conv.kanban_custom_field_values.each_with_object({}) do |cfv, hash|
       hash[cfv.kanban_custom_field.field_key] = cfv.value
     end
+
+    pending_tasks_count = conv.kanban_tasks.where(status: ['pending', 'in_progress']).count
+    overdue_tasks_count = conv.kanban_tasks.where(status: ['pending', 'in_progress']).where('due_at < ?', Time.current).count
 
     {
       id: conv.id,
@@ -181,6 +184,10 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       closed_reason: conv.closed_reason,
       closed_at: conv.closed_at,
       custom_fields: custom_field_values,
+      tasks: {
+        pending: pending_tasks_count,
+        overdue: overdue_tasks_count
+      },
       contact: conv.contact ? {
         id: conv.contact.id,
         name: conv.contact.name,
@@ -227,3 +234,4 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 end
+
