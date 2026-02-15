@@ -1,14 +1,16 @@
 <template>
-  <div class="kanban-column">
+  <div 
+    class="kanban-column"
+    :class="{ 'kanban-column--drag-over': isDragOver }"
+    @dragover.prevent="onDragOver"
+    @dragleave="onDragLeave"
+    @drop="handleDrop"
+  >
     <KanbanColumnHeader
       :stage="stage"
       :totals="totals"
     />
-    <div
-      class="kanban-column__cards"
-      @dragover.prevent
-      @drop="handleDrop"
-    >
+    <div class="kanban-column__cards">
       <KanbanCard
         v-for="item in items"
         :key="item.id"
@@ -62,6 +64,11 @@ export default {
     },
   },
   emits: ['move', 'card-click'],
+  data() {
+    return {
+      isDragOver: false,
+    };
+  },
   methods: {
     getItemType(item) {
       if (item.itemType) return item.itemType;
@@ -72,11 +79,26 @@ export default {
       event.dataTransfer.setData('itemId', item.id);
       event.dataTransfer.setData('itemType', itemType);
       event.dataTransfer.setData('fromStageId', this.stage.id);
+      event.dataTransfer.effectAllowed = 'move';
+    },
+    onDragOver(event) {
+      event.preventDefault();
+      this.isDragOver = true;
+    },
+    onDragLeave() {
+      this.isDragOver = false;
     },
     handleDrop(event) {
+      this.isDragOver = false;
       const itemId = parseInt(event.dataTransfer.getData('itemId'), 10);
       const itemType = event.dataTransfer.getData('itemType');
       const fromStageId = event.dataTransfer.getData('fromStageId');
+      
+      // Não emite se soltar na mesma coluna
+      if (parseInt(fromStageId, 10) === this.stage.id) {
+        return;
+      }
+      
       this.$emit('move', {
         itemId,
         itemType,
@@ -97,10 +119,21 @@ export default {
 <style lang="scss" scoped>
 .kanban-column {
   @apply flex flex-col bg-slate-50 dark:bg-slate-800 rounded-lg min-w-[300px] max-w-[300px];
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  
+  &--drag-over {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    border-style: dashed;
+  }
+  
   &__cards {
     @apply flex-1 overflow-y-auto p-2 space-y-2;
     min-height: 200px;
+    transition: background-color 0.2s;
   }
+  
   &__empty {
     @apply text-center text-slate-400 dark:text-slate-500 py-8 text-sm;
   }
