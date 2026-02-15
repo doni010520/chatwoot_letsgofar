@@ -8,6 +8,9 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
   def show
     stages = @pipeline.kanban_stages.ordered
 
+    # Pré-carregar configuração dos campos personalizados
+    @custom_fields_config = @pipeline.kanban_custom_fields.ordered
+
     board_data = stages.map do |stage|
       items = if @pipeline.pipeline_type == 'contacts'
                 contacts_for_stage(stage)
@@ -33,7 +36,8 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       },
       filters_applied: filters_applied?,
       sort_by: params[:sort_by] || 'last_activity',
-      available_filters: available_filters
+      available_filters: available_filters,
+      custom_fields_config: @custom_fields_config.map { |cf| custom_field_config_json(cf) }
     }
   end
 
@@ -249,19 +253,35 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
   def available_filters
     {
       assignees: Current.account.users.map { |u| { id: u.id, name: u.name } },
-      custom_fields: @pipeline.kanban_custom_fields.ordered.map do |cf|
+      custom_fields: @custom_fields_config.map do |cf|
         {
           field_key: cf.field_key,
           name: cf.name,
           field_type: cf.field_type,
-          select_options: cf.select_options
+          select_options: cf.select_options,
+          show_on_card: cf.show_on_card
         }
       end
     }
   end
 
   def conversation_json(conv)
-    custom_field_values = conv.kanban_custom_field_values.each_with_object({}) do |cfv, hash|
+    # Montar valores dos campos personalizados com informações completas
+    custom_field_values = conv.kanban_custom_field_values.map do |cfv|
+      field_config = @custom_fields_config.find { |cf| cf.id == cfv.kanban_custom_field_id }
+      next unless field_config
+
+      {
+        field_key: cfv.kanban_custom_field.field_key,
+        field_type: field_config.field_type,
+        name: field_config.name,
+        value: cfv.value,
+        show_on_card: field_config.show_on_card
+      }
+    end.compact
+
+    # Também manter o formato antigo para compatibilidade
+    custom_fields_hash = conv.kanban_custom_field_values.each_with_object({}) do |cfv, hash|
       hash[cfv.kanban_custom_field.field_key] = cfv.value
     end
 
@@ -277,7 +297,8 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       closed_won: conv.closed_won,
       closed_reason: conv.closed_reason,
       closed_at: conv.closed_at,
-      custom_fields: custom_field_values,
+      custom_fields: custom_fields_hash,
+      custom_field_values: custom_field_values,
       tasks: {
         pending: pending_tasks_count,
         overdue: overdue_tasks_count
@@ -325,6 +346,17 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       name: stage.name,
       color: stage.color,
       position: stage.position
+    }
+  end
+
+  def custom_field_config_json(field)
+    {
+      id: field.id,
+      field_key: field.field_key,
+      name: field.name,
+      field_type: field.field_type,
+      show_on_card: field.show_on_card,
+      select_options: field.select_options
     }
   end
 end
