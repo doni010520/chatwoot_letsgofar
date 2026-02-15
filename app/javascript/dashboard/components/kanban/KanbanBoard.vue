@@ -13,6 +13,7 @@
         @card-click="handleCardClick"
         @mark-won="handleMarkWon"
         @mark-lost="handleMarkLost"
+        @remove="handleRemove"
       />
     </div>
   </div>
@@ -40,7 +41,7 @@ export default {
       default: () => [],
     },
   },
-  emits: ['move', 'card-click', 'mark-won', 'mark-lost'],
+  emits: ['move', 'card-click', 'mark-won', 'mark-lost', 'remove'],
   methods: {
     getColumnItems(column) {
       if (Array.isArray(column.items)) {
@@ -66,6 +67,9 @@ export default {
     },
     handleMarkLost(payload) {
       this.$emit('mark-lost', payload);
+    },
+    handleRemove(payload) {
+      this.$emit('remove', payload);
     },
   },
 };
