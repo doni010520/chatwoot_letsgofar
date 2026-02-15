@@ -125,6 +125,7 @@ class Conversation < ApplicationRecord
   before_create :ensure_waiting_since
 
   after_update_commit :execute_after_update_commit_callbacks
+  after_update_commit :log_kanban_changes
   after_create_commit :notify_conversation_creation
   after_create_commit :load_attributes_created_by_db_triggers
 
@@ -229,7 +230,90 @@ class Conversation < ApplicationRecord
     create_activity
     notify_conversation_updation
   end
+  def log_kanban_changes
+    log_kanban_stage_change if saved_change_to_kanban_stage_id?
+    log_deal_value_change if saved_change_to_deal_value?
+    log_closed_won_change if saved_change_to_closed_won?
+  end
 
+  def log_kanban_stage_change
+    old_stage_id, new_stage_id = saved_change_to_kanban_stage_id
+    
+    old_stage = KanbanStage.find_by(id: old_stage_id)
+    new_stage = KanbanStage.find_by(id: new_stage_id)
+
+    if old_stage_id.nil? && new_stage_id.present?
+      title = "Adicionado ao Kanban: #{new_stage&.name || 'Estágio'}"
+    elsif new_stage_id.nil? && old_stage_id.present?
+      title = "Removido do Kanban"
+    else
+      title = "Moveu de #{old_stage&.name || 'Desconhecido'} → #{new_stage&.name || 'Desconhecido'}"
+    end
+
+    kanban_activities.create(
+      account_id: account_id,
+      user_id: Current.user&.id,
+      activity_type: 'stage_changed',
+      title: title,
+      metadata: {
+        from_stage_id: old_stage_id,
+        from_stage_name: old_stage&.name,
+        to_stage_id: new_stage_id,
+        to_stage_name: new_stage&.name
+      }
+    )
+  end
+
+  def log_deal_value_change
+    old_value, new_value = saved_change_to_deal_value
+    return if old_value.nil? && new_value.nil?
+
+    formatted_old = old_value ? ActionController::Base.helpers.number_to_currency(old_value, unit: 'R$ ', separator: ',', delimiter: '.') : 'não definido'
+    formatted_new = new_value ? ActionController::Base.helpers.number_to_currency(new_value, unit: 'R$ ', separator: ',', delimiter: '.') : 'não definido'
+
+    title = "Valor alterado: #{formatted_old} → #{formatted_new}"
+
+    kanban_activities.create(
+      account_id: account_id,
+      user_id: Current.user&.id,
+      activity_type: 'deal_value_changed',
+      title: title,
+      metadata: {
+        from_value: old_value,
+        to_value: new_value
+      }
+    )
+  end
+
+  def log_closed_won_change
+    old_status, new_status = saved_change_to_closed_won
+
+    if new_status == true
+      title = "Marcou como Ganho"
+      activity_type = 'marked_won'
+    elsif new_status == false
+      title = "Marcou como Perdido"
+      title += " - #{closed_reason}" if closed_reason.present?
+      activity_type = 'marked_lost'
+    elsif new_status.nil? && !old_status.nil?
+      title = "Reabriu negócio"
+      activity_type = 'reopened'
+    else
+      return
+    end
+
+    kanban_activities.create(
+      account_id: account_id,
+      user_id: Current.user&.id,
+      activity_type: activity_type,
+      title: title,
+      metadata: {
+        from_status: old_status,
+        to_status: new_status,
+        closed_reason: closed_reason
+      }
+    )
+  end
   def handle_resolved_status_change
     # When conversation is resolved, clear waiting_since using update_column to avoid callbacks
     return unless saved_change_to_status? && status == 'resolved'
