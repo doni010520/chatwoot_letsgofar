@@ -324,9 +324,9 @@ const menuItems = computed(() => {
       ],
     },
     {
-      name: 'Kanban',
-      label: 'Kanban',
-      icon: 'i-lucide-kanban',
+      name: 'CRM',
+      label: 'CRM',
+      icon: 'i-lucide-layout-grid',
       to: accountScopedRoute('kanban_board'),
     },
     {
