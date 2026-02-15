@@ -25,7 +25,8 @@ import LinearIssuesList from 'dashboard/components/widgets/conversation/linear/I
 import LinearSetupCTA from 'dashboard/components/widgets/conversation/linear/LinearSetupCTA.vue';
 import KanbanStageSelector from 'dashboard/components/widgets/conversation/KanbanStageSelector.vue';
 import KanbanCrmFields from 'dashboard/components/widgets/conversation/KanbanCrmFields.vue';
-import KanbanTimeline from 'dashboard/components/widgets/conversation/KanbanTimeline.vue';
+import KanbanTasks from 'dashboard/components/widgets/conversation/KanbanTasks.vue';
+import KanbanHistory from 'dashboard/components/widgets/conversation/KanbanHistory.vue';
 
 const props = defineProps({
   conversationId: {
@@ -181,11 +182,27 @@ onMounted(() => {
 
       <div class="kanban-section">
         <AccordionItem
-          title="Atividades & Tarefas"
-          :is-open="isContactSidebarItemOpen('is_kanban_timeline_open')"
-          @toggle="value => toggleSidebarUIState('is_kanban_timeline_open', value)"
+          title="Tarefas"
+          :is-open="isContactSidebarItemOpen('is_kanban_tasks_open')"
+          @toggle="value => toggleSidebarUIState('is_kanban_tasks_open', value)"
         >
-          <KanbanTimeline :conversation-id="conversationId" />
+          <KanbanTasks
+            :conversation-id="conversationId"
+            @task-changed="onTaskChanged"
+          />
+        </AccordionItem>
+      </div>
+
+      <div class="kanban-section">
+        <AccordionItem
+          title="Histórico"
+          :is-open="isContactSidebarItemOpen('is_kanban_history_open')"
+          @toggle="value => toggleSidebarUIState('is_kanban_history_open', value)"
+        >
+          <KanbanHistory
+            ref="historyRef"
+            :conversation-id="conversationId"
+          />
         </AccordionItem>
       </div>
 
