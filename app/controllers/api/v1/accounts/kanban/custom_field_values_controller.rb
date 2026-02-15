@@ -3,13 +3,13 @@
 class Api::V1::Accounts::Kanban::CustomFieldValuesController < Api::V1::Accounts::Kanban::BaseController
   before_action :set_conversation
 
-  def index
-    @values = @conversation.kanban_custom_field_values.includes(:kanban_custom_field)
+  # GET /conversations/:conversation_id/kanban_custom_field_values
+  def show
     render json: values_json
   end
 
+  # PATCH /conversations/:conversation_id/kanban_custom_field_values
   def update
-    results = []
     params[:fields]&.each do |field_data|
       field = KanbanCustomField.find_by(id: field_data[:field_id])
       next unless field
@@ -18,12 +18,12 @@ class Api::V1::Accounts::Kanban::CustomFieldValuesController < Api::V1::Accounts
                                   .find_or_initialize_by(kanban_custom_field_id: field.id)
       value_record.value = field_data[:value]
       value_record.save
-      results << value_record
     end
 
     render json: values_json
   end
 
+  # PATCH /conversations/:conversation_id/kanban_custom_field_values/bulk_update
   def bulk_update
     params[:values]&.each do |field_key, value|
       field = find_field_by_key(field_key)
