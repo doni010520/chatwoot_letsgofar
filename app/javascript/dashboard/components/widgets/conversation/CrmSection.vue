@@ -42,19 +42,18 @@
       <!-- Está no CRM -->
       <div v-else class="crm-section__content">
         <!-- Info do Pipeline/Estágio atual -->
-        <div class="crm-section__current">
-          <div class="crm-section__pipeline-info">
-            <span class="crm-section__label">Pipeline:</span>
-            <span class="crm-section__value">{{ currentPipelineName }}</span>
-          </div>
-          <div class="crm-section__stage-selector">
-            <span class="crm-section__label">Estágio:</span>
-            <select v-model="currentStageIdLocal" class="crm-section__select" @change="onStageChange">
-              <option v-for="stage in currentPipelineStages" :key="stage.id" :value="stage.id">
-                {{ stage.name }}
-              </option>
-            </select>
-          </div>
+        <div class="crm-section__field">
+          <label class="crm-section__label">Pipeline</label>
+          <div class="crm-section__value-text">{{ currentPipelineName }}</div>
+        </div>
+
+        <div class="crm-section__field">
+          <label class="crm-section__label">Estágio</label>
+          <select v-model="currentStageIdLocal" class="crm-section__input" @change="onStageChange">
+            <option v-for="stage in currentPipelineStages" :key="stage.id" :value="stage.id">
+              {{ stage.name }}
+            </option>
+          </select>
         </div>
 
         <!-- Valor do Negócio -->
@@ -106,8 +105,8 @@
         <div v-if="customFields.length > 0" class="crm-section__custom-fields">
           <label class="crm-section__label crm-section__label--section">Campos Personalizados</label>
           
-          <div v-for="field in customFields" :key="field.id" class="crm-section__custom-field">
-            <label class="crm-section__field-label">
+          <div v-for="field in customFields" :key="field.id" class="crm-section__field">
+            <label class="crm-section__label">
               {{ field.name }}
               <span v-if="field.required" class="crm-section__required">*</span>
             </label>
@@ -125,7 +124,7 @@
             <!-- Textarea -->
             <textarea
               v-else-if="field.field_type === 'textarea'"
-              class="crm-section__textarea"
+              class="crm-section__input crm-section__textarea"
               rows="2"
               :value="getFieldValue(field.field_key)"
               @blur="updateCustomField(field.field_key, $event.target.value)"
@@ -155,7 +154,7 @@
             <!-- Select -->
             <select
               v-else-if="field.field_type === 'select'"
-              class="crm-section__select"
+              class="crm-section__input"
               :value="getFieldValue(field.field_key)"
               @change="updateCustomField(field.field_key, $event.target.value)"
             >
@@ -200,7 +199,7 @@
     <div v-if="showLossModal" class="crm-section__modal-overlay" @click="showLossModal = false">
       <div class="crm-section__modal" @click.stop>
         <h4>Motivo da Perda</h4>
-        <select v-model="lossReason" class="crm-section__select">
+        <select v-model="lossReason" class="crm-section__input">
           <option value="">Selecione...</option>
           <option value="Preço">Preço</option>
           <option value="Concorrência">Concorrência</option>
@@ -502,7 +501,8 @@ export default {
 
 <style scoped>
 .crm-section {
-  padding: 8px 0;
+  padding: 4px 0;
+  font-size: 13px;
 }
 
 .crm-section__loading {
@@ -548,40 +548,19 @@ export default {
 .crm-section__content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.crm-section__current {
+.crm-section__field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  background-color: var(--s-50);
-  border-radius: 6px;
-}
-
-.dark .crm-section__current {
-  background-color: var(--s-800);
-}
-
-.crm-section__pipeline-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.crm-section__stage-selector {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .crm-section__label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--s-600);
-  flex-shrink: 0;
 }
 
 .dark .crm-section__label {
@@ -590,40 +569,30 @@ export default {
 
 .crm-section__label--section {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--s-700);
-  margin-bottom: 8px;
-  display: block;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--s-200);
 }
 
 .dark .crm-section__label--section {
   color: var(--s-300);
+  border-top-color: var(--s-700);
 }
 
-.crm-section__value {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--s-800);
-}
-
-.dark .crm-section__value {
-  color: var(--s-200);
-}
-
-.crm-section__field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.crm-section__field-label {
-  font-size: 12px;
+.crm-section__value-text {
+  font-size: 13px;
   font-weight: 500;
-  color: var(--s-600);
+  color: var(--s-800);
+  padding: 8px 10px;
+  background-color: var(--s-50);
+  border-radius: 6px;
 }
 
-.dark .crm-section__field-label {
-  color: var(--s-400);
+.dark .crm-section__value-text {
+  color: var(--s-200);
+  background-color: var(--s-800);
 }
 
 .crm-section__required {
@@ -631,8 +600,7 @@ export default {
 }
 
 .crm-section__select,
-.crm-section__input,
-.crm-section__textarea {
+.crm-section__input {
   width: 100%;
   padding: 8px 10px;
   border: 1px solid var(--s-200);
@@ -643,16 +611,14 @@ export default {
 }
 
 .dark .crm-section__select,
-.dark .crm-section__input,
-.dark .crm-section__textarea {
+.dark .crm-section__input {
   background-color: var(--s-800);
   border-color: var(--s-600);
   color: var(--s-100);
 }
 
 .crm-section__select:focus,
-.crm-section__input:focus,
-.crm-section__textarea:focus {
+.crm-section__input:focus {
   outline: none;
   border-color: var(--w-500);
 }
@@ -669,6 +635,7 @@ export default {
   border-right: none;
   border-radius: 6px 0 0 6px;
   font-size: 13px;
+  font-weight: 500;
   color: var(--s-600);
 }
 
@@ -772,21 +739,15 @@ export default {
 
 /* Custom Fields */
 .crm-section__custom-fields {
-  padding-top: 12px;
-  border-top: 1px solid var(--s-200);
-}
-
-.dark .crm-section__custom-fields {
-  border-color: var(--s-700);
-}
-
-.crm-section__custom-field {
-  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* Remove Button */
 .crm-section__remove {
   padding-top: 16px;
+  margin-top: 8px;
   border-top: 1px solid var(--s-200);
   text-align: center;
 }
@@ -802,6 +763,7 @@ export default {
   color: #ef4444;
   border-radius: 6px;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -822,6 +784,7 @@ export default {
   padding: 8px 16px;
   border-radius: 6px;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--s-300);
   background-color: var(--color-background);
@@ -873,6 +836,9 @@ export default {
   padding: 20px;
   min-width: 300px;
   max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .dark .crm-section__modal {
@@ -880,8 +846,9 @@ export default {
 }
 
 .crm-section__modal h4 {
-  margin: 0 0 16px 0;
-  font-size: 16px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
   color: var(--s-800);
 }
 
@@ -893,6 +860,6 @@ export default {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 8px;
 }
 </style>
