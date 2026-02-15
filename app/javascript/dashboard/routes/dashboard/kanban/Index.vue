@@ -30,6 +30,13 @@
           <span v-if="hasActiveFilters" class="filter-badge">●</span>
         </button>
         <button
+          class="kanban-page__import-btn"
+          @click="showImportModal = true"
+        >
+          <span class="icon">📤</span>
+          <span>Importar</span>
+        </button>
+        <button
           class="kanban-page__export-btn"
           :disabled="isExporting"
           @click="exportBoard"
@@ -103,6 +110,14 @@
       @close="showSettings = false"
       @saved="onSettingsSaved"
     />
+
+    <KanbanImportModal
+      v-if="showImportModal && currentPipeline"
+      :pipeline-id="currentPipeline.id"
+      :stages="currentPipeline.kanban_stages || []"
+      @close="showImportModal = false"
+      @imported="onImportCompleted"
+    />
   </div>
 </template>
 
@@ -112,6 +127,7 @@ import Spinner from 'shared/components/Spinner.vue';
 import KanbanBoard from 'dashboard/components/kanban/KanbanBoard.vue';
 import KanbanFilters from 'dashboard/components/kanban/KanbanFilters.vue';
 import KanbanSettingsModal from './KanbanSettingsModal.vue';
+import KanbanImportModal from 'dashboard/components/kanban/KanbanImportModal.vue';
 import KanbanAPI from 'dashboard/api/kanban';
 
 export default {
@@ -121,12 +137,14 @@ export default {
     KanbanBoard,
     KanbanFilters,
     KanbanSettingsModal,
+    KanbanImportModal,
   },
   data() {
     return {
       selectedPipelineId: null,
       showSettings: false,
       showFilters: false,
+      showImportModal: false,
       isExporting: false,
       activeFilters: {},
       availableFilters: {
@@ -271,6 +289,10 @@ export default {
         this.isExporting = false;
       }
     },
+    onImportCompleted() {
+      this.showImportModal = false;
+      this.loadBoard();
+    },
     openSettings() {
       this.showSettings = true;
     },
@@ -382,6 +404,30 @@ export default {
       color: #ef4444;
       font-size: 10px;
       margin-left: -4px;
+    }
+  }
+
+  &__import-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #8b5cf6;
+    background-color: #f5f3ff;
+    color: #6d28d9;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #ede9fe;
+      border-color: #7c3aed;
+    }
+
+    .icon {
+      font-size: 16px;
     }
   }
 
