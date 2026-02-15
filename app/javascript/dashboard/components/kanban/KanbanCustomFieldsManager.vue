@@ -285,6 +285,10 @@ export default {
   color: var(--s-800);
 }
 
+.dark .manager-header__title {
+  color: var(--s-100);
+}
+
 .btn-add {
   padding: 8px 16px;
   background-color: var(--w-500);
@@ -293,6 +297,7 @@ export default {
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .btn-add:hover {
@@ -318,6 +323,10 @@ export default {
   gap: 12px;
 }
 
+.dark .field-form {
+  background-color: var(--s-800);
+}
+
 .field-form__row {
   display: flex;
   gap: 12px;
@@ -336,6 +345,10 @@ export default {
   color: var(--s-700);
 }
 
+.dark .field-form__group label {
+  color: var(--s-300);
+}
+
 .field-form__group input,
 .field-form__group select,
 .field-form__group textarea {
@@ -343,6 +356,28 @@ export default {
   border: 1px solid var(--s-200);
   border-radius: 6px;
   font-size: 13px;
+  background-color: var(--color-background);
+  color: var(--color-body);
+}
+
+.dark .field-form__group input,
+.dark .field-form__group select,
+.dark .field-form__group textarea {
+  background-color: var(--s-900);
+  border-color: var(--s-600);
+  color: var(--s-100);
+}
+
+.field-form__group input:focus,
+.field-form__group select:focus,
+.field-form__group textarea:focus {
+  outline: none;
+  border-color: var(--w-500);
+}
+
+.field-form__group input::placeholder,
+.field-form__group textarea::placeholder {
+  color: var(--s-400);
 }
 
 .field-form__group textarea {
@@ -355,6 +390,11 @@ export default {
   gap: 8px;
   font-size: 13px;
   cursor: pointer;
+  color: var(--s-700);
+}
+
+.dark .field-form__checkbox {
+  color: var(--s-300);
 }
 
 .field-form__actions {
@@ -370,18 +410,37 @@ export default {
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn-cancel {
-  background: white;
+  background-color: var(--color-background);
   border: 1px solid var(--s-300);
   color: var(--s-700);
+}
+
+.dark .btn-cancel {
+  background-color: var(--s-700);
+  border-color: var(--s-500);
+  color: var(--s-200);
+}
+
+.btn-cancel:hover {
+  background-color: var(--s-100);
+}
+
+.dark .btn-cancel:hover {
+  background-color: var(--s-600);
 }
 
 .btn-save {
   background-color: var(--w-500);
   border: none;
   color: white;
+}
+
+.btn-save:hover {
+  background-color: var(--w-600);
 }
 
 .btn-save:disabled {
@@ -401,9 +460,23 @@ export default {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background-color: white;
+  background-color: var(--color-background);
   border: 1px solid var(--s-200);
   border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.dark .field-card {
+  background-color: var(--s-800);
+  border-color: var(--s-600);
+}
+
+.field-card:hover {
+  border-color: var(--w-300);
+}
+
+.dark .field-card:hover {
+  border-color: var(--w-500);
 }
 
 .field-card__icon {
@@ -423,6 +496,10 @@ export default {
   gap: 6px;
 }
 
+.dark .field-card__name {
+  color: var(--s-100);
+}
+
 .field-card__required {
   color: #ef4444;
 }
@@ -433,6 +510,11 @@ export default {
   background-color: var(--w-100);
   color: var(--w-700);
   border-radius: 4px;
+}
+
+.dark .field-card__badge {
+  background-color: var(--w-900);
+  color: var(--w-300);
 }
 
 .field-card__meta {
@@ -453,13 +535,22 @@ export default {
   cursor: pointer;
   border-radius: 4px;
   font-size: 14px;
+  transition: background-color 0.2s;
 }
 
 .btn-icon:hover {
   background-color: var(--s-100);
 }
 
+.dark .btn-icon:hover {
+  background-color: var(--s-700);
+}
+
 .btn-icon--danger:hover {
   background-color: #fee2e2;
+}
+
+.dark .btn-icon--danger:hover {
+  background-color: #7f1d1d;
 }
 </style>
