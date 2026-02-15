@@ -12,15 +12,14 @@
     />
     <div class="kanban-column__cards">
       <KanbanCard
-        v-for="item in items"
-        :key="item.id"
-        :item="item"
-        :item-type="getItemType(item)"
-        :custom-fields-config="customFieldsConfig"
-        draggable="true"
-        @dragstart="handleDragStart($event, item)"
-        @click="handleCardClick(item)"
-      />
+  v-for="item in items"
+  :key="item.id"
+  :item="item"
+  :item-type="getItemType(item)"
+  :custom-fields-config="customFieldsConfig"
+  @dragstart="handleDragStart($event, item)"
+  @click="handleCardClick(item)"
+/>
       <div
         v-if="items.length === 0"
         class="kanban-column__empty"
@@ -139,3 +138,4 @@ export default {
   }
 }
 </style>
+
