@@ -5,71 +5,104 @@
       <div class="settings-header">
         <div class="settings-header__text">
           <h2>Configurações do Kanban</h2>
-          <p>Gerencie seus pipelines e estágios</p>
+          <p>Gerencie seus pipelines, estágios e campos</p>
         </div>
         <button class="settings-close" @click="onClose">✕</button>
       </div>
 
+      <!-- Tabs -->
+      <div class="settings-tabs">
+        <button
+          class="settings-tab"
+          :class="{ 'settings-tab--active': activeTab === 'pipelines' }"
+          @click="activeTab = 'pipelines'"
+        >
+          Pipelines & Estágios
+        </button>
+        <button
+          class="settings-tab"
+          :class="{ 'settings-tab--active': activeTab === 'fields' }"
+          @click="activeTab = 'fields'"
+        >
+          Campos Personalizados
+        </button>
+      </div>
+
       <!-- Content -->
       <div class="settings-body">
-        <!-- Pipelines Section -->
-        <div class="settings-section">
-          <div class="settings-section__header">
-            <h3>Pipelines</h3>
-            <button class="btn-primary-sm" @click="openAddPipeline">
-              + Novo Pipeline
-            </button>
-          </div>
+        <!-- Tab: Pipelines & Stages -->
+        <template v-if="activeTab === 'pipelines'">
+          <!-- Pipelines Section -->
+          <div class="settings-section">
+            <div class="settings-section__header">
+              <h3>Pipelines</h3>
+              <button class="btn-primary-sm" @click="openAddPipeline">
+                + Novo Pipeline
+              </button>
+            </div>
 
-          <div v-if="pipelines.length === 0" class="settings-empty">
-            Nenhum pipeline criado ainda.
-          </div>
+            <div v-if="pipelines.length === 0" class="settings-empty">
+              Nenhum pipeline criado ainda.
+            </div>
 
-          <div v-else class="settings-list">
-            <div
-              v-for="p in pipelines"
-              :key="p.id"
-              class="settings-item"
-              :class="{ 'settings-item--selected': p.id === pipeline?.id }"
-            >
-              <div class="settings-item__info">
-                <strong>{{ p.name }}</strong>
-              </div>
-              <div class="settings-item__actions">
-                <button class="btn-icon" @click="editPipeline(p)">✏️</button>
-                <button class="btn-icon" @click="confirmDeletePipeline(p)">🗑️</button>
+            <div v-else class="settings-list">
+              <div
+                v-for="p in pipelines"
+                :key="p.id"
+                class="settings-item"
+                :class="{ 'settings-item--selected': p.id === pipeline?.id }"
+              >
+                <div class="settings-item__info">
+                  <strong>{{ p.name }}</strong>
+                </div>
+                <div class="settings-item__actions">
+                  <button class="btn-icon" @click="editPipeline(p)">✏️</button>
+                  <button class="btn-icon" @click="confirmDeletePipeline(p)">🗑️</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Stages Section -->
-        <div v-if="pipeline" class="settings-section">
-          <div class="settings-section__header">
-            <h3>Estágios de "{{ pipeline.name }}"</h3>
-            <button class="btn-primary-sm" @click="openAddStage">
-              + Novo Estágio
-            </button>
-          </div>
+          <!-- Stages Section -->
+          <div v-if="pipeline" class="settings-section">
+            <div class="settings-section__header">
+              <h3>Estágios de "{{ pipeline.name }}"</h3>
+              <button class="btn-primary-sm" @click="openAddStage">
+                + Novo Estágio
+              </button>
+            </div>
 
-          <div v-if="stages.length === 0" class="settings-empty">
-            Nenhum estágio criado ainda.
-          </div>
+            <div v-if="stages.length === 0" class="settings-empty">
+              Nenhum estágio criado ainda.
+            </div>
 
-          <div v-else class="settings-list">
-            <div v-for="stage in stages" :key="stage.id" class="settings-item">
-              <div class="settings-item__color" :style="{ backgroundColor: stage.color }"></div>
-              <div class="settings-item__info">
-                <strong>{{ stage.name }}</strong>
-                <span>Posição {{ stage.position }}</span>
-              </div>
-              <div class="settings-item__actions">
-                <button class="btn-icon" @click="editStage(stage)">✏️</button>
-                <button class="btn-icon" @click="confirmDeleteStage(stage)">🗑️</button>
+            <div v-else class="settings-list">
+              <div v-for="stage in stages" :key="stage.id" class="settings-item">
+                <div class="settings-item__color" :style="{ backgroundColor: stage.color }"></div>
+                <div class="settings-item__info">
+                  <strong>{{ stage.name }}</strong>
+                  <span>Posição {{ stage.position }}</span>
+                </div>
+                <div class="settings-item__actions">
+                  <button class="btn-icon" @click="editStage(stage)">✏️</button>
+                  <button class="btn-icon" @click="confirmDeleteStage(stage)">🗑️</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </template>
+
+        <!-- Tab: Custom Fields -->
+        <template v-if="activeTab === 'fields'">
+          <div v-if="!pipeline" class="settings-empty">
+            Selecione um pipeline para gerenciar os campos personalizados.
+          </div>
+          <KanbanCustomFieldsManager
+            v-else
+            :account-id="accountId"
+            :pipeline-id="pipeline.id"
+          />
+        </template>
       </div>
 
       <!-- Footer -->
@@ -148,9 +181,13 @@
 
 <script>
 import KanbanAPI from 'dashboard/api/kanban';
+import KanbanCustomFieldsManager from 'dashboard/components/kanban/KanbanCustomFieldsManager.vue';
 
 export default {
   name: 'KanbanSettingsModal',
+  components: {
+    KanbanCustomFieldsManager,
+  },
   props: {
     pipeline: { type: Object, default: null },
     pipelines: { type: Array, default: () => [] },
@@ -158,6 +195,7 @@ export default {
   emits: ['close', 'saved'],
   data() {
     return {
+      activeTab: 'pipelines',
       showPipelineForm: false,
       showStageForm: false,
       editingPipeline: null,
@@ -280,9 +318,9 @@ export default {
 .settings-modal {
   background-color: #1f2937;
   border-radius: 12px;
-  width: 560px;
+  width: 600px;
   max-width: 90vw;
-  max-height: 80vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
@@ -323,6 +361,36 @@ export default {
 .settings-close:hover {
   background-color: #374151;
   color: #f9fafb;
+}
+
+/* Tabs */
+.settings-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 24px;
+  border-bottom: 1px solid #374151;
+}
+
+.settings-tab {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.2s;
+}
+
+.settings-tab:hover {
+  color: #f3f4f6;
+}
+
+.settings-tab--active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
 }
 
 .settings-body {
