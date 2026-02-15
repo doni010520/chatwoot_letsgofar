@@ -166,7 +166,8 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       params[:max_value].present? ||
       params[:search].present? ||
       params[:custom_field].present? ||
-      params[:custom_fields].present?
+      params[:custom_fields].present? ||
+      params[:tasks_filter].present?
   end
 
   def available_filters
@@ -251,5 +252,6 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 end
+
 
 
