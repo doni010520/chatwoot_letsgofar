@@ -3,7 +3,9 @@
     <!-- Header -->
     <div class="dashboard-header">
       <h1 class="dashboard-header__title">
-        <BarChart3 class="dashboard-header__icon" />
+        <svg class="dashboard-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+        </svg>
         Dashboard de Vendas
       </h1>
       <div class="dashboard-header__filters">
@@ -30,7 +32,9 @@
       <div class="metrics-grid">
         <div class="metric-card">
           <div class="metric-card__icon metric-card__icon--blue">
-            <Briefcase />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
           </div>
           <div class="metric-card__content">
             <div class="metric-card__label">Total em Negociação</div>
@@ -42,7 +46,9 @@
         </div>
         <div class="metric-card">
           <div class="metric-card__icon metric-card__icon--green">
-            <CheckCircle />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
           </div>
           <div class="metric-card__content">
             <div class="metric-card__label">Ganhos no Período</div>
@@ -54,7 +60,9 @@
         </div>
         <div class="metric-card">
           <div class="metric-card__icon metric-card__icon--red">
-            <XCircle />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
           </div>
           <div class="metric-card__content">
             <div class="metric-card__label">Perdidos no Período</div>
@@ -66,7 +74,9 @@
         </div>
         <div class="metric-card">
           <div class="metric-card__icon metric-card__icon--yellow">
-            <TrendingUp />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
           </div>
           <div class="metric-card__content">
             <div class="metric-card__label">Taxa de Conversão</div>
@@ -85,7 +95,9 @@
         <!-- Funil de vendas -->
         <div class="card">
           <div class="card__title">
-            <Filter class="card__title-icon" />
+            <svg class="card__title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+            </svg>
             Funil de Vendas
           </div>
           <div class="funnel">
@@ -118,7 +130,9 @@
         <!-- Motivos de perda -->
         <div class="card">
           <div class="card__title">
-            <XOctagon class="card__title-icon card__title-icon--red" />
+            <svg class="card__title-icon card__title-icon--red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
             Motivos de Perda
           </div>
           <div v-if="lossReasons && lossReasons.reasons.length > 0" class="loss-reasons">
@@ -133,7 +147,9 @@
             </div>
           </div>
           <div v-else class="empty-state">
-            <PartyPopper class="empty-state__icon" />
+            <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5.8 11.3 2 22l10.7-3.79"/><path d="M4 3h.01"/><path d="M22 8h.01"/><path d="M15 2h.01"/><path d="M22 20h.01"/><path d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10"/><path d="m22 13-.82-.33c-.86-.34-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17"/><path d="m11 2 .33.82c.34.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7"/><path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z"/>
+            </svg>
             <span>Nenhuma perda registrada no período</span>
           </div>
         </div>
@@ -144,7 +160,9 @@
         <!-- Top performers -->
         <div class="card">
           <div class="card__title">
-            <Trophy class="card__title-icon card__title-icon--yellow" />
+            <svg class="card__title-icon card__title-icon--yellow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+            </svg>
             Top Vendedores
           </div>
           <div v-if="topPerformers && topPerformers.performers.length > 0" class="performers">
@@ -163,7 +181,9 @@
             </div>
           </div>
           <div v-else class="empty-state">
-            <Search class="empty-state__icon" />
+            <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
             <span>Nenhuma venda fechada no período</span>
           </div>
         </div>
@@ -171,14 +191,18 @@
         <!-- Conversão entre estágios -->
         <div class="card">
           <div class="card__title">
-            <ArrowUpRight class="card__title-icon card__title-icon--green" />
+            <svg class="card__title-icon card__title-icon--green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+            </svg>
             Conversão entre Estágios
           </div>
           <div v-if="summary.stage_conversions.length > 0" class="conversions">
             <div v-for="conv in summary.stage_conversions" :key="conv.from_stage + conv.to_stage" class="conversion">
               <div class="conversion__flow">
                 <span class="conversion__stage">{{ conv.from_stage }}</span>
-                <ArrowRight class="conversion__arrow" />
+                <svg class="conversion__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+                </svg>
                 <span class="conversion__stage">{{ conv.to_stage }}</span>
               </div>
               <span class="conversion__rate" :class="getConversionClass(conv.conversion_rate)">
@@ -188,7 +212,9 @@
             <div class="conversion conversion--total">
               <div class="conversion__flow">
                 <span class="conversion__stage"><strong>Total</strong></span>
-                <ArrowRight class="conversion__arrow" />
+                <svg class="conversion__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
+                </svg>
                 <span class="conversion__stage">Lead → Venda</span>
               </div>
               <span class="conversion__rate conversion__rate--total" :class="getConversionClass(summary.totals.conversion_rate)">
@@ -197,7 +223,9 @@
             </div>
           </div>
           <div v-else class="empty-state">
-            <BarChart2 class="empty-state__icon" />
+            <svg class="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+            </svg>
             <span>Dados insuficientes</span>
           </div>
         </div>
@@ -211,39 +239,9 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'dashboard/composables/store';
 import KanbanAPI from 'dashboard/api/kanban';
-import {
-  BarChart3,
-  Briefcase,
-  CheckCircle,
-  XCircle,
-  TrendingUp,
-  Filter,
-  XOctagon,
-  Trophy,
-  ArrowUpRight,
-  ArrowRight,
-  PartyPopper,
-  Search,
-  BarChart2,
-} from 'lucide-vue-next';
 
 export default {
   name: 'KanbanDashboard',
-  components: {
-    BarChart3,
-    Briefcase,
-    CheckCircle,
-    XCircle,
-    TrendingUp,
-    Filter,
-    XOctagon,
-    Trophy,
-    ArrowUpRight,
-    ArrowRight,
-    PartyPopper,
-    Search,
-    BarChart2,
-  },
   setup() {
     const route = useRoute();
     const store = useStore();
