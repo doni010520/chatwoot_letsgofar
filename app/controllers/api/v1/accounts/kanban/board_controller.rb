@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'csv'
+
 class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::BaseController
   before_action :set_pipeline
 
@@ -48,6 +50,57 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
 
     item.update!(kanban_stage_id: to_stage_id.presence)
     head :ok
+  end
+
+  def export
+    stages = @pipeline.kanban_stages.ordered
+    
+    csv_data = CSV.generate(headers: true, col_sep: ';') do |csv|
+      # Header
+      headers = [
+        'ID', 'Contato', 'Email', 'Telefone', 'Estágio', 'Valor',
+        'Status', 'Motivo Perda', 'Vendedor', 'Criado em', 'Última Atividade'
+      ]
+      
+      # Adicionar campos personalizados ao header
+      custom_fields = @pipeline.kanban_custom_fields.ordered
+      custom_fields.each { |cf| headers << cf.name }
+      
+      csv << headers
+      
+      # Dados
+      stages.each do |stage|
+        conversations = stage.conversations.includes(:contact, :assignee, :kanban_custom_field_values)
+        
+        conversations.each do |conv|
+          row = [
+            conv.display_id,
+            conv.contact&.name,
+            conv.contact&.email,
+            conv.contact&.phone_number,
+            stage.name,
+            conv.deal_value,
+            conv.closed_won.nil? ? 'Aberto' : (conv.closed_won ? 'Ganho' : 'Perdido'),
+            conv.closed_reason,
+            conv.assignee&.name,
+            conv.created_at&.strftime('%d/%m/%Y %H:%M'),
+            conv.last_activity_at&.strftime('%d/%m/%Y %H:%M')
+          ]
+          
+          # Adicionar valores dos campos personalizados
+          custom_fields.each do |cf|
+            value = conv.kanban_custom_field_values.find { |v| v.kanban_custom_field_id == cf.id }&.value
+            row << value
+          end
+          
+          csv << row
+        end
+      end
+    end
+    
+    send_data csv_data,
+              filename: "kanban_#{@pipeline.name.parameterize}_#{Date.current}.csv",
+              type: 'text/csv; charset=utf-8'
   end
 
   private
