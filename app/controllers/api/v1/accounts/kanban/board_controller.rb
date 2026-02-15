@@ -30,6 +30,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
         value: board_data.sum { |col| col[:totals][:value] }
       },
       filters_applied: filters_applied?,
+      sort_by: params[:sort_by] || 'last_activity',
       available_filters: available_filters
     }
   end
@@ -56,7 +57,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
   end
 
   def conversations_for_stage(stage)
-    conversations = stage.conversations.includes(:contact, :assignee, :kanban_custom_field_values)
+    conversations = stage.conversations.includes(:contact, :assignee, :kanban_custom_field_values, :kanban_tasks)
 
     # Filtro por vendedor
     if params[:assignee_id].present?
@@ -119,7 +120,8 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
         conversations = conversations.where(id: conversation_ids)
       end
     end
-   # Filtro por tarefas
+
+    # Filtro por tarefas
     if params[:tasks_filter].present?
       case params[:tasks_filter]
       when 'with_tasks'
@@ -137,6 +139,10 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
         conversations = conversations.where.not(id: conversation_ids)
       end
     end
+
+    # Aplicar ordenação
+    conversations = apply_sorting(conversations)
+
     conversations.limit(100).map do |conv|
       conversation_json(conv)
     end
@@ -156,6 +162,23 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
 
     contacts.limit(100).map do |contact|
       contact_json(contact)
+    end
+  end
+
+  def apply_sorting(conversations)
+    case params[:sort_by]
+    when 'value_desc'
+      conversations.order('deal_value DESC NULLS LAST')
+    when 'value_asc'
+      conversations.order('deal_value ASC NULLS LAST')
+    when 'newest'
+      conversations.order(created_at: :desc)
+    when 'oldest'
+      conversations.order(created_at: :asc)
+    when 'last_activity'
+      conversations.order(last_activity_at: :desc)
+    else
+      conversations.order(last_activity_at: :desc)
     end
   end
 
@@ -184,7 +207,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 
- def conversation_json(conv)
+  def conversation_json(conv)
     custom_field_values = conv.kanban_custom_field_values.each_with_object({}) do |cfv, hash|
       hash[cfv.kanban_custom_field.field_key] = cfv.value
     end
@@ -252,6 +275,3 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 end
-
-
-
