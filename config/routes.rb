@@ -157,6 +157,14 @@ Rails.application.routes.draw do
               get :inbox_assistant
               get :reporting_events if ChatwootApp.enterprise?
             end
+
+            # Kanban Activities e Tasks
+            resources :kanban_activities, only: [:index, :create, :destroy], controller: 'kanban/activities'
+            resources :kanban_tasks, only: [:index, :show, :create, :update, :destroy], controller: 'kanban/tasks' do
+              member do
+                patch :complete
+              end
+            end
           end
 
           resources :search, only: [:index] do
