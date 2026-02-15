@@ -2,7 +2,7 @@
   <div class="kanban-page">
     <header class="kanban-page__header">
       <div class="kanban-page__title">
-        <h1>Kanban</h1>
+        <h1>CRM</h1>
         <p v-if="currentPipeline">{{ currentPipeline.name }}</p>
       </div>
       <div class="kanban-page__actions">
@@ -574,3 +574,4 @@ export default {
   }
 }
 </style>
+
