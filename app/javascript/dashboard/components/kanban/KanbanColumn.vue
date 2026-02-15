@@ -14,6 +14,7 @@
         :key="item.id"
         :item="item"
         :item-type="getItemType(item)"
+        :custom-fields-config="customFieldsConfig"
         draggable="true"
         @dragstart="handleDragStart($event, item)"
         @click="handleCardClick(item)"
@@ -55,6 +56,10 @@ export default {
       type: String,
       default: 'conversations',
     },
+    customFieldsConfig: {
+      type: Array,
+      default: () => [],
+    },
   },
   emits: ['move', 'card-click'],
   methods: {
@@ -72,7 +77,6 @@ export default {
       const itemId = parseInt(event.dataTransfer.getData('itemId'), 10);
       const itemType = event.dataTransfer.getData('itemType');
       const fromStageId = event.dataTransfer.getData('fromStageId');
-
       this.$emit('move', {
         itemId,
         itemType,
@@ -93,12 +97,10 @@ export default {
 <style lang="scss" scoped>
 .kanban-column {
   @apply flex flex-col bg-slate-50 dark:bg-slate-800 rounded-lg min-w-[300px] max-w-[300px];
-
   &__cards {
     @apply flex-1 overflow-y-auto p-2 space-y-2;
     min-height: 200px;
   }
-
   &__empty {
     @apply text-center text-slate-400 dark:text-slate-500 py-8 text-sm;
   }
