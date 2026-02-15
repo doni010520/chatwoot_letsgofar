@@ -32,6 +32,17 @@
         </select>
       </div>
 
+       <!-- Tarefas -->
+      <div class="filter-item">
+        <select v-model="localFilters.tasks_filter" class="filter-select" @change="applyFilters">
+          <option value="">📋 Todas as tarefas</option>
+          <option value="with_tasks">Com tarefas pendentes</option>
+          <option value="overdue">⚠️ Com tarefas atrasadas</option>
+          <option value="due_today">📅 Vencendo hoje</option>
+          <option value="no_tasks">Sem tarefas</option>
+        </select>
+      </div>
+
       <!-- Valor Mínimo/Máximo -->
       <div class="filter-item filter-item--value">
         <span class="filter-prefix">R$</span>
