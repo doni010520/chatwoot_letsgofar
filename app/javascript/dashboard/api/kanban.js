@@ -171,6 +171,42 @@ class KanbanAPI extends ApiClient {
     const params = filter ? { filter } : {};
     return window.axios.get(`/api/v1/accounts/${accountId}/kanban/user_tasks`, { params });
   }
+  // ============================================
+  // AUTOMATIONS
+  // ============================================
+
+  getAutomations(accountId, pipelineId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations`);
+  }
+
+  getAutomation(accountId, pipelineId, automationId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}`);
+  }
+
+  createAutomation(accountId, pipelineId, data) {
+    return window.axios.post(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations`, { automation: data });
+  }
+
+  updateAutomation(accountId, pipelineId, automationId, data) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}`, { automation: data });
+  }
+
+  deleteAutomation(accountId, pipelineId, automationId) {
+    return window.axios.delete(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}`);
+  }
+
+  toggleAutomation(accountId, pipelineId, automationId) {
+    return window.axios.patch(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}/toggle`);
+  }
+
+  getAutomationLogs(accountId, pipelineId, automationId, limit = 50) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}/logs`, { params: { limit } });
+  }
+
+  testAutomation(accountId, pipelineId, automationId) {
+    return window.axios.post(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}/test`);
+  }
 }
 
 export default new KanbanAPI();
+
