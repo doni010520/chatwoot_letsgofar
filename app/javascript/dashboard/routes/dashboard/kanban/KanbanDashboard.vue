@@ -279,7 +279,10 @@ export default {
   padding: 24px;
   background-color: #111827;
   min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
   color: #f3f4f6;
+  box-sizing: border-box;
 }
 
 .dashboard-header {
@@ -287,6 +290,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .dashboard-header__title {
@@ -329,6 +334,7 @@ export default {
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 24px;
+  width: 100%;
 }
 
 .metric-card {
@@ -345,7 +351,7 @@ export default {
 }
 
 .metric-card__value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
 }
 
@@ -363,15 +369,17 @@ export default {
 /* Grids */
 .main-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1.5fr 1fr;
   gap: 24px;
   margin-bottom: 24px;
+  width: 100%;
 }
 
 .secondary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  width: 100%;
 }
 
 .card {
@@ -379,6 +387,7 @@ export default {
   border-radius: 12px;
   padding: 20px;
   border: 1px solid #374151;
+  min-width: 0;
 }
 
 .card__title {
@@ -404,11 +413,13 @@ export default {
   width: 12px;
   height: 12px;
   border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .funnel-stage__name {
-  width: 120px;
+  width: 100px;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .funnel-stage__bar-container {
@@ -417,6 +428,7 @@ export default {
   background-color: #111827;
   border-radius: 4px;
   overflow: hidden;
+  min-width: 80px;
 }
 
 .funnel-stage__bar {
@@ -430,9 +442,10 @@ export default {
 }
 
 .funnel-stage__values {
-  width: 140px;
+  width: 120px;
   text-align: right;
   font-size: 13px;
+  flex-shrink: 0;
 }
 
 .funnel-stage__count {
@@ -445,10 +458,11 @@ export default {
 }
 
 .funnel-stage__conversion {
-  width: 60px;
+  width: 50px;
   text-align: center;
   font-size: 12px;
   color: #9ca3af;
+  flex-shrink: 0;
 }
 
 /* Motivos de perda */
@@ -468,6 +482,7 @@ export default {
   width: 100px;
   font-size: 13px;
   color: #d1d5db;
+  flex-shrink: 0;
 }
 
 .loss-reason__bar-container {
@@ -476,6 +491,7 @@ export default {
   background-color: #111827;
   border-radius: 4px;
   overflow: hidden;
+  min-width: 40px;
 }
 
 .loss-reason__bar {
@@ -493,6 +509,7 @@ export default {
   text-align: right;
   font-size: 13px;
   color: #9ca3af;
+  flex-shrink: 0;
 }
 
 /* Performers */
@@ -521,6 +538,7 @@ export default {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .performer__rank--1 { background-color: #f59e0b; color: #111827; }
@@ -537,15 +555,20 @@ export default {
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
+  flex-shrink: 0;
 }
 
 .performer__info {
   flex: 1;
+  min-width: 0;
 }
 
 .performer__name {
   font-size: 14px;
   font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .performer__count {
@@ -557,6 +580,7 @@ export default {
   font-size: 14px;
   font-weight: 600;
   color: #10b981;
+  flex-shrink: 0;
 }
 
 /* Conversões */
@@ -602,6 +626,24 @@ export default {
   }
   .main-grid,
   .secondary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-dashboard {
+    padding: 16px;
+  }
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .metric-card__value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-grid {
     grid-template-columns: 1fr;
   }
 }
