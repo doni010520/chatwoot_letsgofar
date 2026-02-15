@@ -21,6 +21,7 @@
         @click="handleCardClick(item)"
         @mark-won="handleMarkWon"
         @mark-lost="handleMarkLost"
+        @remove="handleRemove"
       />
       <div
         v-if="items.length === 0"
@@ -64,7 +65,7 @@ export default {
       default: () => [],
     },
   },
-  emits: ['move', 'card-click', 'mark-won', 'mark-lost'],
+  emits: ['move', 'card-click', 'mark-won', 'mark-lost', 'remove'],
   data() {
     return {
       isDragOver: false,
@@ -118,6 +119,9 @@ export default {
     },
     handleMarkLost(payload) {
       this.$emit('mark-lost', payload);
+    },
+    handleRemove(payload) {
+      this.$emit('remove', payload);
     },
   },
 };
