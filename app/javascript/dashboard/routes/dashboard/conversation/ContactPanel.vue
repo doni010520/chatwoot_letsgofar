@@ -27,6 +27,7 @@ import KanbanStageSelector from 'dashboard/components/widgets/conversation/Kanba
 import KanbanCrmFields from 'dashboard/components/widgets/conversation/KanbanCrmFields.vue';
 import KanbanTasks from 'dashboard/components/widgets/conversation/KanbanTasks.vue';
 import KanbanHistory from 'dashboard/components/widgets/conversation/KanbanHistory.vue';
+import KanbanCustomFields from 'dashboard/components/widgets/conversation/KanbanCustomFields.vue';
 
 const props = defineProps({
   conversationId: {
@@ -210,6 +211,15 @@ onMounted(() => {
             ref="historyRef"
             :conversation-id="conversationId"
           />
+        </AccordionItem>
+      </div>
+      <div class="kanban-section">
+        <AccordionItem
+          title="Campos do Lead"
+          :is-open="isContactSidebarItemOpen('is_kanban_custom_fields_open')"
+          @toggle="value => toggleSidebarUIState('is_kanban_custom_fields_open', value)"
+        >
+          <KanbanCustomFields :conversation-id="conversationId" />
         </AccordionItem>
       </div>
 
