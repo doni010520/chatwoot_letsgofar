@@ -45,7 +45,7 @@ class KanbanAPI extends ApiClient {
     return window.axios.patch(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/stages/${stageId}/reorder`, { position });
   }
 
- getBoard(accountId, pipelineId, filters = {}) {
+  getBoard(accountId, pipelineId, filters = {}) {
     return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/board`, {
       params: filters
     });
@@ -53,6 +53,14 @@ class KanbanAPI extends ApiClient {
 
   moveItem(accountId, pipelineId, data) {
     return window.axios.patch(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/board/move`, data);
+  }
+
+  // Export
+  exportBoard(accountId, pipelineId) {
+    return window.axios.get(
+      `/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/board/export`,
+      { responseType: 'blob' }
+    );
   }
 
   updateConversationStage(accountId, conversationId, stageId) {
@@ -166,5 +174,3 @@ class KanbanAPI extends ApiClient {
 }
 
 export default new KanbanAPI();
-
-
