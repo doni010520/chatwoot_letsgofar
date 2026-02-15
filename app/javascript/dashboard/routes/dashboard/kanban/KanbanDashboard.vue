@@ -2,12 +2,19 @@
   <div class="kanban-dashboard">
     <!-- Header -->
     <div class="dashboard-header">
-      <h1 class="dashboard-header__title">
-        <svg class="dashboard-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
-        </svg>
-        Dashboard de Vendas
-      </h1>
+      <div class="dashboard-header__left">
+        <button class="dashboard-header__back" @click="goBack" title="Voltar ao CRM">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>
+          </svg>
+        </button>
+        <h1 class="dashboard-header__title">
+          <svg class="dashboard-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+          </svg>
+          Dashboard de Vendas
+        </h1>
+      </div>
       <div class="dashboard-header__filters">
         <select v-model="selectedPipelineId" class="dashboard-select" @change="loadData">
           <option v-for="p in pipelines" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -330,11 +337,16 @@ export default {
       return 'conversion__rate--low';
     };
 
+    const goBack = () => {
+      window.history.back();
+    };
+
     onMounted(() => {
       loadPipelines();
     });
 
     return {
+      goBack,
       pipelines,
       selectedPipelineId,
       selectedPeriod,
@@ -375,6 +387,36 @@ export default {
   border-radius: 16px;
   border: 1px solid var(--s-100);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dashboard-header__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--s-200);
+  background-color: var(--s-50);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dashboard-header__back:hover {
+  background-color: var(--s-100);
+  border-color: var(--s-300);
+}
+
+.dashboard-header__back svg {
+  width: 20px;
+  height: 20px;
+  color: var(--s-600);
 }
 
 .dashboard-header__title {
@@ -921,16 +963,28 @@ export default {
 
 /* ===== DARK MODE ===== */
 .dark .kanban-dashboard {
-  background-color: var(--s-900);
+  background-color: #0f1117;
   color: var(--s-100);
 }
 
-.dark .dashboard-header,
-.dark .metric-card,
-.dark .card,
-.dark .dashboard-loading {
-  background-color: var(--s-800);
-  border-color: var(--s-700);
+.dark .dashboard-header {
+  background-color: #1a1d26;
+  border: 1px solid #2d3343;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark .dashboard-header__back {
+  background-color: #252a36;
+  border-color: #3d4455;
+}
+
+.dark .dashboard-header__back:hover {
+  background-color: #2d3343;
+  border-color: #4d5566;
+}
+
+.dark .dashboard-header__back svg {
+  color: #a5b4c5;
 }
 
 .dark .dashboard-header__title {
@@ -938,17 +992,44 @@ export default {
 }
 
 .dark .dashboard-select {
-  background-color: var(--s-700);
-  border-color: var(--s-600);
+  background-color: #252a36;
+  border-color: #3d4455;
   color: var(--s-100);
 }
 
+.dark .dashboard-select:hover {
+  border-color: #4d5566;
+  background-color: #2d3343;
+}
+
+.dark .metric-card {
+  background-color: #1a1d26;
+  border: 1px solid #2d3343;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .metric-card:hover {
+  border-color: #3d4455;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
 .dark .metric-card__label {
-  color: var(--s-400);
+  color: #8b95a5;
 }
 
 .dark .metric-card__sub {
-  color: var(--s-500);
+  color: #6b7280;
+}
+
+.dark .card {
+  background-color: #1a1d26;
+  border: 1px solid #2d3343;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dark .dashboard-loading {
+  background-color: #1a1d26;
+  border: 1px solid #2d3343;
 }
 
 .dark .card__title {
@@ -956,61 +1037,70 @@ export default {
 }
 
 .dark .funnel-stage__name {
-  color: var(--s-300);
+  color: #c9d1d9;
 }
 
 .dark .funnel-stage__bar-container,
 .dark .loss-reason__bar-container {
-  background-color: var(--s-700);
+  background-color: #252a36;
 }
 
 .dark .conversion-badge {
-  background-color: var(--s-700);
-  color: var(--s-300);
+  background-color: #252a36;
+  border: 1px solid #3d4455;
+  color: #a5b4c5;
 }
 
 .dark .performer {
-  background-color: var(--s-700);
+  background-color: #252a36;
+  border: 1px solid #2d3343;
 }
 
 .dark .performer:hover {
-  background-color: var(--s-600);
+  background-color: #2d3343;
+  border-color: #3d4455;
 }
 
 .dark .performer__name {
-  color: var(--s-100);
+  color: #e5e7eb;
 }
 
 .dark .performer__count {
-  color: var(--s-400);
+  color: #8b95a5;
 }
 
 .dark .conversion {
-  background-color: var(--s-700);
+  background-color: #252a36;
+  border: 1px solid #2d3343;
 }
 
 .dark .conversion:hover {
-  background-color: var(--s-600);
+  background-color: #2d3343;
+  border-color: #3d4455;
 }
 
 .dark .conversion--total {
-  background-color: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.3);
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .dark .conversion__stage {
-  color: var(--s-300);
+  color: #c9d1d9;
+}
+
+.dark .conversion__arrow {
+  color: #6b7280;
 }
 
 .dark .empty-state {
-  color: var(--s-500);
+  color: #6b7280;
 }
 
 .dark .loss-reason__name {
-  color: var(--s-400);
+  color: #a5b4c5;
 }
 
 .dark .loss-reason__percent {
-  color: var(--s-400);
+  color: #8b95a5;
 }
 </style>
