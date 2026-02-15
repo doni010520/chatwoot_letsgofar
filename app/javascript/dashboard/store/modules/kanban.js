@@ -200,11 +200,11 @@ const mutations = {
     // Update totals
     if (fromColumn.totals) {
       fromColumn.totals.count = Math.max(0, (fromColumn.totals.count || 0) - 1);
-      fromColumn.totals.value = Math.max(0, (fromColumn.totals.value || 0) - (movedItem.value || 0));
+      fromColumn.totals.value = Math.max(0, (fromColumn.totals.value || 0) - (movedItem.deal_value || 0));
     }
     if (toColumn.totals) {
       toColumn.totals.count = (toColumn.totals.count || 0) + 1;
-      toColumn.totals.value = (toColumn.totals.value || 0) + (movedItem.value || 0);
+      toColumn.totals.value = (toColumn.totals.value || 0) + (movedItem.deal_value || 0);
     }
   },
 };
@@ -217,3 +217,4 @@ export default {
   mutations,
 
 };
+
