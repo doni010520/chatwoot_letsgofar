@@ -1,5 +1,12 @@
 <template>
-  <div class="kanban-card" :class="cardClasses" @click="$emit('click')">
+  <div 
+    class="kanban-card" 
+    :class="[cardClasses, { 'kanban-card--dragging': isDragging }]"
+    draggable="true"
+    @click="$emit('click')"
+    @dragstart="onDragStart"
+    @dragend="onDragEnd"
+  >
     <!-- Header com foto e info do contato -->
     <div class="kanban-card__header">
       <div class="kanban-card__avatar">
@@ -96,7 +103,12 @@ export default {
       default: () => [],
     },
   },
-  emits: ['click'],
+  emits: ['click', 'dragstart'],
+  data() {
+    return {
+      isDragging: false,
+    };
+  },
   computed: {
     contactName() {
       if (this.itemType === 'conversation') {
@@ -166,6 +178,13 @@ export default {
     },
   },
   methods: {
+    onDragStart(event) {
+      this.isDragging = true;
+      this.$emit('dragstart', event);
+    },
+    onDragEnd() {
+      this.isDragging = false;
+    },
     getInitials(name) {
       if (!name) return '?';
       return name
@@ -214,8 +233,9 @@ export default {
   padding: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
-  cursor: grab;
+  cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .kanban-card:hover {
@@ -224,7 +244,7 @@ export default {
   transform: translateY(-1px);
 }
 
-.kanban-card:active {
+.kanban-card--dragging {
   cursor: grabbing;
   transform: rotate(2deg) scale(1.02);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
@@ -451,5 +471,33 @@ export default {
 .kanban-card__assignee-name {
   color: #4b5563;
   font-weight: 500;
+}
+
+/* Dark mode support */
+:deep(.dark) .kanban-card,
+.dark .kanban-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+:deep(.dark) .kanban-card__name,
+.dark .kanban-card__name {
+  color: #f9fafb;
+}
+
+:deep(.dark) .kanban-card__phone,
+.dark .kanban-card__phone {
+  color: #9ca3af;
+}
+
+:deep(.dark) .kanban-card__custom-fields,
+.dark .kanban-card__custom-fields {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+
+:deep(.dark) .kanban-card__custom-field-value,
+.dark .kanban-card__custom-field-value {
+  color: #f9fafb;
 }
 </style>
