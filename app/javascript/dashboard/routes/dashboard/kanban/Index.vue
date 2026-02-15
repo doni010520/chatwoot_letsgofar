@@ -52,6 +52,13 @@
           <span>Dashboard</span>
         </button>
         <button
+          class="kanban-page__automations-btn"
+          @click="showAutomations = true"
+        >
+          <span class="icon">⚡</span>
+          <span>Automações</span>
+        </button>
+        <button
           class="kanban-page__config-btn"
           @click="openSettings"
         >
@@ -118,6 +125,14 @@
       @close="showImportModal = false"
       @imported="onImportCompleted"
     />
+
+    <KanbanAutomationsManager
+      v-if="showAutomations && currentPipeline"
+      :pipeline-id="currentPipeline.id"
+      :stages="currentPipeline.kanban_stages || []"
+      :users="availableFilters.assignees || []"
+      @close="showAutomations = false"
+    />
   </div>
 </template>
 
@@ -128,6 +143,7 @@ import KanbanBoard from 'dashboard/components/kanban/KanbanBoard.vue';
 import KanbanFilters from 'dashboard/components/kanban/KanbanFilters.vue';
 import KanbanSettingsModal from './KanbanSettingsModal.vue';
 import KanbanImportModal from 'dashboard/components/kanban/KanbanImportModal.vue';
+import KanbanAutomationsManager from 'dashboard/components/kanban/KanbanAutomationsManager.vue';
 import KanbanAPI from 'dashboard/api/kanban';
 
 export default {
@@ -138,6 +154,7 @@ export default {
     KanbanFilters,
     KanbanSettingsModal,
     KanbanImportModal,
+    KanbanAutomationsManager,
   },
   data() {
     return {
@@ -145,6 +162,7 @@ export default {
       showSettings: false,
       showFilters: false,
       showImportModal: false,
+      showAutomations: false,
       isExporting: false,
       activeFilters: {},
       availableFilters: {
@@ -483,6 +501,30 @@ export default {
     }
   }
 
+  &__automations-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #f59e0b;
+    background-color: #fffbeb;
+    color: #b45309;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: #fef3c7;
+      border-color: #d97706;
+    }
+
+    .icon {
+      font-size: 16px;
+    }
+  }
+
   &__config-btn {
     display: flex;
     align-items: center;
@@ -574,4 +616,3 @@ export default {
   }
 }
 </style>
-
