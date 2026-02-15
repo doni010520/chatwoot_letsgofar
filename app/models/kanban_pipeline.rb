@@ -4,7 +4,7 @@ class KanbanPipeline < ApplicationRecord
   belongs_to :account
   has_many :kanban_stages, -> { order(position: :asc) }, dependent: :destroy, inverse_of: :kanban_pipeline
   has_many :kanban_custom_fields, -> { order(position: :asc) }, dependent: :destroy
-  has_many :kanban_automation, dependet: :destroy
+  has_many :kanban_automation, dependent: :destroy
   
   enum pipeline_type: { conversations: 0, contacts: 1, both: 2 }
 
@@ -51,4 +51,5 @@ class KanbanPipeline < ApplicationRecord
   end
 
 end
+
 
