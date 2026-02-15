@@ -51,22 +51,13 @@
       </div>
     </div>
 
-    <!-- ID da conversa -->
-    <div v-if="itemType === 'conversation'" class="kanban-card__id">
-      #{{ item.display_id }}
-    </div>
-
-    <!-- Status e tempo -->
-    <div class="kanban-card__footer">
-      <span
-        class="kanban-card__status"
-        :class="`kanban-card__status--${item.status}`"
-      >
+    <!-- ID da conversa + Status + Tempo -->
+    <div class="kanban-card__meta">
+      <span v-if="itemType === 'conversation'" class="kanban-card__id">#{{ item.display_id }}</span>
+      <span class="kanban-card__status" :class="`kanban-card__status--${item.status}`">
         {{ statusLabel }}
       </span>
-      <span v-if="timeAgo" class="kanban-card__time">
-        {{ timeAgo }}
-      </span>
+      <span v-if="timeAgo" class="kanban-card__time">{{ timeAgo }}</span>
     </div>
 
     <!-- Resultado (Ganho/Perdido) - Se já foi marcado -->
@@ -98,7 +89,7 @@
     <!-- Tarefas -->
     <div v-if="hasTasks" class="kanban-card__tasks">
       <span class="kanban-card__tasks-icon">📋</span>
-      <span class="kanban-card__tasks-count">{{ item.tasks.pending }}</span>
+      <span class="kanban-card__tasks-text">{{ item.tasks.pending }} tarefa{{ item.tasks.pending > 1 ? 's' : '' }}</span>
       <span v-if="item.tasks.overdue > 0" class="kanban-card__tasks-overdue">
         ({{ item.tasks.overdue }} atrasada{{ item.tasks.overdue > 1 ? 's' : '' }})
       </span>
@@ -106,8 +97,7 @@
 
     <!-- Assignee -->
     <div v-if="item.assignee" class="kanban-card__assignee">
-      <span class="kanban-card__assignee-label">Atribuído:</span>
-      <span class="kanban-card__assignee-name">{{ item.assignee.name }}</span>
+      <span class="kanban-card__assignee-text">Atribuído: {{ item.assignee.name }}</span>
     </div>
 
     <!-- Modal de Motivo de Perda -->
@@ -332,7 +322,12 @@ export default {
 </script>
 
 <style scoped>
+/* Base font size for the card */
 .kanban-card {
+  --card-font-size: 12px;
+  --card-font-size-sm: 11px;
+  --card-font-size-lg: 13px;
+  
   background-color: #ffffff;
   border-radius: 8px;
   padding: 12px;
@@ -342,6 +337,7 @@ export default {
   transition: all 0.2s ease;
   user-select: none;
   position: relative;
+  font-size: var(--card-font-size);
 }
 
 .kanban-card:hover {
@@ -371,16 +367,17 @@ export default {
   opacity: 0.7;
 }
 
+/* Header */
 .kanban-card__header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .kanban-card__avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   flex-shrink: 0;
   overflow: hidden;
@@ -398,7 +395,7 @@ export default {
 
 .kanban-card__avatar-initials {
   color: #ffffff;
-  font-size: 14px;
+  font-size: var(--card-font-size);
   font-weight: 600;
 }
 
@@ -409,22 +406,24 @@ export default {
 
 .kanban-card__name {
   display: block;
-  font-size: 14px;
+  font-size: var(--card-font-size-lg);
   font-weight: 600;
   color: #1f2937;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.3;
 }
 
 .kanban-card__phone {
   display: block;
-  font-size: 12px;
+  font-size: var(--card-font-size-sm);
   color: #6b7280;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-top: 2px;
+  line-height: 1.3;
 }
 
 .kanban-card__remove-btn {
@@ -442,8 +441,9 @@ export default {
   background-color: #fee2e2;
 }
 
+/* Value */
 .kanban-card__value {
-  font-size: 16px;
+  font-size: var(--card-font-size-lg);
   font-weight: 700;
   color: #059669;
   margin-bottom: 8px;
@@ -453,7 +453,7 @@ export default {
   display: inline-block;
 }
 
-/* Campos Personalizados */
+/* Custom Fields */
 .kanban-card__custom-fields {
   display: flex;
   flex-direction: column;
@@ -469,39 +469,42 @@ export default {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--card-font-size-sm);
+  line-height: 1.4;
 }
 
 .kanban-card__custom-field-label {
   color: #6b7280;
+  font-weight: 500;
   flex-shrink: 0;
 }
 
 .kanban-card__custom-field-value {
   color: #1f2937;
-  font-weight: 500;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.kanban-card__id {
-  font-size: 11px;
-  color: #9ca3af;
+/* Meta (ID + Status + Time) */
+.kanban-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
-.kanban-card__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
+.kanban-card__id {
+  font-size: var(--card-font-size-sm);
+  color: #9ca3af;
+  font-weight: 500;
 }
 
 .kanban-card__status {
-  font-size: 11px;
-  font-weight: 500;
-  padding: 3px 8px;
+  font-size: var(--card-font-size-sm);
+  font-weight: 600;
+  padding: 2px 8px;
   border-radius: 4px;
 }
 
@@ -526,16 +529,19 @@ export default {
 }
 
 .kanban-card__time {
-  font-size: 11px;
+  font-size: var(--card-font-size-sm);
   color: #9ca3af;
+  font-weight: 500;
+  margin-left: auto;
 }
 
+/* Result */
 .kanban-card__result {
-  font-size: 11px;
+  font-size: var(--card-font-size-sm);
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .kanban-card__result--won {
@@ -549,14 +555,14 @@ export default {
 }
 
 .kanban-card__reason {
-  font-weight: 400;
+  font-weight: 500;
 }
 
-/* Botões de Ação Ganho/Perdido */
+/* Action Buttons */
 .kanban-card__actions {
   display: flex;
   gap: 6px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .kanban-card__action-btn {
@@ -564,7 +570,7 @@ export default {
   padding: 6px 8px;
   border: none;
   border-radius: 4px;
-  font-size: 11px;
+  font-size: var(--card-font-size-sm);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -590,7 +596,46 @@ export default {
   color: white;
 }
 
-/* Modal de Motivo de Perda */
+/* Tasks */
+.kanban-card__tasks {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--card-font-size-sm);
+  color: #6b7280;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+}
+
+.kanban-card__tasks-icon {
+  font-size: var(--card-font-size);
+}
+
+.kanban-card__tasks-text {
+  font-weight: 500;
+  color: #374151;
+}
+
+.kanban-card__tasks-overdue {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Assignee */
+.kanban-card__assignee {
+  font-size: var(--card-font-size-sm);
+  color: #6b7280;
+  padding-top: 6px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.kanban-card__assignee-text {
+  font-weight: 500;
+}
+
+/* Modal */
 .kanban-card__modal-overlay {
   position: fixed;
   top: 0;
@@ -614,7 +659,8 @@ export default {
 
 .kanban-card__modal h4 {
   margin: 0 0 16px 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   color: #1f2937;
 }
 
@@ -624,7 +670,7 @@ export default {
   padding: 10px;
   border: 1px solid #e5e7eb;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   margin-bottom: 12px;
 }
 
@@ -674,53 +720,7 @@ export default {
   cursor: not-allowed;
 }
 
-/* Tarefas */
-.kanban-card__tasks {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #6b7280;
-  margin-bottom: 6px;
-  padding: 4px 8px;
-  background-color: #f3f4f6;
-  border-radius: 4px;
-}
-
-.kanban-card__tasks-icon {
-  font-size: 12px;
-}
-
-.kanban-card__tasks-count {
-  font-weight: 600;
-  color: #374151;
-}
-
-.kanban-card__tasks-overdue {
-  color: #ef4444;
-  font-weight: 500;
-}
-
-.kanban-card__assignee {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
-  color: #6b7280;
-  padding-top: 6px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.kanban-card__assignee-label {
-  color: #9ca3af;
-}
-
-.kanban-card__assignee-name {
-  color: #4b5563;
-  font-weight: 500;
-}
-
-/* Dark mode support */
+/* Dark mode */
 .dark .kanban-card {
   background-color: #1f2937;
   border-color: #374151;
@@ -743,8 +743,33 @@ export default {
   border-color: #4b5563;
 }
 
+.dark .kanban-card__custom-field-label {
+  color: #9ca3af;
+}
+
 .dark .kanban-card__custom-field-value {
   color: #f9fafb;
+}
+
+.dark .kanban-card__id {
+  color: #6b7280;
+}
+
+.dark .kanban-card__time {
+  color: #6b7280;
+}
+
+.dark .kanban-card__tasks {
+  background-color: #374151;
+}
+
+.dark .kanban-card__tasks-text {
+  color: #d1d5db;
+}
+
+.dark .kanban-card__assignee {
+  border-top-color: #374151;
+  color: #9ca3af;
 }
 
 .dark .kanban-card__modal {
