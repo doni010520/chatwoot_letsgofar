@@ -385,6 +385,14 @@ Rails.application.routes.draw do
                 end
               end
 
+              resources :automations do
+                member do
+                  patch :toggle
+                  get :logs
+                  post :test
+                end
+              end
+
               resources :custom_fields do
                 member do
                   patch :reorder
