@@ -2,7 +2,10 @@
   <div class="kanban-dashboard">
     <!-- Header -->
     <div class="dashboard-header">
-      <h1 class="dashboard-header__title">📊 Dashboard de Vendas</h1>
+      <h1 class="dashboard-header__title">
+        <BarChart3 class="dashboard-header__icon" />
+        Dashboard de Vendas
+      </h1>
       <div class="dashboard-header__filters">
         <select v-model="selectedPipelineId" class="dashboard-select" @change="loadData">
           <option v-for="p in pipelines" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -18,40 +21,61 @@
 
     <!-- Loading -->
     <div v-if="isLoading" class="dashboard-loading">
-      Carregando...
+      <div class="loading-spinner"></div>
+      <span>Carregando dados...</span>
     </div>
 
     <template v-else-if="summary">
       <!-- Métricas principais -->
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-card__label">Total em Negociação</div>
-          <div class="metric-card__value metric-card__value--blue">
-            {{ formatCurrency(summary.totals.open_value) }}
+          <div class="metric-card__icon metric-card__icon--blue">
+            <Briefcase />
           </div>
-          <div class="metric-card__sub">{{ summary.totals.open_count }} negócios ativos</div>
+          <div class="metric-card__content">
+            <div class="metric-card__label">Total em Negociação</div>
+            <div class="metric-card__value metric-card__value--blue">
+              {{ formatCurrency(summary.totals.open_value) }}
+            </div>
+            <div class="metric-card__sub">{{ summary.totals.open_count }} negócios ativos</div>
+          </div>
         </div>
         <div class="metric-card">
-          <div class="metric-card__label">Ganhos no Período</div>
-          <div class="metric-card__value metric-card__value--green">
-            {{ formatCurrency(summary.totals.won_value) }}
+          <div class="metric-card__icon metric-card__icon--green">
+            <CheckCircle />
           </div>
-          <div class="metric-card__sub">{{ summary.totals.won_count }} negócios fechados</div>
+          <div class="metric-card__content">
+            <div class="metric-card__label">Ganhos no Período</div>
+            <div class="metric-card__value metric-card__value--green">
+              {{ formatCurrency(summary.totals.won_value) }}
+            </div>
+            <div class="metric-card__sub">{{ summary.totals.won_count }} negócios fechados</div>
+          </div>
         </div>
         <div class="metric-card">
-          <div class="metric-card__label">Perdidos no Período</div>
-          <div class="metric-card__value metric-card__value--red">
-            {{ formatCurrency(summary.totals.lost_value) }}
+          <div class="metric-card__icon metric-card__icon--red">
+            <XCircle />
           </div>
-          <div class="metric-card__sub">{{ summary.totals.lost_count }} negócios perdidos</div>
+          <div class="metric-card__content">
+            <div class="metric-card__label">Perdidos no Período</div>
+            <div class="metric-card__value metric-card__value--red">
+              {{ formatCurrency(summary.totals.lost_value) }}
+            </div>
+            <div class="metric-card__sub">{{ summary.totals.lost_count }} negócios perdidos</div>
+          </div>
         </div>
         <div class="metric-card">
-          <div class="metric-card__label">Taxa de Conversão</div>
-          <div class="metric-card__value metric-card__value--yellow">
-            {{ summary.totals.conversion_rate }}%
+          <div class="metric-card__icon metric-card__icon--yellow">
+            <TrendingUp />
           </div>
-          <div class="metric-card__sub">
-            {{ summary.totals.won_count }} ganhos / {{ summary.totals.won_count + summary.totals.lost_count }} fechados
+          <div class="metric-card__content">
+            <div class="metric-card__label">Taxa de Conversão</div>
+            <div class="metric-card__value metric-card__value--yellow">
+              {{ summary.totals.conversion_rate }}%
+            </div>
+            <div class="metric-card__sub">
+              {{ summary.totals.won_count }} / {{ summary.totals.won_count + summary.totals.lost_count }} fechados
+            </div>
           </div>
         </div>
       </div>
@@ -60,7 +84,10 @@
       <div class="main-grid">
         <!-- Funil de vendas -->
         <div class="card">
-          <div class="card__title">🎯 Funil de Vendas</div>
+          <div class="card__title">
+            <Filter class="card__title-icon" />
+            Funil de Vendas
+          </div>
           <div class="funnel">
             <div v-for="(stage, index) in summary.funnel" :key="stage.stage_id" class="funnel-stage">
               <div class="funnel-stage__color" :style="{ backgroundColor: stage.stage_color }"></div>
@@ -73,16 +100,15 @@
                     backgroundColor: stage.stage_color
                   }"
                 >
-                  {{ stage.count }}
+                  <span class="funnel-stage__bar-text">{{ stage.count }}</span>
                 </div>
               </div>
               <div class="funnel-stage__values">
-                <span class="funnel-stage__count">{{ stage.count }}</span>
                 <span class="funnel-stage__value">{{ formatCurrency(stage.value) }}</span>
               </div>
               <div class="funnel-stage__conversion">
                 <template v-if="index > 0 && summary.stage_conversions[index - 1]">
-                  {{ summary.stage_conversions[index - 1].conversion_rate }}%
+                  <span class="conversion-badge">{{ summary.stage_conversions[index - 1].conversion_rate }}%</span>
                 </template>
               </div>
             </div>
@@ -91,19 +117,25 @@
 
         <!-- Motivos de perda -->
         <div class="card">
-          <div class="card__title">❌ Motivos de Perda</div>
+          <div class="card__title">
+            <XOctagon class="card__title-icon card__title-icon--red" />
+            Motivos de Perda
+          </div>
           <div v-if="lossReasons && lossReasons.reasons.length > 0" class="loss-reasons">
             <div v-for="reason in lossReasons.reasons" :key="reason.reason" class="loss-reason">
               <div class="loss-reason__name">{{ reason.reason }}</div>
               <div class="loss-reason__bar-container">
                 <div class="loss-reason__bar" :style="{ width: reason.percentage + '%' }">
-                  {{ reason.count }}
+                  <span>{{ reason.count }}</span>
                 </div>
               </div>
               <div class="loss-reason__percent">{{ reason.percentage }}%</div>
             </div>
           </div>
-          <div v-else class="empty-state">Nenhuma perda registrada no período</div>
+          <div v-else class="empty-state">
+            <PartyPopper class="empty-state__icon" />
+            <span>Nenhuma perda registrada no período</span>
+          </div>
         </div>
       </div>
 
@@ -111,13 +143,18 @@
       <div class="secondary-grid">
         <!-- Top performers -->
         <div class="card">
-          <div class="card__title">🏆 Top Vendedores</div>
+          <div class="card__title">
+            <Trophy class="card__title-icon card__title-icon--yellow" />
+            Top Vendedores
+          </div>
           <div v-if="topPerformers && topPerformers.performers.length > 0" class="performers">
             <div v-for="(performer, index) in topPerformers.performers" :key="performer.id" class="performer">
               <div class="performer__rank" :class="`performer__rank--${index + 1}`">
                 {{ index + 1 }}
               </div>
-              <div class="performer__avatar">{{ getInitials(performer.name) }}</div>
+              <div class="performer__avatar" :class="`performer__avatar--${index + 1}`">
+                {{ getInitials(performer.name) }}
+              </div>
               <div class="performer__info">
                 <div class="performer__name">{{ performer.name }}</div>
                 <div class="performer__count">{{ performer.won_count }} vendas fechadas</div>
@@ -125,31 +162,44 @@
               <div class="performer__value">{{ formatCurrency(performer.total_value) }}</div>
             </div>
           </div>
-          <div v-else class="empty-state">Nenhuma venda fechada no período</div>
+          <div v-else class="empty-state">
+            <Search class="empty-state__icon" />
+            <span>Nenhuma venda fechada no período</span>
+          </div>
         </div>
 
         <!-- Conversão entre estágios -->
         <div class="card">
-          <div class="card__title">📈 Conversão entre Estágios</div>
+          <div class="card__title">
+            <ArrowUpRight class="card__title-icon card__title-icon--green" />
+            Conversão entre Estágios
+          </div>
           <div v-if="summary.stage_conversions.length > 0" class="conversions">
             <div v-for="conv in summary.stage_conversions" :key="conv.from_stage + conv.to_stage" class="conversion">
-              <span>{{ conv.from_stage }}</span>
-              <span class="conversion__arrow">→</span>
-              <span>{{ conv.to_stage }}</span>
+              <div class="conversion__flow">
+                <span class="conversion__stage">{{ conv.from_stage }}</span>
+                <ArrowRight class="conversion__arrow" />
+                <span class="conversion__stage">{{ conv.to_stage }}</span>
+              </div>
               <span class="conversion__rate" :class="getConversionClass(conv.conversion_rate)">
                 {{ conv.conversion_rate }}%
               </span>
             </div>
             <div class="conversion conversion--total">
-              <span><strong>Conversão Total</strong></span>
-              <span class="conversion__arrow">→</span>
-              <span>Lead → Venda</span>
-              <span class="conversion__rate" :class="getConversionClass(summary.totals.conversion_rate)">
+              <div class="conversion__flow">
+                <span class="conversion__stage"><strong>Total</strong></span>
+                <ArrowRight class="conversion__arrow" />
+                <span class="conversion__stage">Lead → Venda</span>
+              </div>
+              <span class="conversion__rate conversion__rate--total" :class="getConversionClass(summary.totals.conversion_rate)">
                 {{ summary.totals.conversion_rate }}%
               </span>
             </div>
           </div>
-          <div v-else class="empty-state">Dados insuficientes</div>
+          <div v-else class="empty-state">
+            <BarChart2 class="empty-state__icon" />
+            <span>Dados insuficientes</span>
+          </div>
         </div>
       </div>
     </template>
@@ -161,9 +211,39 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'dashboard/composables/store';
 import KanbanAPI from 'dashboard/api/kanban';
+import {
+  BarChart3,
+  Briefcase,
+  CheckCircle,
+  XCircle,
+  TrendingUp,
+  Filter,
+  XOctagon,
+  Trophy,
+  ArrowUpRight,
+  ArrowRight,
+  PartyPopper,
+  Search,
+  BarChart2,
+} from 'lucide-vue-next';
 
 export default {
   name: 'KanbanDashboard',
+  components: {
+    BarChart3,
+    Briefcase,
+    CheckCircle,
+    XCircle,
+    TrendingUp,
+    Filter,
+    XOctagon,
+    Trophy,
+    ArrowUpRight,
+    ArrowRight,
+    PartyPopper,
+    Search,
+    BarChart2,
+  },
   setup() {
     const route = useRoute();
     const store = useStore();
@@ -275,28 +355,43 @@ export default {
 </script>
 
 <style scoped>
+/* ===== BASE ===== */
 .kanban-dashboard {
   padding: 24px;
-  background-color: #111827;
   min-height: 100vh;
   width: 100%;
-  max-width: 100%;
-  color: #f3f4f6;
-  box-sizing: border-box;
+  max-width: 1600px;
+  margin: 0 auto;
+  background-color: var(--s-25);
+  color: var(--s-900);
 }
 
+/* ===== HEADER ===== */
 .dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
+  padding: 20px 24px;
+  background-color: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--s-100);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .dashboard-header__title {
-  font-size: 24px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--s-900);
+}
+
+.dashboard-header__icon {
+  width: 28px;
+  height: 28px;
+  color: var(--w-500);
 }
 
 .dashboard-header__filters {
@@ -305,54 +400,136 @@ export default {
 }
 
 .dashboard-select {
-  padding: 8px 12px;
-  background-color: #1f2937;
-  border: 1px solid #374151;
-  border-radius: 6px;
-  color: #f3f4f6;
+  padding: 10px 16px;
+  background-color: var(--s-50);
+  border: 1px solid var(--s-200);
+  border-radius: 10px;
+  color: var(--s-800);
   font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
+.dashboard-select:hover {
+  border-color: var(--s-300);
+}
+
+.dashboard-select:focus {
+  outline: none;
+  border-color: var(--w-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ===== LOADING ===== */
 .dashboard-loading {
-  text-align: center;
-  padding: 60px;
-  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  gap: 16px;
+  color: var(--s-500);
   font-size: 16px;
+  background-color: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--s-100);
 }
 
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--s-200);
+  border-top-color: var(--w-500);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== EMPTY STATE ===== */
 .empty-state {
-  text-align: center;
-  padding: 24px;
-  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  color: var(--s-400);
   font-size: 14px;
+  gap: 12px;
 }
 
-/* Métricas */
+.empty-state__icon {
+  width: 32px;
+  height: 32px;
+  opacity: 0.5;
+}
+
+/* ===== METRICS GRID ===== */
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 20px;
   margin-bottom: 24px;
-  width: 100%;
 }
 
 .metric-card {
-  background-color: #1f2937;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #374151;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background-color: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--s-100);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.metric-card__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-card__icon svg {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+
+.metric-card__icon--blue { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+.metric-card__icon--green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.metric-card__icon--red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+.metric-card__icon--yellow { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+
+.metric-card__content {
+  flex: 1;
+  min-width: 0;
 }
 
 .metric-card__label {
-  font-size: 13px;
-  color: #9ca3af;
-  margin-bottom: 8px;
+  font-size: 12px;
+  color: var(--s-500);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
 .metric-card__value {
   font-size: 24px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .metric-card__value--green { color: #10b981; }
@@ -362,45 +539,57 @@ export default {
 
 .metric-card__sub {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--s-400);
   margin-top: 4px;
 }
 
-/* Grids */
+/* ===== GRIDS ===== */
 .main-grid {
   display: grid;
   grid-template-columns: 1.5fr 1fr;
   gap: 24px;
   margin-bottom: 24px;
-  width: 100%;
 }
 
 .secondary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
-  width: 100%;
 }
 
 .card {
-  background-color: #1f2937;
-  border-radius: 12px;
-  padding: 20px;
-  border: 1px solid #374151;
-  min-width: 0;
+  padding: 24px;
+  background-color: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--s-100);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 16px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  color: var(--s-800);
 }
 
-/* Funil */
+.card__title-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--w-500);
+}
+
+.card__title-icon--red { color: #ef4444; }
+.card__title-icon--yellow { color: #f59e0b; }
+.card__title-icon--green { color: #10b981; }
+
+/* ===== FUNNEL ===== */
 .funnel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
 .funnel-stage {
@@ -410,8 +599,8 @@ export default {
 }
 
 .funnel-stage__color {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
 }
@@ -419,57 +608,69 @@ export default {
 .funnel-stage__name {
   width: 100px;
   font-size: 14px;
+  color: var(--s-700);
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .funnel-stage__bar-container {
   flex: 1;
-  height: 32px;
-  background-color: #111827;
-  border-radius: 4px;
+  height: 36px;
+  background-color: var(--s-100);
+  border-radius: 8px;
   overflow: hidden;
   min-width: 80px;
 }
 
 .funnel-stage__bar {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  padding-left: 12px;
+  padding: 0 14px;
+  transition: width 0.5s ease;
+}
+
+.funnel-stage__bar-text {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .funnel-stage__values {
-  width: 120px;
+  width: 100px;
   text-align: right;
-  font-size: 13px;
   flex-shrink: 0;
-}
-
-.funnel-stage__count {
-  color: #f3f4f6;
 }
 
 .funnel-stage__value {
+  font-size: 13px;
+  font-weight: 600;
   color: #10b981;
-  margin-left: 8px;
 }
 
 .funnel-stage__conversion {
-  width: 50px;
+  width: 60px;
   text-align: center;
-  font-size: 12px;
-  color: #9ca3af;
   flex-shrink: 0;
 }
 
-/* Motivos de perda */
+.conversion-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: var(--s-100);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--s-600);
+}
+
+/* ===== LOSS REASONS ===== */
 .loss-reasons {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .loss-reason {
@@ -481,38 +682,43 @@ export default {
 .loss-reason__name {
   width: 100px;
   font-size: 13px;
-  color: #d1d5db;
+  color: var(--s-600);
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .loss-reason__bar-container {
   flex: 1;
-  height: 24px;
-  background-color: #111827;
-  border-radius: 4px;
+  height: 28px;
+  background-color: var(--s-100);
+  border-radius: 6px;
   overflow: hidden;
   min-width: 40px;
 }
 
 .loss-reason__bar {
   height: 100%;
-  background-color: #ef4444;
-  border-radius: 4px;
+  background: linear-gradient(90deg, #ef4444, #f87171);
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  padding-left: 8px;
+  padding-left: 10px;
   font-size: 12px;
+  font-weight: 500;
+  color: #fff;
+  transition: width 0.5s ease;
 }
 
 .loss-reason__percent {
   width: 50px;
   text-align: right;
   font-size: 13px;
-  color: #9ca3af;
+  font-weight: 600;
+  color: var(--s-500);
   flex-shrink: 0;
 }
 
-/* Performers */
+/* ===== PERFORMERS ===== */
 .performers {
   display: flex;
   flex-direction: column;
@@ -522,41 +728,62 @@ export default {
 .performer {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background-color: #111827;
-  border-radius: 8px;
+  gap: 14px;
+  padding: 14px;
+  background-color: var(--s-50);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.performer:hover {
+  background-color: var(--s-100);
+  transform: translateX(4px);
 }
 
 .performer__rank {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #374151;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   flex-shrink: 0;
+  background-color: var(--s-200);
+  color: var(--s-600);
 }
 
-.performer__rank--1 { background-color: #f59e0b; color: #111827; }
-.performer__rank--2 { background-color: #9ca3af; color: #111827; }
-.performer__rank--3 { background-color: #b45309; color: #fff; }
+.performer__rank--1 { 
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); 
+  color: #1a1a2e; 
+}
+.performer__rank--2 { 
+  background: linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%); 
+  color: #1a1a2e; 
+}
+.performer__rank--3 { 
+  background: linear-gradient(135deg, #b45309 0%, #d97706 100%); 
+  color: #fff; 
+}
 
 .performer__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: #3b82f6;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: #fff;
 }
+
+.performer__avatar--1 { background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: #1a1a2e; }
+.performer__avatar--2 { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.performer__avatar--3 { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
 
 .performer__info {
   flex: 1;
@@ -565,7 +792,8 @@ export default {
 
 .performer__name {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--s-800);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -573,53 +801,87 @@ export default {
 
 .performer__count {
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--s-500);
+  margin-top: 2px;
 }
 
 .performer__value {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #10b981;
   flex-shrink: 0;
 }
 
-/* Conversões */
+/* ===== CONVERSIONS ===== */
 .conversions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .conversion {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background-color: var(--s-50);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.conversion:hover {
+  background-color: var(--s-100);
+}
+
+.conversion--total {
+  margin-top: 8px;
+  background-color: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.conversion__flow {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
 }
 
-.conversion--total {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #374151;
+.conversion__stage {
+  color: var(--s-700);
 }
 
 .conversion__arrow {
-  color: #6b7280;
+  width: 16px;
+  height: 16px;
+  color: var(--s-400);
 }
 
 .conversion__rate {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 600;
   font-size: 12px;
-  margin-left: auto;
 }
 
-.conversion__rate--high { background-color: #065f46; color: #10b981; }
-.conversion__rate--medium { background-color: #92400e; color: #f59e0b; }
-.conversion__rate--low { background-color: #991b1b; color: #ef4444; }
+.conversion__rate--high { 
+  background-color: rgba(16, 185, 129, 0.15); 
+  color: #059669; 
+}
+.conversion__rate--medium { 
+  background-color: rgba(245, 158, 11, 0.15); 
+  color: #d97706; 
+}
+.conversion__rate--low { 
+  background-color: rgba(239, 68, 68, 0.15); 
+  color: #dc2626; 
+}
 
-/* Responsivo */
+.conversion__rate--total {
+  font-size: 14px;
+  padding: 6px 16px;
+}
+
+/* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
   .metrics-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -634,17 +896,123 @@ export default {
   .kanban-dashboard {
     padding: 16px;
   }
-  .metrics-grid {
-    grid-template-columns: 1fr 1fr;
+  
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
   }
-  .metric-card__value {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 480px) {
+  
   .metrics-grid {
     grid-template-columns: 1fr;
   }
+  
+  .metric-card__value {
+    font-size: 20px;
+  }
+  
+  .funnel-stage__name {
+    width: 70px;
+    font-size: 12px;
+  }
+  
+  .funnel-stage__values {
+    width: 80px;
+  }
+}
+
+/* ===== DARK MODE ===== */
+.dark .kanban-dashboard {
+  background-color: var(--s-900);
+  color: var(--s-100);
+}
+
+.dark .dashboard-header,
+.dark .metric-card,
+.dark .card,
+.dark .dashboard-loading {
+  background-color: var(--s-800);
+  border-color: var(--s-700);
+}
+
+.dark .dashboard-header__title {
+  color: var(--s-100);
+}
+
+.dark .dashboard-select {
+  background-color: var(--s-700);
+  border-color: var(--s-600);
+  color: var(--s-100);
+}
+
+.dark .metric-card__label {
+  color: var(--s-400);
+}
+
+.dark .metric-card__sub {
+  color: var(--s-500);
+}
+
+.dark .card__title {
+  color: var(--s-100);
+}
+
+.dark .funnel-stage__name {
+  color: var(--s-300);
+}
+
+.dark .funnel-stage__bar-container,
+.dark .loss-reason__bar-container {
+  background-color: var(--s-700);
+}
+
+.dark .conversion-badge {
+  background-color: var(--s-700);
+  color: var(--s-300);
+}
+
+.dark .performer {
+  background-color: var(--s-700);
+}
+
+.dark .performer:hover {
+  background-color: var(--s-600);
+}
+
+.dark .performer__name {
+  color: var(--s-100);
+}
+
+.dark .performer__count {
+  color: var(--s-400);
+}
+
+.dark .conversion {
+  background-color: var(--s-700);
+}
+
+.dark .conversion:hover {
+  background-color: var(--s-600);
+}
+
+.dark .conversion--total {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dark .conversion__stage {
+  color: var(--s-300);
+}
+
+.dark .empty-state {
+  color: var(--s-500);
+}
+
+.dark .loss-reason__name {
+  color: var(--s-400);
+}
+
+.dark .loss-reason__percent {
+  color: var(--s-400);
 }
 </style>
