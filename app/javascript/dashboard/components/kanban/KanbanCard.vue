@@ -24,6 +24,14 @@
         <span class="kanban-card__name">{{ contactName }}</span>
         <span class="kanban-card__phone">{{ contactPhone }}</span>
       </div>
+      <!-- Botão Remover -->
+      <button 
+        class="kanban-card__remove-btn"
+        title="Remover do CRM"
+        @click.stop="confirmRemove"
+      >
+        🗑️
+      </button>
     </div>
 
     <!-- Valor do negócio -->
@@ -156,7 +164,7 @@ export default {
       default: () => [],
     },
   },
-  emits: ['click', 'dragstart', 'mark-won', 'mark-lost'],
+  emits: ['click', 'dragstart', 'mark-won', 'mark-lost', 'remove'],
   data() {
     return {
       isDragging: false,
@@ -223,6 +231,12 @@ export default {
       return this.item.tasks && this.item.tasks.pending > 0;
     },
     visibleCustomFields() {
+      // Se os campos vêm junto com o item (do backend)
+      if (this.item.custom_field_values && Array.isArray(this.item.custom_field_values)) {
+        return this.item.custom_field_values.filter(f => f.show_on_card);
+      }
+      
+      // Se usa customFieldsConfig (configuração do pipeline)
       if (!this.item.custom_fields || !this.customFieldsConfig) return [];
       
       return this.customFieldsConfig
@@ -265,11 +279,13 @@ export default {
       const value = field.value;
       if (!value) return '-';
 
-      switch (field.field_type) {
+      const fieldType = field.field_type || field.type;
+
+      switch (fieldType) {
         case 'currency':
           return this.formatCurrency(parseFloat(value) || 0);
         case 'checkbox':
-          return value === 'true' ? 'Sim' : 'Não';
+          return value === 'true' || value === true ? 'Sim' : 'Não';
         case 'date':
           return new Date(value).toLocaleDateString('pt-BR');
         case 'multiselect':
@@ -306,6 +322,11 @@ export default {
       });
       this.closeLossModal();
     },
+    confirmRemove() {
+      if (confirm('Remover este card do CRM? A conversa não será apagada.')) {
+        this.$emit('remove', { itemId: this.item.id, itemType: this.itemType });
+      }
+    },
   },
 };
 </script>
@@ -327,6 +348,10 @@ export default {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-color: #3b82f6;
   transform: translateY(-1px);
+}
+
+.kanban-card:hover .kanban-card__remove-btn {
+  opacity: 1;
 }
 
 .kanban-card--dragging {
@@ -400,6 +425,21 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   margin-top: 2px;
+}
+
+.kanban-card__remove-btn {
+  opacity: 0;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.kanban-card__remove-btn:hover {
+  background-color: #fee2e2;
 }
 
 .kanban-card__value {
@@ -692,6 +732,10 @@ export default {
 
 .dark .kanban-card__phone {
   color: #9ca3af;
+}
+
+.dark .kanban-card__remove-btn:hover {
+  background-color: #7f1d1d;
 }
 
 .dark .kanban-card__custom-fields {
