@@ -30,6 +30,14 @@
           <span v-if="hasActiveFilters" class="filter-badge">●</span>
         </button>
         <button
+          class="kanban-page__export-btn"
+          :disabled="isExporting"
+          @click="exportBoard"
+        >
+          <span class="icon">📥</span>
+          <span>{{ isExporting ? 'Exportando...' : 'Exportar' }}</span>
+        </button>
+        <button
           class="kanban-page__dashboard-btn"
           @click="openDashboard"
         >
@@ -104,6 +112,7 @@ import Spinner from 'shared/components/Spinner.vue';
 import KanbanBoard from 'dashboard/components/kanban/KanbanBoard.vue';
 import KanbanFilters from 'dashboard/components/kanban/KanbanFilters.vue';
 import KanbanSettingsModal from './KanbanSettingsModal.vue';
+import KanbanAPI from 'dashboard/api/kanban';
 
 export default {
   name: 'KanbanIndex',
@@ -118,6 +127,7 @@ export default {
       selectedPipelineId: null,
       showSettings: false,
       showFilters: false,
+      isExporting: false,
       activeFilters: {},
       availableFilters: {
         assignees: [],
@@ -233,6 +243,34 @@ export default {
         });
       }
     },
+    async exportBoard() {
+      if (!this.selectedPipelineId || this.isExporting) return;
+      
+      this.isExporting = true;
+      try {
+        const response = await KanbanAPI.exportBoard(this.accountId, this.selectedPipelineId);
+        
+        // Criar blob e fazer download
+        const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Nome do arquivo baseado no pipeline
+        const pipelineName = this.currentPipeline?.name || 'kanban';
+        const date = new Date().toISOString().split('T')[0];
+        link.setAttribute('download', `${pipelineName.toLowerCase().replace(/\s+/g, '_')}_${date}.csv`);
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Erro ao exportar:', error);
+      } finally {
+        this.isExporting = false;
+      }
+    },
     openSettings() {
       this.showSettings = true;
     },
@@ -344,6 +382,35 @@ export default {
       color: #ef4444;
       font-size: 10px;
       margin-left: -4px;
+    }
+  }
+
+  &__export-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid #10b981;
+    background-color: #ecfdf5;
+    color: #065f46;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #d1fae5;
+      border-color: #059669;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .icon {
+      font-size: 16px;
     }
   }
 
@@ -461,4 +528,3 @@ export default {
   }
 }
 </style>
-
