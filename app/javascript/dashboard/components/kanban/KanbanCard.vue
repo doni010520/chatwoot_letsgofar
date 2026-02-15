@@ -24,6 +24,18 @@
       {{ formatCurrency(item.deal_value) }}
     </div>
 
+    <!-- Campos Personalizados -->
+    <div v-if="visibleCustomFields.length > 0" class="kanban-card__custom-fields">
+      <div
+        v-for="field in visibleCustomFields"
+        :key="field.field_key"
+        class="kanban-card__custom-field"
+      >
+        <span class="kanban-card__custom-field-label">{{ field.name }}:</span>
+        <span class="kanban-card__custom-field-value">{{ formatFieldValue(field) }}</span>
+      </div>
+    </div>
+
     <!-- ID da conversa -->
     <div v-if="itemType === 'conversation'" class="kanban-card__id">
       #{{ item.display_id }}
@@ -69,6 +81,10 @@ export default {
     itemType: {
       type: String,
       default: 'conversation',
+    },
+    customFieldsConfig: {
+      type: Array,
+      default: () => [],
     },
   },
   emits: ['click'],
@@ -126,6 +142,16 @@ export default {
     resultClass() {
       return this.item.closed_won ? 'kanban-card__result--won' : 'kanban-card__result--lost';
     },
+    visibleCustomFields() {
+      if (!this.item.custom_fields || !this.customFieldsConfig) return [];
+      
+      return this.customFieldsConfig
+        .filter(field => field.show_on_card && this.item.custom_fields[field.field_key])
+        .map(field => ({
+          ...field,
+          value: this.item.custom_fields[field.field_key],
+        }));
+    },
   },
   methods: {
     getInitials(name) {
@@ -142,6 +168,28 @@ export default {
         style: 'currency',
         currency: 'BRL',
       }).format(value);
+    },
+    formatFieldValue(field) {
+      const value = field.value;
+      if (!value) return '-';
+
+      switch (field.field_type) {
+        case 'currency':
+          return this.formatCurrency(parseFloat(value) || 0);
+        case 'checkbox':
+          return value === 'true' ? 'Sim' : 'Não';
+        case 'date':
+          return new Date(value).toLocaleDateString('pt-BR');
+        case 'multiselect':
+          try {
+            const arr = JSON.parse(value);
+            return Array.isArray(arr) ? arr.join(', ') : value;
+          } catch {
+            return value;
+          }
+        default:
+          return value;
+      }
     },
   },
 };
@@ -238,6 +286,38 @@ export default {
   background-color: #d1fae5;
   border-radius: 4px;
   display: inline-block;
+}
+
+/* Campos Personalizados */
+.kanban-card__custom-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 6px 8px;
+  background-color: #f9fafb;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+}
+
+.kanban-card__custom-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.kanban-card__custom-field-label {
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.kanban-card__custom-field-value {
+  color: #1f2937;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .kanban-card__id {
