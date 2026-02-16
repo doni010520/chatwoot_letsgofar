@@ -1,139 +1,192 @@
 <template>
   <div 
-    class="kanban-card" 
-    :class="[cardClasses, { 'kanban-card--dragging': isDragging }]"
+    class="group relative w-full cursor-pointer overflow-hidden rounded-lg bg-slate-800 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl hover:border-slate-600 border border-transparent"
+    :class="[
+      cardBorderClass, 
+      { 'z-50 rotate-2 scale-105 opacity-90 ring-2 ring-blue-500/50': isDragging }
+    ]"
     draggable="true"
     @click="$emit('click')"
     @dragstart="onDragStart"
     @dragend="onDragEnd"
   >
-    <!-- Header com foto e info do contato -->
-    <div class="kanban-card__header">
-      <div class="kanban-card__avatar">
-        <img
-          v-if="contactThumbnail"
-          :src="contactThumbnail"
-          :alt="contactName"
-          class="kanban-card__avatar-img"
-        />
-        <span v-else class="kanban-card__avatar-initials">
-          {{ getInitials(contactName) }}
+    
+    <!-- Decoração de Fundo (Gradient Sutil) -->
+    <div class="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-white/5 transition-opacity group-hover:bg-white/10"></div>
+
+    <!-- Botão de Remover (Aparece no Hover) -->
+    <button 
+      class="absolute right-2 top-2 z-20 rounded p-1.5 text-slate-500 opacity-0 hover:bg-red-500/20 hover:text-red-400 transition-all group-hover:opacity-100"
+      title="Remover do CRM"
+      @click.stop="confirmRemove"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+    </button>
+
+    <!-- Conteúdo Principal -->
+    <div class="p-4 pb-2 relative z-10">
+      
+      <!-- Linha Superior: Status e Tempo -->
+      <div class="mb-3 flex items-center justify-between pr-6">
+        <span 
+          class="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide border"
+          :class="statusBadgeClasses"
+        >
+          <span class="h-1.5 w-1.5 rounded-full" :class="statusDotClass"></span>
+          {{ statusLabel }}
+        </span>
+        
+        <div class="flex items-center gap-1 text-[10px] font-medium text-slate-500">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span v-if="timeAgo">{{ timeAgo }}</span>
+        </div>
+      </div>
+
+      <!-- Cabeçalho: Avatar + Nome -->
+      <div class="mb-4 flex items-center gap-3">
+        <!-- Avatar -->
+        <div class="relative flex-shrink-0">
+          <img
+            v-if="contactThumbnail"
+            :src="contactThumbnail"
+            :alt="contactName"
+            class="h-12 w-12 rounded-full border-2 border-slate-700 object-cover shadow-sm"
+          />
+          <div v-else class="flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-700 text-sm font-bold text-slate-300">
+            {{ getInitials(contactName) }}
+          </div>
+          <!-- Indicador Online/Status (Opcional) -->
+          <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-800 bg-green-500"></div>
+        </div>
+
+        <!-- Nome e Telefone -->
+        <div class="min-w-0 flex-1">
+          <h3 class="truncate text-lg font-bold leading-tight text-white" :title="contactName">
+            {{ contactName }}
+          </h3>
+          <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-70"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span class="truncate">{{ contactPhone || 'Sem telefone' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid de Informações (Valor + Extras) -->
+      <div class="mt-3 mb-2 grid grid-cols-2 gap-x-4 gap-y-3 pl-1">
+        <!-- Valor (Sempre em destaque se existir) -->
+        <div v-if="item.deal_value" class="min-w-0">
+          <p class="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Valor</p>
+          <p class="truncate text-sm font-bold text-emerald-400">{{ formatCurrency(item.deal_value) }}</p>
+        </div>
+
+        <!-- Loop Dinâmico para TODOS os Campos Personalizados Visíveis -->
+        <div 
+          v-for="field in visibleCustomFields" 
+          :key="field.field_key"
+          class="min-w-0"
+        >
+           <p class="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 truncate" :title="field.name">
+             {{ field.name }}
+           </p>
+           <p class="truncate text-sm font-medium text-slate-300" :title="formatFieldValue(field)">
+             {{ formatFieldValue(field) }}
+           </p>
+        </div>
+      </div>
+      
+      <!-- Tarefas (Pílula Condensada) -->
+      <div v-if="hasTasks" class="mt-3 flex items-center gap-2 rounded bg-slate-900/50 px-2 py-1.5 text-xs text-slate-400 border border-slate-700/50">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>{{ item.tasks.pending }} tarefa{{ item.tasks.pending > 1 ? 's' : '' }}</span>
+        <span v-if="item.tasks.overdue > 0" class="font-bold text-red-400 ml-auto">
+           {{ item.tasks.overdue }} atrasada{{ item.tasks.overdue > 1 ? 's' : '' }}
         </span>
       </div>
-      <div class="kanban-card__info">
-        <span class="kanban-card__name">{{ contactName }}</span>
-        <span class="kanban-card__phone">{{ contactPhone }}</span>
+
+      <!-- Atribuído a (Rodapé Interno) -->
+      <div v-if="item.assignee" class="mt-2 flex items-center justify-end">
+         <span class="text-[10px] text-slate-600 mr-2">Atribuído a</span>
+         <span class="text-xs text-slate-400 font-medium">{{ item.assignee.name }}</span>
       </div>
-      <!-- Botão Remover -->
+
+    </div>
+
+    <!-- RODAPÉ DE AÇÕES (Híbrido) -->
+    
+    <!-- Estado: Já Finalizado (Ganho/Perdido) -->
+    <div 
+      v-if="item.closed_won !== null && item.closed_won !== undefined" 
+      class="mt-auto border-t py-2 text-center text-xs font-bold uppercase tracking-wider"
+      :class="item.closed_won ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-red-500/20 bg-red-500/10 text-red-400'"
+    >
+      {{ item.closed_won ? '✓ Negócio Ganho' : '✗ Negócio Perdido' }}
+    </div>
+
+    <!-- Estado: Aberto (Botões de Ação) -->
+    <div 
+      v-else 
+      class="mt-auto flex divide-x divide-slate-700/80 border-t border-slate-700/80 bg-slate-900/30"
+    >
       <button 
-        class="kanban-card__remove-btn"
-        title="Remover do CRM"
-        @click.stop="confirmRemove"
-      >
-        🗑️
-      </button>
-    </div>
-
-    <!-- Valor do negócio -->
-    <div v-if="item.deal_value" class="kanban-card__value">
-      {{ formatCurrency(item.deal_value) }}
-    </div>
-
-    <!-- Campos Personalizados -->
-    <div v-if="visibleCustomFields.length > 0" class="kanban-card__custom-fields">
-      <div
-        v-for="field in visibleCustomFields"
-        :key="field.field_key"
-        class="kanban-card__custom-field"
-      >
-        <span class="kanban-card__custom-field-label">{{ field.name }}:</span>
-        <span class="kanban-card__custom-field-value">{{ formatFieldValue(field) }}</span>
-      </div>
-    </div>
-
-    <!-- ID da conversa + Status + Tempo -->
-    <div class="kanban-card__meta">
-      <span v-if="itemType === 'conversation'" class="kanban-card__id">#{{ item.display_id }}</span>
-      <span class="kanban-card__status" :class="`kanban-card__status--${item.status}`">
-        {{ statusLabel }}
-      </span>
-      <span v-if="timeAgo" class="kanban-card__time">{{ timeAgo }}</span>
-    </div>
-
-    <!-- Resultado (Ganho/Perdido) - Se já foi marcado -->
-    <div v-if="item.closed_won !== null && item.closed_won !== undefined" class="kanban-card__result" :class="resultClass">
-      {{ item.closed_won ? '✓ Ganho' : '✗ Perdido' }}
-      <span v-if="!item.closed_won && item.closed_reason" class="kanban-card__reason">
-        - {{ item.closed_reason }}
-      </span>
-    </div>
-
-    <!-- Botões Ganho/Perdido - Se ainda não foi marcado -->
-    <div v-else class="kanban-card__actions">
-      <button 
-        class="kanban-card__action-btn kanban-card__action-btn--won"
+        class="group/btn flex flex-1 items-center justify-center gap-2 py-3 text-xs font-bold text-emerald-500 transition-colors hover:bg-emerald-500/10"
         title="Marcar como Ganho"
         @click.stop="markAsWon"
       >
-        ✓ Ganho
+        <svg class="h-4 w-4 transition-transform group-hover/btn:scale-110" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        GANHO
       </button>
+      
       <button 
-        class="kanban-card__action-btn kanban-card__action-btn--lost"
+        class="group/btn flex flex-1 items-center justify-center gap-2 py-3 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/10"
         title="Marcar como Perdido"
         @click.stop="markAsLost"
       >
-        ✗ Perdido
+        <svg class="h-4 w-4 transition-transform group-hover/btn:scale-110" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        PERDIDO
       </button>
     </div>
 
-    <!-- Tarefas -->
-    <div v-if="hasTasks" class="kanban-card__tasks">
-      <span class="kanban-card__tasks-icon">📋</span>
-      <span class="kanban-card__tasks-text">{{ item.tasks.pending }} tarefa{{ item.tasks.pending > 1 ? 's' : '' }}</span>
-      <span v-if="item.tasks.overdue > 0" class="kanban-card__tasks-overdue">
-        ({{ item.tasks.overdue }} atrasada{{ item.tasks.overdue > 1 ? 's' : '' }})
-      </span>
-    </div>
+    <!-- MODAL (Mantido simples, apenas estilizado para dark mode) -->
+    <div v-if="showLossReasonModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" @click.stop="closeLossModal">
+      <div class="w-full max-w-sm rounded-lg bg-slate-800 p-6 shadow-2xl border border-slate-700" @click.stop>
+        <h4 class="mb-4 text-lg font-bold text-white">Motivo da Perda</h4>
+        
+        <div class="mb-4">
+            <select v-model="selectedLossReason" class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <option value="" disabled>Selecione um motivo...</option>
+            <option value="Preço">Preço</option>
+            <option value="Concorrência">Concorrência</option>
+            <option value="Timing">Timing / Não é o momento</option>
+            <option value="Sem resposta">Sem resposta</option>
+            <option value="Desistiu">Desistiu</option>
+            <option value="Outro">Outro</option>
+            </select>
+        </div>
 
-    <!-- Assignee -->
-    <div v-if="item.assignee" class="kanban-card__assignee">
-      <span class="kanban-card__assignee-text">Atribuído: {{ item.assignee.name }}</span>
-    </div>
+        <div v-if="selectedLossReason === 'Outro'" class="mb-4">
+            <input
+            v-model="customLossReason"
+            type="text"
+            placeholder="Especifique o motivo..."
+            class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            />
+        </div>
 
-    <!-- Modal de Motivo de Perda -->
-    <div v-if="showLossReasonModal" class="kanban-card__modal-overlay" @click.stop="closeLossModal">
-      <div class="kanban-card__modal" @click.stop>
-        <h4>Motivo da Perda</h4>
-        <select v-model="selectedLossReason" class="kanban-card__modal-select">
-          <option value="">Selecione...</option>
-          <option value="Preço">Preço</option>
-          <option value="Concorrência">Concorrência</option>
-          <option value="Timing">Timing / Não é o momento</option>
-          <option value="Sem resposta">Sem resposta</option>
-          <option value="Desistiu">Desistiu</option>
-          <option value="Outro">Outro</option>
-        </select>
-        <input
-          v-if="selectedLossReason === 'Outro'"
-          v-model="customLossReason"
-          type="text"
-          placeholder="Especifique o motivo..."
-          class="kanban-card__modal-input"
-        />
-        <div class="kanban-card__modal-actions">
-          <button class="kanban-card__modal-btn kanban-card__modal-btn--cancel" @click.stop="closeLossModal">
+        <div class="flex justify-end gap-2">
+          <button class="rounded px-4 py-2 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" @click.stop="closeLossModal">
             Cancelar
           </button>
           <button 
-            class="kanban-card__modal-btn kanban-card__modal-btn--confirm" 
+            class="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             :disabled="!canConfirmLoss"
             @click.stop="confirmLoss"
           >
-            Confirmar
+            Confirmar Perda
           </button>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -141,18 +194,9 @@
 export default {
   name: 'KanbanCard',
   props: {
-    item: {
-      type: Object,
-      required: true,
-    },
-    itemType: {
-      type: String,
-      default: 'conversation',
-    },
-    customFieldsConfig: {
-      type: Array,
-      default: () => [],
-    },
+    item: { type: Object, required: true },
+    itemType: { type: String, default: 'conversation' },
+    customFieldsConfig: { type: Array, default: () => [] },
   },
   emits: ['click', 'dragstart', 'mark-won', 'mark-lost', 'remove'],
   data() {
@@ -164,6 +208,40 @@ export default {
     };
   },
   computed: {
+    // --- Lógica de Visualização ---
+    cardBorderClass() {
+        // Borda esquerda colorida baseada no status
+        if (this.item.closed_won === true) return 'border-l-4 border-l-emerald-500';
+        if (this.item.closed_won === false) return 'border-l-4 border-l-red-500';
+        
+        // Cores por status quando em aberto
+        const statusColors = {
+            'open': 'border-l-4 border-l-blue-500',
+            'pending': 'border-l-4 border-l-yellow-500',
+            'resolved': 'border-l-4 border-l-purple-500',
+            'snoozed': 'border-l-4 border-l-slate-500'
+        };
+        return statusColors[this.item.status] || 'border-l-4 border-l-blue-500';
+    },
+    statusBadgeClasses() {
+        const maps = {
+            'open': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+            'pending': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+            'resolved': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+            'snoozed': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+        };
+        return maps[this.item.status] || 'bg-slate-700 text-slate-300 border-slate-600';
+    },
+    statusDotClass() {
+         const maps = {
+            'open': 'bg-blue-500',
+            'pending': 'bg-yellow-500',
+            'resolved': 'bg-purple-500',
+            'snoozed': 'bg-slate-500',
+        };
+        return maps[this.item.status] || 'bg-slate-400';
+    },
+    // --- Dados do Contato ---
     contactName() {
       if (this.itemType === 'conversation') {
         return this.item.contact?.name || 'Sem nome';
@@ -203,30 +281,18 @@ export default {
       const diffDays = Math.floor(diffHours / 24);
 
       if (diffMins < 1) return 'Agora';
-      if (diffMins < 60) return `${diffMins}min`;
+      if (diffMins < 60) return `${diffMins}m`;
       if (diffHours < 24) return `${diffHours}h`;
       if (diffDays < 7) return `${diffDays}d`;
-      return past.toLocaleDateString('pt-BR');
-    },
-    cardClasses() {
-      return {
-        'kanban-card--won': this.item.closed_won === true,
-        'kanban-card--lost': this.item.closed_won === false,
-      };
-    },
-    resultClass() {
-      return this.item.closed_won ? 'kanban-card__result--won' : 'kanban-card__result--lost';
+      return past.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     },
     hasTasks() {
       return this.item.tasks && this.item.tasks.pending > 0;
     },
     visibleCustomFields() {
-      // Se os campos vêm junto com o item (do backend)
       if (this.item.custom_field_values && Array.isArray(this.item.custom_field_values)) {
         return this.item.custom_field_values.filter(f => f.show_on_card);
       }
-      
-      // Se usa customFieldsConfig (configuração do pipeline)
       if (!this.item.custom_fields || !this.customFieldsConfig) return [];
       
       return this.customFieldsConfig
@@ -268,25 +334,18 @@ export default {
     formatFieldValue(field) {
       const value = field.value;
       if (!value) return '-';
-
       const fieldType = field.field_type || field.type;
 
       switch (fieldType) {
-        case 'currency':
-          return this.formatCurrency(parseFloat(value) || 0);
-        case 'checkbox':
-          return value === 'true' || value === true ? 'Sim' : 'Não';
-        case 'date':
-          return new Date(value).toLocaleDateString('pt-BR');
+        case 'currency': return this.formatCurrency(parseFloat(value) || 0);
+        case 'checkbox': return value === 'true' || value === true ? 'Sim' : 'Não';
+        case 'date': return new Date(value).toLocaleDateString('pt-BR');
         case 'multiselect':
           try {
             const arr = JSON.parse(value);
             return Array.isArray(arr) ? arr.join(', ') : value;
-          } catch {
-            return value;
-          }
-        default:
-          return value;
+          } catch { return value; }
+        default: return value;
       }
     },
     markAsWon() {
@@ -322,468 +381,10 @@ export default {
 </script>
 
 <style scoped>
-/* Base font size for the card */
-.kanban-card {
-  --card-font-size: 12px;
-  --card-font-size-sm: 11px;
-  --card-font-size-lg: 13px;
+/* Se você NÃO estiver usando Tailwind no projeto, precisará adicionar o CDN no index.html 
+  ou converter essas classes para CSS puro. 
   
-  background-color: #ffffff;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-  position: relative;
-  font-size: var(--card-font-size);
-}
-
-.kanban-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border-color: #3b82f6;
-  transform: translateY(-1px);
-}
-
-.kanban-card:hover .kanban-card__remove-btn {
-  opacity: 1;
-}
-
-.kanban-card--dragging {
-  cursor: grabbing;
-  transform: rotate(2deg) scale(1.02);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-  z-index: 100;
-  opacity: 0.9;
-}
-
-.kanban-card--won {
-  border-left: 3px solid #10b981;
-}
-
-.kanban-card--lost {
-  border-left: 3px solid #ef4444;
-  opacity: 0.7;
-}
-
-/* Header */
-.kanban-card__header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-}
-
-.kanban-card__avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  overflow: hidden;
-  background-color: #3b82f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.kanban-card__avatar-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.kanban-card__avatar-initials {
-  color: #ffffff;
-  font-size: var(--card-font-size);
-  font-weight: 600;
-}
-
-.kanban-card__info {
-  flex: 1;
-  min-width: 0;
-}
-
-.kanban-card__name {
-  display: block;
-  font-size: var(--card-font-size-lg);
-  font-weight: 600;
-  color: #1f2937;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.3;
-}
-
-.kanban-card__phone {
-  display: block;
-  font-size: var(--card-font-size-sm);
-  color: #6b7280;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-top: 2px;
-  line-height: 1.3;
-}
-
-.kanban-card__remove-btn {
-  opacity: 0;
-  background: none;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.kanban-card__remove-btn:hover {
-  background-color: #fee2e2;
-}
-
-/* Value */
-.kanban-card__value {
-  font-size: var(--card-font-size-lg);
-  font-weight: 700;
-  color: #059669;
-  margin-bottom: 8px;
-  padding: 4px 8px;
-  background-color: #d1fae5;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-/* Custom Fields */
-.kanban-card__custom-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
-  padding: 6px 8px;
-  background-color: #f9fafb;
-  border-radius: 4px;
-  border: 1px solid #e5e7eb;
-}
-
-.kanban-card__custom-field {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--card-font-size-sm);
-  line-height: 1.4;
-}
-
-.kanban-card__custom-field-label {
-  color: #6b7280;
-  font-weight: 500;
-  flex-shrink: 0;
-}
-
-.kanban-card__custom-field-value {
-  color: #1f2937;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Meta (ID + Status + Time) */
-.kanban-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.kanban-card__id {
-  font-size: var(--card-font-size-sm);
-  color: #9ca3af;
-  font-weight: 500;
-}
-
-.kanban-card__status {
-  font-size: var(--card-font-size-sm);
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.kanban-card__status--open {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.kanban-card__status--pending {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.kanban-card__status--resolved {
-  background-color: #e5e7eb;
-  color: #4b5563;
-}
-
-.kanban-card__status--snoozed {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.kanban-card__time {
-  font-size: var(--card-font-size-sm);
-  color: #9ca3af;
-  font-weight: 500;
-  margin-left: auto;
-}
-
-/* Result */
-.kanban-card__result {
-  font-size: var(--card-font-size-sm);
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin-bottom: 8px;
-}
-
-.kanban-card__result--won {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.kanban-card__result--lost {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.kanban-card__reason {
-  font-weight: 500;
-}
-
-/* Action Buttons */
-.kanban-card__actions {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
-.kanban-card__action-btn {
-  flex: 1;
-  padding: 6px 8px;
-  border: none;
-  border-radius: 4px;
-  font-size: var(--card-font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.kanban-card__action-btn--won {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-
-.kanban-card__action-btn--won:hover {
-  background-color: #10b981;
-  color: white;
-}
-
-.kanban-card__action-btn--lost {
-  background-color: #fee2e2;
-  color: #991b1b;
-}
-
-.kanban-card__action-btn--lost:hover {
-  background-color: #ef4444;
-  color: white;
-}
-
-/* Tasks */
-.kanban-card__tasks {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--card-font-size-sm);
-  color: #6b7280;
-  margin-bottom: 6px;
-  padding: 4px 8px;
-  background-color: #f3f4f6;
-  border-radius: 4px;
-}
-
-.kanban-card__tasks-icon {
-  font-size: var(--card-font-size);
-}
-
-.kanban-card__tasks-text {
-  font-weight: 500;
-  color: #374151;
-}
-
-.kanban-card__tasks-overdue {
-  color: #ef4444;
-  font-weight: 600;
-}
-
-/* Assignee */
-.kanban-card__assignee {
-  font-size: var(--card-font-size-sm);
-  color: #6b7280;
-  padding-top: 6px;
-  border-top: 1px solid #f3f4f6;
-}
-
-.kanban-card__assignee-text {
-  font-weight: 500;
-}
-
-/* Modal */
-.kanban-card__modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.kanban-card__modal {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  min-width: 300px;
-  max-width: 400px;
-}
-
-.kanban-card__modal h4 {
-  margin: 0 0 16px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.kanban-card__modal-select,
-.kanban-card__modal-input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.kanban-card__modal-select:focus,
-.kanban-card__modal-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-}
-
-.kanban-card__modal-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.kanban-card__modal-btn {
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.kanban-card__modal-btn--cancel {
-  background: white;
-  border: 1px solid #e5e7eb;
-  color: #6b7280;
-}
-
-.kanban-card__modal-btn--cancel:hover {
-  background: #f3f4f6;
-}
-
-.kanban-card__modal-btn--confirm {
-  background: #ef4444;
-  border: none;
-  color: white;
-}
-
-.kanban-card__modal-btn--confirm:hover {
-  background: #dc2626;
-}
-
-.kanban-card__modal-btn--confirm:disabled {
-  background: #fca5a5;
-  cursor: not-allowed;
-}
-
-/* Dark mode */
-.dark .kanban-card {
-  background-color: #1f2937;
-  border-color: #374151;
-}
-
-.dark .kanban-card__name {
-  color: #f9fafb;
-}
-
-.dark .kanban-card__phone {
-  color: #9ca3af;
-}
-
-.dark .kanban-card__remove-btn:hover {
-  background-color: #7f1d1d;
-}
-
-.dark .kanban-card__custom-fields {
-  background-color: #374151;
-  border-color: #4b5563;
-}
-
-.dark .kanban-card__custom-field-label {
-  color: #9ca3af;
-}
-
-.dark .kanban-card__custom-field-value {
-  color: #f9fafb;
-}
-
-.dark .kanban-card__id {
-  color: #6b7280;
-}
-
-.dark .kanban-card__time {
-  color: #6b7280;
-}
-
-.dark .kanban-card__tasks {
-  background-color: #374151;
-}
-
-.dark .kanban-card__tasks-text {
-  color: #d1d5db;
-}
-
-.dark .kanban-card__assignee {
-  border-top-color: #374151;
-  color: #9ca3af;
-}
-
-.dark .kanban-card__modal {
-  background-color: #1f2937;
-}
-
-.dark .kanban-card__modal h4 {
-  color: #f9fafb;
-}
-
-.dark .kanban-card__modal-select,
-.dark .kanban-card__modal-input {
-  background-color: #374151;
-  border-color: #4b5563;
-  color: #f9fafb;
-}
+  Mantive este bloco vazio propositalmente para mostrar que o estilo 
+  agora é 100% controlado pelas classes do template acima.
+*/
 </style>
