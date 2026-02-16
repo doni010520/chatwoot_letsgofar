@@ -76,7 +76,7 @@
         <!-- Valor (Sempre em destaque se existir) -->
         <div v-if="item.deal_value" class="min-w-0">
           <p class="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Valor</p>
-          <p class="truncate text-sm font-bold text-emerald-400">{{ formatCurrency(item.deal_value) }}</p>
+          <p class="truncate text-sm font-bold text-green-400">{{ formatCurrency(item.deal_value) }}</p>
         </div>
 
         <!-- Loop Dinâmico para TODOS os Campos Personalizados Visíveis -->
@@ -117,7 +117,7 @@
     <div 
       v-if="item.closed_won !== null && item.closed_won !== undefined" 
       class="mt-auto border-t py-2 text-center text-xs font-bold uppercase tracking-wider"
-      :class="item.closed_won ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-red-500/20 bg-red-500/10 text-red-400'"
+      :class="item.closed_won ? 'border-green-500/20 bg-green-500/10 text-green-400' : 'border-red-500/20 bg-red-500/10 text-red-400'"
     >
       {{ item.closed_won ? '✓ Negócio Ganho' : '✗ Negócio Perdido' }}
     </div>
@@ -128,7 +128,7 @@
       class="mt-auto flex divide-x divide-slate-700/80 border-t border-slate-700/80 bg-slate-900/30"
     >
       <button 
-        class="group/btn flex flex-1 items-center justify-center gap-2 py-3 text-xs font-bold text-emerald-500 transition-colors hover:bg-emerald-500/10"
+        class="group/btn flex flex-1 items-center justify-center gap-2 py-3 text-xs font-bold text-green-500 transition-colors hover:bg-green-500/10"
         title="Marcar como Ganho"
         @click.stop="markAsWon"
       >
@@ -152,7 +152,7 @@
         <h4 class="mb-4 text-lg font-bold text-white">Motivo da Perda</h4>
         
         <div class="mb-4">
-            <select v-model="selectedLossReason" class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+            <select v-model="selectedLossReason" class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500">
             <option value="" disabled>Selecione um motivo...</option>
             <option value="Preço">Preço</option>
             <option value="Concorrência">Concorrência</option>
@@ -168,7 +168,7 @@
             v-model="customLossReason"
             type="text"
             placeholder="Especifique o motivo..."
-            class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none"
+            class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
             />
         </div>
 
@@ -211,7 +211,7 @@ export default {
     // --- Lógica de Visualização ---
     cardBorderClass() {
         // Borda esquerda colorida baseada no status
-        if (this.item.closed_won === true) return 'border-l-4 border-l-emerald-500';
+        if (this.item.closed_won === true) return 'border-l-4 border-l-green-500';
         if (this.item.closed_won === false) return 'border-l-4 border-l-red-500';
         
         // Cores por status quando em aberto
@@ -388,3 +388,4 @@ export default {
   agora é 100% controlado pelas classes do template acima.
 */
 </style>
+
