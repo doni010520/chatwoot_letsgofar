@@ -47,7 +47,6 @@ export default {
       if (Array.isArray(column.items)) {
         return column.items;
       }
-      // For pipeline type 'both', items is an object with conversations and contacts
       if (this.pipelineType === 'both') {
         return [
           ...(column.items.conversations || []).map(item => ({ ...item, itemType: 'conversation' })),
@@ -77,11 +76,38 @@ export default {
 
 <style lang="scss" scoped>
 .kanban-board {
-  @apply flex-1 overflow-hidden;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &__columns {
-    @apply flex h-full gap-4 overflow-x-auto p-4;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    height: 100%;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
     scroll-behavior: smooth;
+
+    // Quando houver muitas colunas, alinha à esquerda para permitir scroll
+    &:has(> :nth-child(5)) {
+      justify-content: flex-start;
+    }
+  }
+}
+
+// Fallback para browsers que não suportam :has()
+@supports not selector(:has(> :nth-child(5))) {
+  .kanban-board__columns {
+    // Se não suportar :has, centraliza por padrão
+    // O overflow-x: auto ainda permite scroll se necessário
+    justify-content: center;
   }
 }
 </style>
