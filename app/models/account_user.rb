@@ -23,8 +23,8 @@
 #  index_account_users_on_user_id                   (user_id)
 #  uniq_user_id_per_account_id                      (account_id,user_id) UNIQUE
 #
-
 class AccountUser < ApplicationRecord
+  include CrmPermissionable
   include AvailabilityStatusable
 
   belongs_to :account
