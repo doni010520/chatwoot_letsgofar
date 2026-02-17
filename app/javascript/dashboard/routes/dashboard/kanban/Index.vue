@@ -1,72 +1,72 @@
 <template>
   <div class="kanban-page">
     <header class="kanban-page__header">
-      <div class="kanban-page__header-content">
-        <div class="kanban-page__title">
-          <h1>CRM</h1>
-          <p v-if="currentPipeline">{{ currentPipeline.name }}</p>
-        </div>
-        <div class="kanban-page__actions">
-          <select
-            v-if="pipelines.length > 1"
-            v-model="selectedPipelineId"
-            class="kanban-page__btn kanban-page__select"
-            @change="onPipelineChange"
+      <div class="kanban-page__title">
+        <span class="kanban-page__icon">📊</span>
+        <h1>CRM</h1>
+        <span class="kanban-page__separator">·</span>
+        <span class="kanban-page__pipeline-name">{{ currentPipeline?.name || 'Carregando...' }}</span>
+      </div>
+      <div class="kanban-page__actions">
+        <select
+          v-if="pipelines.length > 1"
+          v-model="selectedPipelineId"
+          class="kanban-page__btn kanban-page__select"
+          @change="onPipelineChange"
+        >
+          <option
+            v-for="pipeline in pipelines"
+            :key="pipeline.id"
+            :value="pipeline.id"
           >
-            <option
-              v-for="pipeline in pipelines"
-              :key="pipeline.id"
-              :value="pipeline.id"
-            >
-              {{ pipeline.name }}
-            </option>
-          </select>
-          <button
-            class="kanban-page__btn"
-            :class="{ 'kanban-page__btn--active': showFilters }"
-            @click="showFilters = !showFilters"
-          >
-            <span class="icon">🔍</span>
-            <span>Filtros</span>
-            <span v-if="hasActiveFilters" class="filter-badge">●</span>
-          </button>
-          <button
-            class="kanban-page__btn kanban-page__btn--purple"
-            @click="showImportModal = true"
-          >
-            <span class="icon">📤</span>
-            <span>Importar</span>
-          </button>
-          <button
-            class="kanban-page__btn kanban-page__btn--green"
-            :disabled="isExporting"
-            @click="exportBoard"
-          >
-            <span class="icon">📥</span>
-            <span>{{ isExporting ? 'Exportando...' : 'Exportar' }}</span>
-          </button>
-          <button
-            class="kanban-page__btn kanban-page__btn--blue"
-            @click="openDashboard"
-          >
-            <span class="icon">📊</span>
-            <span>Dashboard</span>
-          </button>
-          <button
-            class="kanban-page__btn kanban-page__btn--yellow"
-            @click="showAutomations = true"
-          >
-            <span class="icon">⚡</span>
-            <span>Automações</span>
-          </button>
-          <button
-            class="kanban-page__btn"
-            @click="openSettings"
-          >
-            <span class="icon">⚙️</span>
-            <span>Configurações</span>
-          </button>
-        </div>
+            {{ pipeline.name }}
+          </option>
+        </select>
+        <button
+          class="kanban-page__btn"
+          :class="{ 'kanban-page__btn--active': showFilters }"
+          @click="showFilters = !showFilters"
+        >
+          <span class="icon">🔍</span>
+          <span>Filtros</span>
+          <span v-if="hasActiveFilters" class="filter-badge">●</span>
+        </button>
+        <button
+          class="kanban-page__btn kanban-page__btn--purple"
+          @click="showImportModal = true"
+        >
+          <span class="icon">📤</span>
+          <span>Importar</span>
+        </button>
+        <button
+          class="kanban-page__btn kanban-page__btn--green"
+          :disabled="isExporting"
+          @click="exportBoard"
+        >
+          <span class="icon">📥</span>
+          <span>{{ isExporting ? 'Exportando...' : 'Exportar' }}</span>
+        </button>
+        <button
+          class="kanban-page__btn kanban-page__btn--blue"
+          @click="openDashboard"
+        >
+          <span class="icon">📊</span>
+          <span>Dashboard</span>
+        </button>
+        <button
+          class="kanban-page__btn kanban-page__btn--yellow"
+          @click="showAutomations = true"
+        >
+          <span class="icon">⚡</span>
+          <span>Automações</span>
+        </button>
+        <button
+          class="kanban-page__btn"
+          @click="openSettings"
+        >
+          <span class="icon">⚙️</span>
+          <span>Configurações</span>
+        </button>
       </div>
     </header>
 
@@ -239,7 +239,6 @@ export default {
         filters: this.activeFilters,
       });
 
-      // Atualizar filtros disponíveis, totais e config de campos
       if (response) {
         if (response.available_filters) {
           this.availableFilters = response.available_filters;
@@ -314,7 +313,6 @@ export default {
     async handleRemove({ itemId, itemType }) {
       try {
         await KanbanAPI.updateConversationStage(this.accountId, itemId, null);
-        // Recarregar o board para refletir a mudança
         this.loadBoard();
       } catch (error) {
         console.error('Erro ao remover do CRM:', error);
@@ -327,13 +325,11 @@ export default {
       try {
         const response = await KanbanAPI.exportBoard(this.accountId, this.selectedPipelineId);
         
-        // Criar blob e fazer download
         const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         
-        // Nome do arquivo baseado no pipeline
         const pipelineName = this.currentPipeline?.name || 'kanban';
         const date = new Date().toISOString().split('T')[0];
         link.setAttribute('download', `${pipelineName.toLowerCase().replace(/\s+/g, '_')}_${date}.csv`);
@@ -382,33 +378,49 @@ export default {
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   background-color: var(--s-25);
 
   &__header {
-    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 24px;
     background-color: var(--white);
     border-bottom: 1px solid var(--s-100);
-  }
-
-  &__header-content {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    min-height: 60px;
   }
 
   &__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+
     h1 {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
       color: var(--s-800);
       margin: 0;
     }
+  }
 
-    p {
-      font-size: 13px;
-      color: var(--s-500);
-      margin: 4px 0 0 0;
-    }
+  &__icon {
+    font-size: 20px;
+  }
+
+  &__separator {
+    color: var(--s-300);
+    font-size: 20px;
+    font-weight: 300;
+  }
+
+  &__pipeline-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--s-600);
   }
 
   &__actions {
@@ -431,7 +443,6 @@ export default {
     transition: all 0.2s ease;
     position: relative;
     
-    /* Glass effect base */
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -599,9 +610,14 @@ export default {
     h1 {
       color: var(--s-100);
     }
-    p {
-      color: var(--s-400);
-    }
+  }
+
+  &__separator {
+    color: var(--s-600);
+  }
+
+  &__pipeline-name {
+    color: var(--s-300);
   }
 
   &__btn {
