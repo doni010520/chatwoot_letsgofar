@@ -172,6 +172,9 @@ const conversationCustomViews = useMapGetter(
   'customViews/getConversationCustomViews'
 );
 
+// Getter para os pipelines do CRM
+const kanbanPipelines = useMapGetter('kanban/getPipelines');
+
 onMounted(() => {
   store.dispatch('labels/get');
   store.dispatch('inboxes/get');
@@ -180,11 +183,19 @@ onMounted(() => {
   store.dispatch('attributes/get');
   store.dispatch('customViews/get', 'conversation');
   store.dispatch('customViews/get', 'contact');
+  // Carregar pipelines do CRM
+  store.dispatch('kanban/fetchPipelines', accountId.value);
 });
 
 const sortedInboxes = computed(() =>
   inboxes.value.slice().sort((a, b) => a.name.localeCompare(b.name))
 );
+
+// Pipelines ordenados por nome
+const sortedPipelines = computed(() => {
+  if (!kanbanPipelines.value || !Array.isArray(kanbanPipelines.value)) return [];
+  return kanbanPipelines.value.slice().sort((a, b) => a.name.localeCompare(b.name));
+});
 
 const closeMobileSidebar = () => {
   if (!props.isMobileSidebarOpen) return;
@@ -228,6 +239,47 @@ const newReportRoutes = () => [
 
 const reportRoutes = computed(() => newReportRoutes());
 
+// Gerar children do CRM baseado nos pipelines
+const crmChildren = computed(() => {
+  const children = [];
+  
+  // Se houver pipelines, adiciona cada um como subitem
+  if (sortedPipelines.value.length > 0) {
+    sortedPipelines.value.forEach(pipeline => {
+      children.push({
+        name: `CRM-Pipeline-${pipeline.id}`,
+        label: pipeline.name,
+        icon: h('span', {
+          class: 'size-[8px] rounded-full',
+          style: { backgroundColor: pipeline.color || '#3b82f6' },
+        }),
+        to: accountScopedRoute('kanban_board', { pipeline_id: pipeline.id }),
+        activeOn: ['kanban_board'],
+      });
+    });
+  }
+  
+  // Sempre adiciona Dashboard e Configurações
+  children.push(
+    {
+      name: 'CRM-Dashboard',
+      label: 'Dashboard',
+      icon: 'i-lucide-chart-bar',
+      to: accountScopedRoute('kanban_dashboard'),
+      activeOn: ['kanban_dashboard'],
+    },
+    {
+      name: 'CRM-Settings',
+      label: 'Configurações',
+      icon: 'i-lucide-settings',
+      to: accountScopedRoute('kanban_board'),
+      // Vai abrir o modal de configurações quando clicar
+    }
+  );
+  
+  return children;
+});
+
 const menuItems = computed(() => {
   const allItems = [
     {
@@ -244,13 +296,19 @@ const menuItems = computed(() => {
       name: 'CRM',
       label: 'CRM',
       icon: 'i-lucide-layout-grid',
-      to: accountScopedRoute('kanban_board'),
+      activeOn: ['kanban_board', 'kanban_dashboard'],
+      // Se tiver pipelines, mostra como menu expansível
+      // Se não tiver, vai direto para a página
+      ...(sortedPipelines.value.length > 0
+        ? { children: crmChildren.value }
+        : { to: accountScopedRoute('kanban_board') }
+      ),
     },
     {
       name: 'Conversation',
       label: t('SIDEBAR.CONVERSATIONS'),
       icon: 'i-lucide-message-circle',
-      adminOnly: false, // Flag para indicar que é só para admin
+      adminOnly: false,
       children: [
         {
           name: 'All',
