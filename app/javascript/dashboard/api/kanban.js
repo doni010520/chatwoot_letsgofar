@@ -171,6 +171,7 @@ class KanbanAPI extends ApiClient {
     const params = filter ? { filter } : {};
     return window.axios.get(`/api/v1/accounts/${accountId}/kanban/user_tasks`, { params });
   }
+
   // ============================================
   // AUTOMATIONS
   // ============================================
@@ -206,7 +207,26 @@ class KanbanAPI extends ApiClient {
   testAutomation(accountId, pipelineId, automationId) {
     return window.axios.post(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/automations/${automationId}/test`);
   }
+
+  // ==========================================
+  // CRM PERMISSIONS
+  // ==========================================
+
+  getCurrentPermissions(accountId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/permissions/current`);
+  }
+
+  getAllPermissions(accountId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/permissions`);
+  }
+
+  getUserPermissions(accountId, userId) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/permissions/${userId}`);
+  }
+
+  updateUserPermissions(accountId, userId, data) {
+    return window.axios.put(`/api/v1/accounts/${accountId}/kanban/permissions/${userId}`, data);
+  }
 }
 
 export default new KanbanAPI();
-
