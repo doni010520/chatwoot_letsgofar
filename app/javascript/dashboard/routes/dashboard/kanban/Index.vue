@@ -61,6 +61,14 @@
           <span>Automações</span>
         </button>
         <button
+          v-if="isAdmin"
+          class="kanban-page__btn kanban-page__btn--purple"
+          @click="openPermissions"
+        >
+          <span class="icon">🔐</span>
+          <span>Permissões</span>
+        </button>
+        <button
           class="kanban-page__btn"
           @click="openSettings"
         >
@@ -206,6 +214,9 @@ export default {
     hasActiveFilters() {
       return Object.keys(this.activeFilters).some(key => this.activeFilters[key]);
     },
+    isAdmin() {
+  return this.$store.getters.getCurrentRole === 'administrator';
+    },
   },
   watch: {
     accountId: {
@@ -259,6 +270,12 @@ export default {
       this.activeFilters = filters;
       this.loadBoard();
     },
+    openPermissions() {
+      this.$router.push({
+      name: 'kanban_permissions',
+      params: { accountId: this.accountId },
+    });
+  },
     async handleMove({ itemId, itemType, fromStageId, toStageId }) {
       if (fromStageId === toStageId) return;
       await this.moveItem({
@@ -668,3 +685,4 @@ export default {
   }
 }
 </style>
+
