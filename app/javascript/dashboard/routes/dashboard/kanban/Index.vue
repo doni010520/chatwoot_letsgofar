@@ -8,6 +8,37 @@
         <span class="kanban-page__pipeline-name">{{ currentPipeline?.name || 'Carregando...' }}</span>
       </div>
       <div class="kanban-page__actions">
+        <!-- Toggle de Visualização -->
+        <div class="view-toggle">
+          <button
+            class="view-toggle__btn"
+            :class="{ 'view-toggle__btn--active': viewMode === 'kanban' }"
+            @click="viewMode = 'kanban'"
+            title="Visualização Kanban"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="5" height="18" rx="1"/>
+              <rect x="10" y="3" width="5" height="12" rx="1"/>
+              <rect x="17" y="3" width="5" height="8" rx="1"/>
+            </svg>
+          </button>
+          <button
+            class="view-toggle__btn"
+            :class="{ 'view-toggle__btn--active': viewMode === 'list' }"
+            @click="viewMode = 'list'"
+            title="Visualização em Lista"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"/>
+              <line x1="8" y1="12" x2="21" y2="12"/>
+              <line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/>
+              <line x1="3" y1="12" x2="3.01" y2="12"/>
+              <line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
         <select
           v-if="pipelines.length > 1"
           v-model="selectedPipelineId"
@@ -23,6 +54,7 @@
           </option>
         </select>
         <button
+          v-if="viewMode === 'kanban'"
           class="kanban-page__btn"
           :class="{ 'kanban-page__btn--active': showFilters }"
           @click="showFilters = !showFilters"
@@ -78,9 +110,9 @@
       </div>
     </header>
 
-    <!-- Filtros -->
+    <!-- Filtros (apenas no modo Kanban) -->
     <KanbanFilters
-      v-if="showFilters && currentPipeline"
+      v-if="showFilters && currentPipeline && viewMode === 'kanban'"
       :assignees="availableFilters.assignees"
       :custom-fields="availableFilters.custom_fields"
       :filters="activeFilters"
@@ -103,18 +135,33 @@
     </div>
 
     <template v-else>
-      <!-- Indicador de resultados filtrados -->
-      <div v-if="hasActiveFilters" class="kanban-page__filter-info">
+      <!-- Indicador de resultados filtrados (apenas no modo Kanban) -->
+      <div v-if="hasActiveFilters && viewMode === 'kanban'" class="kanban-page__filter-info">
         <span>Exibindo resultados filtrados</span>
         <span class="kanban-page__totals">
           {{ boardTotals.count }} cards · R$ {{ formatCurrency(boardTotals.value) }}
         </span>
       </div>
 
+      <!-- Visualização Kanban -->
       <KanbanBoard
+        v-if="viewMode === 'kanban'"
         :board="board"
         :pipeline-type="currentPipeline?.pipeline_type || 'conversations'"
         :custom-fields-config="customFieldsConfig"
+        @move="handleMove"
+        @card-click="handleCardClick"
+        @mark-won="handleMarkWon"
+        @mark-lost="handleMarkLost"
+        @remove="handleRemove"
+      />
+
+      <!-- Visualização em Lista -->
+      <KanbanListView
+        v-else
+        :board="board"
+        :stages="currentPipeline?.kanban_stages || []"
+        :assignees="availableFilters.assignees || []"
         @move="handleMove"
         @card-click="handleCardClick"
         @mark-won="handleMarkWon"
@@ -139,13 +186,18 @@
       @imported="onImportCompleted"
     />
 
-    <KanbanAutomationsManager
-      v-if="showAutomations && currentPipeline"
-      :pipeline-id="currentPipeline.id"
-      :stages="currentPipeline.kanban_stages || []"
-      :users="availableFilters.assignees || []"
-      @close="showAutomations = false"
-    />
+    <!-- Modal wrapper para Automações -->
+    <div v-if="showAutomations && currentPipeline" class="modal-overlay" @click.self="showAutomations = false">
+      <div class="modal-content modal-content--full">
+        <button class="modal-close" @click="showAutomations = false">✕</button>
+        <KanbanAutomationsManager
+          :pipeline-id="currentPipeline.id"
+          :stages="currentPipeline.kanban_stages || []"
+          :users="availableFilters.assignees || []"
+          @close="showAutomations = false"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -154,6 +206,7 @@ import { mapGetters, mapActions } from 'vuex';
 import Spinner from 'shared/components/Spinner.vue';
 import KanbanBoard from 'dashboard/components/kanban/KanbanBoard.vue';
 import KanbanFilters from 'dashboard/components/kanban/KanbanFilters.vue';
+import KanbanListView from 'dashboard/components/kanban/KanbanListView.vue';
 import KanbanSettingsModal from './KanbanSettingsModal.vue';
 import KanbanImportModal from 'dashboard/components/kanban/KanbanImportModal.vue';
 import KanbanAutomationsManager from 'dashboard/components/kanban/KanbanAutomationsManager.vue';
@@ -165,6 +218,7 @@ export default {
     Spinner,
     KanbanBoard,
     KanbanFilters,
+    KanbanListView,
     KanbanSettingsModal,
     KanbanImportModal,
     KanbanAutomationsManager,
@@ -177,6 +231,7 @@ export default {
       showImportModal: false,
       showAutomations: false,
       isExporting: false,
+      viewMode: 'kanban', // 'kanban' ou 'list'
       activeFilters: {},
       availableFilters: {
         assignees: [],
@@ -215,7 +270,7 @@ export default {
       return Object.keys(this.activeFilters).some(key => this.activeFilters[key]);
     },
     isAdmin() {
-  return this.$store.getters.getCurrentRole === 'administrator';
+      return this.$store.getters.getCurrentRole === 'administrator';
     },
   },
   watch: {
@@ -225,6 +280,13 @@ export default {
         this.loadPipelines();
       },
     },
+  },
+  mounted() {
+    // Recupera a preferência de visualização salva
+    const savedViewMode = localStorage.getItem('crm_view_mode');
+    if (savedViewMode && ['kanban', 'list'].includes(savedViewMode)) {
+      this.viewMode = savedViewMode;
+    }
   },
   methods: {
     ...mapActions('kanban', [
@@ -272,10 +334,10 @@ export default {
     },
     openPermissions() {
       this.$router.push({
-      name: 'kanban_permissions',
-      params: { accountId: this.accountId },
-    });
-  },
+        name: 'kanban_permissions',
+        params: { accountId: this.accountId },
+      });
+    },
     async handleMove({ itemId, itemType, fromStageId, toStageId }) {
       if (fromStageId === toStageId) return;
       await this.moveItem({
@@ -387,6 +449,18 @@ export default {
       });
     },
   },
+  watch: {
+    viewMode(newVal) {
+      // Salva a preferência de visualização
+      localStorage.setItem('crm_view_mode', newVal);
+    },
+    accountId: {
+      immediate: true,
+      handler() {
+        this.loadPipelines();
+      },
+    },
+  },
 };
 </script>
 
@@ -445,6 +519,56 @@ export default {
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  /* Toggle de Visualização */
+  .view-toggle {
+    display: flex;
+    align-items: center;
+    background: var(--s-100);
+    border-radius: 8px;
+    padding: 2px;
+    margin-right: 8px;
+
+    &__btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+
+      svg {
+        width: 18px;
+        height: 18px;
+        color: var(--s-500);
+      }
+
+      &:hover {
+        background: var(--s-200);
+
+        svg {
+          color: var(--s-700);
+        }
+      }
+
+      &--active {
+        background: var(--white);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        svg {
+          color: var(--w-500);
+        }
+
+        &:hover {
+          background: var(--white);
+        }
+      }
+    }
   }
 
   /* Estilo Glass para todos os botões */
@@ -616,6 +740,58 @@ export default {
   }
 }
 
+/* Modal para Automações */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: 12px;
+  position: relative;
+  max-height: 90vh;
+  overflow: auto;
+
+  &--full {
+    width: 95%;
+    max-width: 1400px;
+    height: 90vh;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--s-100);
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--s-600);
+
+  &:hover {
+    background: var(--s-200);
+    color: var(--s-800);
+  }
+}
+
 /* Dark mode */
 .dark .kanban-page {
   &__header {
@@ -635,6 +811,32 @@ export default {
 
   &__pipeline-name {
     color: var(--s-300);
+  }
+
+  .view-toggle {
+    background: var(--s-800);
+
+    &__btn {
+      svg {
+        color: var(--s-400);
+      }
+
+      &:hover {
+        background: var(--s-700);
+
+        svg {
+          color: var(--s-200);
+        }
+      }
+
+      &--active {
+        background: var(--s-700);
+
+        svg {
+          color: var(--w-400);
+        }
+      }
+    }
   }
 
   &__btn {
@@ -683,6 +885,18 @@ export default {
     border-bottom-color: rgba(59, 130, 246, 0.2);
     color: #60a5fa;
   }
+
+  .modal-content {
+    background: var(--s-900);
+  }
+
+  .modal-close {
+    background: var(--s-700);
+    color: var(--s-300);
+
+    &:hover {
+      background: var(--s-600);
+    }
+  }
 }
 </style>
-
