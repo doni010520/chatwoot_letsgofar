@@ -337,18 +337,29 @@ export default {
   },
   computed: {
     allItems() {
-      if (!this.board || !this.board.stages) return [];
+      // board é um array de { stage, items, totals }
+      if (!this.board || !Array.isArray(this.board)) return [];
       
       const items = [];
-      this.board.stages.forEach(stage => {
-        const stageItems = stage.items || [];
+      this.board.forEach(stageData => {
+        const stage = stageData.stage;
+        const stageItems = stageData.items || [];
         stageItems.forEach(item => {
           items.push({
             ...item,
+            // Dados do contato
+            name: item.contact?.name || 'Sem nome',
+            email: item.contact?.email || null,
+            phone: item.contact?.phone_number || null,
+            thumbnail: item.contact?.thumbnail || null,
+            // Dados do estágio
             stage_id: stage.id,
             stage_name: stage.name,
             stage_color: stage.color || '#6b7280',
-            type: this.board.pipeline_type === 'contacts' ? 'contact' : 'conversation',
+            // Tipo do item
+            type: 'conversation',
+            // Data de atualização
+            updated_at: item.last_activity_at,
           });
         });
       });
