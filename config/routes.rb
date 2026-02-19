@@ -367,8 +367,8 @@ Rails.application.routes.draw do
 
           resources :upload, only: [:create]
 
-        # Kanban
-            namespace :kanban do
+          # Kanban
+          namespace :kanban do
             # Tarefas do usuário (global)
             resource :user_tasks, only: [], controller: 'user_tasks' do
               collection do
@@ -376,19 +376,13 @@ Rails.application.routes.draw do
                 get :index
               end
             end
-          
-            # ↓↓↓ ADICIONE ESTE BLOCO AQUI ↓↓↓
+
+            # Permissões do CRM
             resources :permissions, only: [:index, :show, :update], param: :user_id do
               collection do
                 get :current
               end
             end
-            # ↑↑↑ FIM DO BLOCO ↑↑↑
-          
-            resources :pipelines do
-              # ... resto continua igual
-            end
-          end
 
             resources :pipelines do
               resources :stages do
