@@ -82,13 +82,14 @@ export default {
   overflow: visible;
   display: flex;
   flex-direction: column;
+  padding-top: 10px;
 
   &__columns {
     display: flex;
     justify-content: center;
     align-items: flex-start;
     gap: 16px;
-    padding: 20px 24px;
+    padding: 10px 24px 24px;
     height: 100%;
     width: 100%;
     overflow-x: visible;
