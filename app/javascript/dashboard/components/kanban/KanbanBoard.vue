@@ -78,8 +78,8 @@ export default {
 .kanban-board {
   flex: 1;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
+  overflow: visible;
   display: flex;
   flex-direction: column;
 
@@ -91,8 +91,8 @@ export default {
     padding: 20px 24px;
     height: 100%;
     width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow-x: visible;
+    overflow-y: visible;
     scroll-behavior: smooth;
 
     // Quando houver muitas colunas, alinha à esquerda para permitir scroll
