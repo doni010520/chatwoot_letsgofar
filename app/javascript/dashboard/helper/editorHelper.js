@@ -110,7 +110,7 @@ export function cleanSignature(signature) {
  * @returns {string} - The signature with the delimiter added.
  */
 function appendDelimiter(signature) {
-  return `${SIGNATURE_DELIMITER}\n\n${cleanSignature(signature)}`;
+  return cleanSignature(signature);
 }
 
 /**
