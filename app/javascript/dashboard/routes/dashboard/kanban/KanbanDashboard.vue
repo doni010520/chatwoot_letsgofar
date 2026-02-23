@@ -368,7 +368,8 @@ export default {
 /* ===== BASE ===== */
 .kanban-dashboard {
   padding: 24px;
-  min-height: 100vh;
+  height: 100%;
+  overflow-y: auto;
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
