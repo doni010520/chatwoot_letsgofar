@@ -76,18 +76,19 @@ RUN pnpm i
 
 COPY . /app
 
+# Generate .git_sha safely before precompile to avoid broken layer caching
+RUN echo "unknown" > /app/.git_sha
+
 # creating a log directory so that image wont fail when RAILS_LOG_TO_STDOUT is false
 # https://github.com/chatwoot/chatwoot/issues/701
 RUN mkdir -p /app/log
 
-# generate production assets if production environment
+# generate production assets if production environment (cache busted)
 RUN if [ "$RAILS_ENV" = "production" ]; then \
   SECRET_KEY_BASE=precompile_placeholder RAILS_LOG_TO_STDOUT=enabled bundle exec rake assets:precompile \
   && rm -rf spec node_modules tmp/cache; \
   fi
 
-# Generate .git_sha file with current commit hash (fallback to unknown since git history might not be present)
-RUN echo "unknown" > /app/.git_sha
 
 # Remove unnecessary files
 RUN rm -rf /gems/ruby/3.4.0/cache/*.gem \
