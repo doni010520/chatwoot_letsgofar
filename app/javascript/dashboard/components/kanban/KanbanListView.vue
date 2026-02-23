@@ -583,7 +583,7 @@ export default {
 .kanban-list-view {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 100%;
   background: var(--white);
 }
 
@@ -669,7 +669,7 @@ export default {
 
 .list-table-container {
   flex: 1;
-  overflow: auto;
+  overflow: visible;
 }
 
 .list-table {
