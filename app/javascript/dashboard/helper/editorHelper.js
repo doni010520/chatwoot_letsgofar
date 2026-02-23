@@ -171,7 +171,7 @@ export function appendSignature(body, signature, channelType) {
     return body;
   }
 
-  return `${body.trimEnd()}\n${appendDelimiter(cleanedSignature)}`;
+  return `${body.trimEnd()}${appendDelimiter(cleanedSignature)}\n\n`;
 }
 
 /**
