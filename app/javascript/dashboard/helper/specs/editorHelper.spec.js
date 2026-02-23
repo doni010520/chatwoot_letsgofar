@@ -372,27 +372,27 @@ describe('replaceSignature', () => {
     Object.keys(DOES_NOT_HAVE_SIGNATURE).forEach(key => {
       const { body, signature } = DOES_NOT_HAVE_SIGNATURE[key];
       expect(replaceSignature(body, signature, NEW_SIGNATURE)).toBe(
-        `${body}\n\n--\n\n${NEW_SIGNATURE}`
+        `${body}\n\n${NEW_SIGNATURE}`
       );
     });
   });
   it('removes signature if present at the end', () => {
     const { body, signature } = HAS_SIGNATURE['signature at end'];
     expect(replaceSignature(body, signature, NEW_SIGNATURE)).toBe(
-      `This is a test\n\n--\n\n${NEW_SIGNATURE}`
+      `This is a test\n\n${NEW_SIGNATURE}`
     );
   });
   it('removes signature if present with spaces and new lines', () => {
     const { body, signature } =
       HAS_SIGNATURE['signature at end with spaces and new lines'];
     expect(replaceSignature(body, signature, NEW_SIGNATURE)).toBe(
-      `This is a test\n\n--\n\n${NEW_SIGNATURE}`
+      `This is a test\n\n${NEW_SIGNATURE}`
     );
   });
   it('removes signature if present without text before it', () => {
     const { body, signature } = HAS_SIGNATURE['no text before signature'];
     expect(replaceSignature(body, signature, NEW_SIGNATURE)).toBe(
-      `\n\n--\n\n${NEW_SIGNATURE}`
+      `\n\n${NEW_SIGNATURE}`
     );
   });
 });
