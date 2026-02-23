@@ -471,6 +471,7 @@ export default {
   height: 100%;
   width: 100%;
   background-color: var(--s-25);
+  overflow: auto;
 
   &__header {
     display: flex;
