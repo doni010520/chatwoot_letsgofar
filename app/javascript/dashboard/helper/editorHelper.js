@@ -171,9 +171,8 @@ export function appendSignature(body, signature, channelType) {
     return body;
   }
 
-  return `${body.trimEnd()}\n${appendDelimiter(cleanedSignature)}`;  // <-- Mudança aqui: \n ao invés de \n\n
+  return `${body.trimEnd()}\n${appendDelimiter(cleanedSignature)}`;
 }
-```
 
 /**
  * Removes the signature from the body, along with the signature delimiter.
