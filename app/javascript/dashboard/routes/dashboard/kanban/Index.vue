@@ -483,6 +483,8 @@ export default {
     background-color: var(--white);
     border-bottom: 1px solid var(--s-100);
     min-height: 60px;
+    flex-shrink: 0;
+    margin-bottom: 8px;
   }
 
   &__title {
