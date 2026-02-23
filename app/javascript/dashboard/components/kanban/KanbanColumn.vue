@@ -132,6 +132,7 @@ export default {
   @apply flex flex-col bg-slate-50 dark:bg-slate-800 rounded-lg min-w-[300px] max-w-[300px];
   transition: all 0.2s ease;
   border: 2px solid transparent;
+  max-height: 100%;
   
   &--drag-over {
     background-color: rgba(59, 130, 246, 0.1);
