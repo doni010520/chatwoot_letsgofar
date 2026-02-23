@@ -92,14 +92,14 @@ export function cleanSignature(signature) {
     const nodes = new MessageMarkdownTransformer(messageSchema).parse(
       signature
     );
-    return MessageMarkdownSerializer.serialize(nodes);
+    return MessageMarkdownSerializer.serialize(nodes).trim();
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn(e);
     Sentry.captureException(e);
     // The parser can break on some cases
     // for example, Token type `hr` not supported by Markdown parser
-    return signature;
+    return signature.trim();
   }
 }
 
