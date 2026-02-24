@@ -351,8 +351,8 @@ export default {
 <style scoped>
 .kanban-filters {
   padding: 12px 16px;
-  background-color: #1f2937;
-  border-bottom: 1px solid #374151;
+  background-color: rgb(var(--slate-2));
+  border-bottom: 1px solid rgb(var(--slate-4));
 }
 
 .filters-row {
@@ -386,21 +386,21 @@ export default {
 .filter-input,
 .filter-select {
   padding: 8px 12px;
-  background-color: #111827;
-  border: 1px solid #374151;
+  background-color: rgb(var(--slate-1));
+  border: 1px solid rgb(var(--slate-4));
   border-radius: 6px;
-  color: #f3f4f6;
+  color: rgb(var(--slate-12));
   font-size: 13px;
 }
 
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: rgb(var(--blue-9));
 }
 
 .filter-input::placeholder {
-  color: #6b7280;
+  color: rgb(var(--slate-9));
 }
 
 .filter-input--small {
@@ -408,29 +408,29 @@ export default {
 }
 
 .filter-prefix {
-  color: #9ca3af;
+  color: rgb(var(--slate-10));
   font-size: 13px;
   margin-right: 4px;
 }
 
 .filter-separator {
-  color: #6b7280;
+  color: rgb(var(--slate-9));
   margin: 0 2px;
 }
 
 .filter-clear {
   padding: 8px 12px;
-  background-color: #374151;
+  background-color: rgb(var(--slate-4));
   border: none;
   border-radius: 6px;
-  color: #f3f4f6;
+  color: rgb(var(--slate-12));
   font-size: 13px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .filter-clear:hover {
-  background-color: #4b5563;
+  background-color: rgb(var(--slate-5));
 }
 
 .filters-active {
@@ -443,7 +443,7 @@ export default {
 
 .filters-active__label {
   font-size: 12px;
-  color: #9ca3af;
+  color: rgb(var(--slate-10));
 }
 
 .filter-tag {
@@ -451,7 +451,7 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background-color: #3b82f6;
+  background-color: rgb(var(--blue-9));
   border-radius: 4px;
   font-size: 12px;
   color: white;
