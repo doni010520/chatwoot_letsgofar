@@ -1,6 +1,6 @@
 <template>
   <div 
-    class="group relative w-full cursor-pointer overflow-hidden rounded-lg bg-slate-800 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl hover:border-slate-600 border border-transparent"
+    class="group relative w-full cursor-pointer overflow-hidden rounded-lg bg-white dark:bg-slate-800 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl hover:border-slate-300 dark:hover:border-slate-600 border border-transparent"
     :class="[
       cardBorderClass, 
       { 'z-50 rotate-2 scale-105 opacity-90 ring-2 ring-blue-500/50': isDragging }
@@ -12,7 +12,7 @@
   >
     
     <!-- Decoração de Fundo (Gradient Sutil) -->
-    <div class="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-white/5 transition-opacity group-hover:bg-white/10"></div>
+    <div class="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-bl-full bg-slate-900/5 dark:bg-white/5 transition-opacity group-hover:bg-slate-900/10 dark:group-hover:bg-white/10"></div>
 
     <!-- Botão de Remover (Aparece no Hover) -->
     <button 
@@ -50,18 +50,18 @@
             v-if="contactThumbnail"
             :src="contactThumbnail"
             :alt="contactName"
-            class="h-12 w-12 rounded-full border-2 border-slate-700 object-cover shadow-sm"
+            class="h-12 w-12 rounded-full border-2 border-slate-200 dark:border-slate-700 object-cover shadow-sm"
           />
-          <div v-else class="flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-700 text-sm font-bold text-slate-300">
+          <div v-else class="flex h-12 w-12 items-center justify-center rounded-full border-2 border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-700 text-sm font-bold text-slate-600 dark:text-slate-300">
             {{ getInitials(contactName) }}
           </div>
           <!-- Indicador Online/Status (Opcional) -->
-          <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-slate-800 bg-green-500"></div>
+          <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white dark:border-slate-800 bg-green-500"></div>
         </div>
 
         <!-- Nome e Telefone -->
         <div class="min-w-0 flex-1">
-          <h3 class="truncate text-lg font-bold leading-tight text-white" :title="contactName">
+          <h3 class="truncate text-lg font-bold leading-tight text-slate-800 dark:text-white" :title="contactName">
             {{ contactName }}
           </h3>
           <div class="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400">
@@ -88,14 +88,14 @@
            <p class="mb-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500 truncate" :title="field.name">
              {{ field.name }}
            </p>
-           <p class="truncate text-sm font-medium text-slate-300" :title="formatFieldValue(field)">
+           <p class="truncate text-sm font-medium text-slate-700 dark:text-slate-300" :title="formatFieldValue(field)">
              {{ formatFieldValue(field) }}
            </p>
         </div>
       </div>
       
       <!-- Tarefas (Pílula Condensada) -->
-      <div v-if="hasTasks" class="mt-3 flex items-center gap-2 rounded bg-slate-900/50 px-2 py-1.5 text-xs text-slate-400 border border-slate-700/50">
+      <div v-if="hasTasks" class="mt-3 flex items-center gap-2 rounded bg-slate-50 dark:bg-slate-900/50 px-2 py-1.5 text-xs text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700/50">
         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
         <span>{{ item.tasks.pending }} tarefa{{ item.tasks.pending > 1 ? 's' : '' }}</span>
         <span v-if="item.tasks.overdue > 0" class="font-bold text-red-400 ml-auto">
@@ -125,7 +125,7 @@
     <!-- Estado: Aberto (Botões de Ação) -->
     <div 
       v-else 
-      class="mt-auto flex divide-x divide-slate-700/80 border-t border-slate-700/80 bg-slate-900/30"
+      class="mt-auto flex divide-x divide-slate-200 dark:divide-slate-700/80 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900/30"
     >
       <button 
         class="group/btn flex flex-1 items-center justify-center gap-2 py-3 text-xs font-bold text-green-500 transition-colors hover:bg-green-500/10"
@@ -148,11 +148,11 @@
 
     <!-- MODAL (Mantido simples, apenas estilizado para dark mode) -->
     <div v-if="showLossReasonModal" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" @click.stop="closeLossModal">
-      <div class="w-full max-w-sm rounded-lg bg-slate-800 p-6 shadow-2xl border border-slate-700" @click.stop>
-        <h4 class="mb-4 text-lg font-bold text-white">Motivo da Perda</h4>
+      <div class="w-full max-w-sm rounded-lg bg-white dark:bg-slate-800 p-6 shadow-2xl border border-slate-200 dark:border-slate-700" @click.stop>
+        <h4 class="mb-4 text-lg font-bold text-slate-800 dark:text-white">Motivo da Perda</h4>
         
         <div class="mb-4">
-            <select v-model="selectedLossReason" class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500">
+            <select v-model="selectedLossReason" class="w-full rounded bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none focus:ring-1 focus:ring-green-500">
             <option value="" disabled>Selecione um motivo...</option>
             <option value="Preço">Preço</option>
             <option value="Concorrência">Concorrência</option>
@@ -168,12 +168,12 @@
             v-model="customLossReason"
             type="text"
             placeholder="Especifique o motivo..."
-            class="w-full rounded bg-slate-900 border border-slate-700 text-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+            class="w-full rounded bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
             />
         </div>
 
         <div class="flex justify-end gap-2">
-          <button class="rounded px-4 py-2 text-sm text-slate-400 hover:bg-slate-700 hover:text-white transition-colors" @click.stop="closeLossModal">
+          <button class="rounded px-4 py-2 text-sm text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors" @click.stop="closeLossModal">
             Cancelar
           </button>
           <button 
@@ -225,12 +225,12 @@ export default {
     },
     statusBadgeClasses() {
         const maps = {
-            'open': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-            'pending': 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-            'resolved': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-            'snoozed': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+            'open': 'bg-blue-50/50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20',
+            'pending': 'bg-yellow-50/50 text-yellow-600 border-yellow-200 dark:bg-yellow-500/10 dark:text-yellow-400 dark:border-yellow-500/20',
+            'resolved': 'bg-purple-50/50 text-purple-600 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20',
+            'snoozed': 'bg-slate-50/50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20',
         };
-        return maps[this.item.status] || 'bg-slate-700 text-slate-300 border-slate-600';
+        return maps[this.item.status] || 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600';
     },
     statusDotClass() {
          const maps = {
@@ -388,4 +388,3 @@ export default {
   agora é 100% controlado pelas classes do template acima.
 */
 </style>
-
