@@ -26,6 +26,14 @@
         >
           Campos Personalizados
         </button>
+        <button
+          v-if="isAdmin"
+          class="settings-tab"
+          :class="{ 'settings-tab--active': activeTab === 'permissions' }"
+          @click="activeTab = 'permissions'"
+        >
+          Permissões
+        </button>
       </div>
 
       <!-- Content -->
@@ -102,6 +110,11 @@
             :account-id="accountId"
             :pipeline-id="pipeline.id"
           />
+        </template>
+
+        <!-- Tab: Permissions -->
+        <template v-if="activeTab === 'permissions'">
+          <CrmPermissionsManager :account-id="accountId" />
         </template>
       </div>
 
@@ -180,13 +193,16 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex';
 import KanbanAPI from 'dashboard/api/kanban';
 import KanbanCustomFieldsManager from 'dashboard/components/kanban/KanbanCustomFieldsManager.vue';
+import CrmPermissionsManager from 'dashboard/components/kanban/CrmPermissionsManager.vue';
 
 export default {
   name: 'KanbanSettingsModal',
   components: {
     KanbanCustomFieldsManager,
+    CrmPermissionsManager,
   },
   props: {
     pipeline: { type: Object, default: null },
@@ -206,11 +222,17 @@ export default {
     };
   },
   computed: {
+    ...mapGetters({
+      currentUser: 'getCurrentUser',
+    }),
     stages() {
       return this.pipeline?.kanban_stages || [];
     },
     accountId() {
       return this.$route.params.accountId;
+    },
+    isAdmin() {
+      return this.currentUser?.role === 'administrator';
     },
   },
   methods: {
@@ -318,9 +340,9 @@ export default {
 .settings-modal {
   background-color: rgb(var(--slate-2));
   border-radius: 12px;
-  width: 600px;
+  width: 800px;
   max-width: 90vw;
-  max-height: 85vh;
+  height: 680px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
@@ -333,6 +355,7 @@ export default {
   justify-content: space-between;
   padding: 20px 24px;
   border-bottom: 1px solid rgb(var(--slate-4));
+  flex-shrink: 0;
 }
 
 .settings-header__text h2 {
@@ -363,12 +386,12 @@ export default {
   color: rgb(var(--slate-12));
 }
 
-/* Tabs */
 .settings-tabs {
   display: flex;
   gap: 0;
   padding: 0 24px;
   border-bottom: 1px solid rgb(var(--slate-4));
+  flex-shrink: 0;
 }
 
 .settings-tab {
@@ -397,6 +420,7 @@ export default {
   flex: 1;
   overflow-y: auto;
   padding: 20px 24px;
+  min-height: 0;
 }
 
 .settings-section {
@@ -488,6 +512,7 @@ export default {
   justify-content: flex-end;
   padding: 16px 24px;
   border-top: 1px solid rgb(var(--slate-4));
+  flex-shrink: 0;
 }
 
 .btn-primary-sm {
@@ -658,4 +683,3 @@ export default {
   border-top: 1px solid rgb(var(--slate-4));
 }
 </style>
-
