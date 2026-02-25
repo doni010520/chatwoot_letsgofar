@@ -92,6 +92,13 @@
           <span class="icon">⚡</span>
           <span>Automações</span>
         </button>
+        <button
+        class="kanban-page__btn"
+        @click="openSettings"
+      >
+        <span class="icon">⚙️</span>
+        <span>Configurações</span>
+      </button>        
       </div>
     </header>
 
@@ -882,5 +889,6 @@ export default {
   }
 }
 </style>
+
 
 
