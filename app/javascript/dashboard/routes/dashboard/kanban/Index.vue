@@ -79,13 +79,6 @@
           <span>{{ isExporting ? 'Exportando...' : 'Exportar' }}</span>
         </button>
         <button
-          class="kanban-page__btn kanban-page__btn--blue"
-          @click="openDashboard"
-        >
-          <span class="icon">📊</span>
-          <span>Dashboard</span>
-        </button>
-        <button
           class="kanban-page__btn kanban-page__btn--yellow"
           @click="showAutomations = true"
         >
@@ -889,6 +882,7 @@ export default {
   }
 }
 </style>
+
 
 
 
