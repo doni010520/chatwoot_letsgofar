@@ -260,22 +260,13 @@ const crmChildren = computed(() => {
   }
   
   // Sempre adiciona Dashboard e Configurações
-  children.push(
-    {
-      name: 'CRM-Dashboard',
-      label: 'Dashboard',
-      icon: 'i-lucide-chart-bar',
-      to: accountScopedRoute('kanban_dashboard'),
-      activeOn: ['kanban_dashboard'],
-    },
-    {
-      name: 'CRM-Settings',
-      label: 'Configurações',
-      icon: 'i-lucide-settings',
-      to: accountScopedRoute('kanban_board'),
-      // Vai abrir o modal de configurações quando clicar
-    }
-  );
+  children.push({
+    name: 'CRM-Dashboard',
+    label: 'Dashboard',
+    icon: 'i-lucide-chart-bar',
+    to: accountScopedRoute('kanban_dashboard'),
+    activeOn: ['kanban_dashboard'],
+  });
   
   return children;
 });
