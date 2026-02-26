@@ -88,32 +88,40 @@ export default {
     onClose() {
       this.$emit('close');
     },
-    async onSchedule() {
-      if (!this.scheduledDateTime) return;
+async onSchedule() {
+  if (!this.scheduledDateTime) return;
 
-      const webhookUrl = 'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-schedule';
+  const webhookUrl = 'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-schedule';
 
-      const payload = {
-        conversation_id: this.conversationId,
-        account_id: this.accountId,
-        inbox_id: this.inboxId,
-        message: this.messageText,
-        scheduled_at: new Date(this.scheduledDateTime).toISOString(),
-      };
+  // ✅ CORREÇÃO: Converte para UTC mantendo a hora escolhida como horário do Brasil
+  const scheduledDate = new Date(this.scheduledDateTime);
+  
+  // Força interpretar como horário de Brasília (UTC-3)
+  // Adiciona 3 horas para compensar quando for convertido para UTC
+  const brasiliaOffset = 3 * 60 * 60 * 1000; // 3 horas em milissegundos
+  const utcTime = new Date(scheduledDate.getTime() + brasiliaOffset);
+  
+  const scheduledAt = utcTime.toISOString();
 
-      try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+  const payload = {
+    conversation_id: this.conversationId,
+    account_id: this.accountId,
+    inbox_id: this.inboxId,
+    message: this.messageText,
+    scheduled_at: scheduledAt,
+  };
 
-        this.$emit('scheduled');
-        this.onClose();
-      } catch (error) {
-        console.error('Erro ao agendar mensagem:', error);
-      }
-    },
-  },
-};
+  try {
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    this.$emit('scheduled');
+    this.onClose();
+  } catch (error) {
+    console.error('Erro ao agendar mensagem:', error);
+  }
+},
 </script>
