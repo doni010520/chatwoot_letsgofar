@@ -64,6 +64,31 @@
       </div>
 
       <!-- Campos Personalizados -->
+      <div class="filter-item">
+        <select v-model="dateFieldSelected" class="filter-select" @change="onDateFieldSelect">
+          <option value="">📅 Filtrar por data</option>
+          <option value="created_at">Data de entrada</option>
+          <option value="updated_at">Última atualização</option>
+        </select>
+      </div>
+      
+      <!-- Input de data aparece quando seleciona -->
+      <div v-if="dateFieldSelected" class="filter-item">
+        <div class="date-filter-wrapper">
+          <input
+            v-model="formattedDate"
+            type="text"
+            placeholder="dd/mm/aaaa, mm/aaaa ou aaaa"
+            class="filter-input"
+            maxlength="10"
+            @input="onDateInput"
+            @blur="validateDate"
+          />
+          <span v-if="dateError" class="error-text">{{ dateError }}</span>
+          <span v-else-if="dateHint" class="hint-text">{{ dateHint }}</span>
+        </div>
+      </div>
+      
       <div v-if="customFields.length > 0" class="filter-item">
         <select v-model="selectedCustomField" class="filter-select" @change="onCustomFieldSelect">
           <option value="">🏷️ Campo personalizado</option>
