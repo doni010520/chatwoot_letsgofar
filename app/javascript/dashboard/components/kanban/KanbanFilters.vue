@@ -74,7 +74,7 @@
       </div>
 
       <!-- Valor do Campo Personalizado -->
-      <div v-if="selectedCustomField" class="filter-item">
+      <div v-if="selectedCustomField" class="filter-item filter-item--custom-value">
         <select
           v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'"
           v-model="localFilters.custom_value"
@@ -96,6 +96,20 @@
           <option value="true">Sim</option>
           <option value="false">Não</option>
         </select>
+        <!-- ✅ NOVO: Input de data formatado para campo created_at -->
+        <div v-else-if="selectedCustomField === 'created_at'" class="date-filter-wrapper">
+          <input
+            v-model="formattedDate"
+            type="text"
+            placeholder="dd/mm/aaaa, mm/aaaa ou aaaa"
+            class="filter-input"
+            maxlength="10"
+            @input="onDateInput"
+            @blur="validateDate"
+          />
+          <span v-if="dateError" class="error-text">{{ dateError }}</span>
+          <span v-else-if="dateHint" class="hint-text">{{ dateHint }}</span>
+        </div>
         <input
           v-else
           v-model="localFilters.custom_value"
@@ -192,6 +206,12 @@ export default {
     });
 
     const selectedCustomField = ref('');
+    
+    // ✅ NOVO: Estados para formatação de data
+    const formattedDate = ref('');
+    const dateError = ref('');
+    const dateHint = ref('');
+    
     let debounceTimer = null;
 
     const selectedFieldType = computed(() => {
@@ -256,6 +276,9 @@ export default {
         sort_by: 'last_activity',
       };
       selectedCustomField.value = '';
+      formattedDate.value = '';
+      dateError.value = '';
+      dateHint.value = '';
       applyFilters();
     };
 
@@ -274,12 +297,18 @@ export default {
       selectedCustomField.value = '';
       localFilters.value.custom_field = '';
       localFilters.value.custom_value = '';
+      formattedDate.value = '';
+      dateError.value = '';
+      dateHint.value = '';
       applyFilters();
     };
 
     const onCustomFieldSelect = () => {
       localFilters.value.custom_value = '';
       localFilters.value.custom_field = selectedCustomField.value;
+      formattedDate.value = '';
+      dateError.value = '';
+      dateHint.value = '';
     };
 
     const getAssigneeName = (id) => {
@@ -316,6 +345,133 @@ export default {
       return '';
     };
 
+    // ✅ NOVO: Formata data enquanto digita
+    const onDateInput = (event) => {
+      let value = event.target.value.replace(/[^\d\/]/g, '');
+      value = value.replace(/\/+/g, '/');
+      
+      const numbers = value.replace(/\//g, '');
+      const slashCount = (value.match(/\//g) || []).length;
+      
+      dateError.value = '';
+      dateHint.value = '';
+      
+      // Apenas ano (aaaa)
+      if (slashCount === 0 && numbers.length <= 4) {
+        formattedDate.value = numbers;
+        if (numbers.length === 4) {
+          const year = parseInt(numbers);
+          if (year >= 1900 && year <= 2100) {
+            localFilters.value.custom_value = year.toString();
+            dateHint.value = `Filtrando por ano: ${year}`;
+            applyFilters();
+          } else {
+            dateError.value = 'Ano inválido';
+          }
+        } else {
+          localFilters.value.custom_value = '';
+        }
+        return;
+      }
+      
+      // Mês e ano (mm/aaaa)
+      if (slashCount === 1) {
+        const parts = value.split('/');
+        const monthPart = parts[0].substring(0, 2);
+        const yearPart = (parts[1] || '').substring(0, 4);
+        
+        formattedDate.value = monthPart + (yearPart ? '/' + yearPart : '');
+        
+        if (monthPart.length === 2 && yearPart.length === 4) {
+          const month = parseInt(monthPart);
+          const year = parseInt(yearPart);
+          
+          if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+            localFilters.value.custom_value = `${year}-${monthPart}`;
+            dateHint.value = `Filtrando por mês: ${monthPart}/${year}`;
+            applyFilters();
+          } else {
+            dateError.value = 'Mês ou ano inválido';
+            localFilters.value.custom_value = '';
+          }
+        } else {
+          localFilters.value.custom_value = '';
+        }
+        return;
+      }
+      
+      // Data completa (dd/mm/aaaa)
+      if (slashCount === 2 || numbers.length > 6) {
+        const parts = value.split('/');
+        const day = (parts[0] || '').substring(0, 2);
+        const month = (parts[1] || '').substring(0, 2);
+        const year = (parts[2] || '').substring(0, 4);
+        
+        let formatted = day;
+        if (month) formatted += '/' + month;
+        if (year) formatted += '/' + year;
+        
+        formattedDate.value = formatted;
+        
+        if (day.length === 2 && month.length === 2 && year.length === 4) {
+          const d = parseInt(day);
+          const m = parseInt(month);
+          const y = parseInt(year);
+          
+          if (isValidDate(d, m, y)) {
+            localFilters.value.custom_value = `${year}-${month}-${day}`;
+            dateHint.value = `Filtrando por dia: ${formatted}`;
+            applyFilters();
+          } else {
+            dateError.value = 'Data inválida';
+            localFilters.value.custom_value = '';
+          }
+        } else {
+          localFilters.value.custom_value = '';
+        }
+        return;
+      }
+      
+      formattedDate.value = value;
+      localFilters.value.custom_value = '';
+    };
+
+    // ✅ NOVO: Valida ao sair do campo
+    const validateDate = () => {
+      if (!formattedDate.value) return;
+      
+      const slashCount = (formattedDate.value.match(/\//g) || []).length;
+      
+      if (slashCount === 0 && formattedDate.value.length !== 4) {
+        dateError.value = 'Ano deve ter 4 dígitos';
+      } else if (slashCount === 1) {
+        const parts = formattedDate.value.split('/');
+        if (parts[0].length !== 2 || parts[1].length !== 4) {
+          dateError.value = 'Formato: mm/aaaa';
+        }
+      } else if (slashCount === 2) {
+        const parts = formattedDate.value.split('/');
+        if (parts[0].length !== 2 || parts[1].length !== 2 || parts[2].length !== 4) {
+          dateError.value = 'Formato: dd/mm/aaaa';
+        }
+      }
+    };
+
+    // ✅ NOVO: Valida se a data é real
+    const isValidDate = (day, month, year) => {
+      if (month < 1 || month > 12) return false;
+      if (year < 1900 || year > 2100) return false;
+      if (day < 1 || day > 31) return false;
+      
+      const daysInMonth = [
+        31,
+        ((year % 4 === 0 && year % 100 !== 0) || year % 400 === 0) ? 29 : 28,
+        31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+      ];
+      
+      return day <= daysInMonth[month - 1];
+    };
+
     watch(() => props.filters, (newFilters) => {
       if (newFilters) {
         Object.assign(localFilters.value, newFilters);
@@ -343,6 +499,12 @@ export default {
       getTasksFilterLabel,
       getCustomFieldName,
       formatValueRange,
+      // ✅ NOVO: Exportar funções e refs de data
+      formattedDate,
+      dateError,
+      dateHint,
+      onDateInput,
+      validateDate,
     };
   },
 };
@@ -377,6 +539,10 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.filter-item--custom-value {
+  min-width: 200px;
 }
 
 .filter-item--sort {
@@ -470,5 +636,31 @@ export default {
 
 .filter-tag button:hover {
   opacity: 1;
+}
+
+/* ✅ NOVO: Estilos para filtro de data */
+.date-filter-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.error-text {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  color: rgb(var(--red-11));
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hint-text {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  color: rgb(var(--blue-11));
+  font-size: 12px;
+  font-weight: 500;
 }
 </style>
