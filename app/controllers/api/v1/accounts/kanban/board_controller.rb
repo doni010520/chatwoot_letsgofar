@@ -150,6 +150,25 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       )
     end
 
+# Filtro por data de entrada
+if params[:date_field].present? && params[:date_value].present?
+  date_field = params[:date_field] # 'created_at' ou 'updated_at'
+  date_value = params[:date_value]
+  
+  # Formato: ano (2024)
+  if date_value.match?(/^\d{4}$/)
+    conversations = conversations.where("YEAR(conversations.#{date_field}) = ?", date_value.to_i)
+  
+  # Formato: mês/ano (2024-02)
+  elsif date_value.match?(/^\d{4}-\d{2}$/)
+    conversations = conversations.where("DATE_FORMAT(conversations.#{date_field}, '%Y-%m') = ?", date_value)
+  
+  # Formato: data completa (2024-02-27)
+  elsif date_value.match?(/^\d{4}-\d{2}-\d{2}$/)
+    conversations = conversations.where("DATE(conversations.#{date_field}) = ?", date_value)
+  end
+end
+    
 # Filtro por campo personalizado
 if params[:custom_field].present? && params[:custom_value].present?
   field = @pipeline.kanban_custom_fields.find_by(field_key: params[:custom_field])
@@ -379,4 +398,5 @@ end
     }
   end
 end
+
 
