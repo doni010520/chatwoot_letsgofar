@@ -42,6 +42,14 @@ export default {
       component: Suspended,
     },
     {
+      path: 'scheduled-messages',
+      name: 'scheduled_messages',
+      component: () => import('./scheduled-messages/Index.vue'),
+      meta: {
+        permissions: ['administrator', 'agent']
+      }
+    },
+    {
       path: frontendURL('no-accounts'),
       name: 'no_accounts',
       component: NoAccounts,
