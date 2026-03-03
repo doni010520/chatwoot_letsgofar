@@ -379,6 +379,13 @@ const menuItems = computed(() => {
       ],
     },
     {
+      name: 'ScheduledMessages',
+      label: 'Mensagens Agendadas',
+      icon: 'i-lucide-clock',
+      to: accountScopedRoute('scheduled_messages'),
+      activeOn: ['scheduled_messages'],
+    },
+    {
       name: 'Captain',
       icon: 'i-woot-captain',
       label: t('SIDEBAR.CAPTAIN'),
