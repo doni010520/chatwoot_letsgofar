@@ -59,12 +59,14 @@ import copilotMessages from './captain/copilotMessages';
 import captainScenarios from './captain/scenarios';
 import captainTools from './captain/tools';
 import captainCustomTools from './captain/customTools';
+import captainCustomTools from './captain/customTools';
+import scheduledMessages from './modules/scheduledMessages';
 
 const plugins = [];
 
 export default createStore({
   modules: {
-    scheduledMessages: require('./modules/scheduledMessages').default,
+    scheduledMessages,
     accounts,
     agentBots,
     agentCapacityPolicies,
