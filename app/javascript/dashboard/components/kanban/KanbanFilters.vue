@@ -72,16 +72,6 @@
           </option>
         </select>
       </div>
-
-      <!-- Valor do Campo Personalizado -->
-      <div v-if="customFields.length > 0" class="filter-item">
-        <select v-model="selectedCustomField" class="filter-select" @change="onCustomFieldSelect">
-          <option value="">🏷️ Campo personalizado</option>
-          <option v-for="field in customFields" :key="field.field_key" :value="field.field_key">
-            {{ field.name }}
-          </option>
-        </select>
-      </div>
       
       <div v-if="selectedCustomField" class="filter-item">
         <input
@@ -371,6 +361,8 @@ export default {
       getTasksFilterLabel,
       getCustomFieldName,
       formatValueRange,
+      dateInput,
+      formatDateInput,
     };
   },
 };
