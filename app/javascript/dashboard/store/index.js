@@ -64,6 +64,7 @@ const plugins = [];
 
 export default createStore({
   modules: {
+    scheduledMessages: require('./modules/scheduledMessages').default,
     accounts,
     agentBots,
     agentCapacityPolicies,
