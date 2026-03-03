@@ -33,6 +33,15 @@ export default {
         ...kanbanRoutes.routes, // KANBAN
       ],
     },
+
+    {
+      path: 'schedule-messages',
+      name: 'scheduled_messages',
+      component: () => import('./schedule_messages/Index.vue'),
+      meta: {
+        permissions: ['administrator', 'agent']
+      }
+    },
     {
       path: frontendURL('accounts/:accountId/suspended'),
       name: 'account_suspended',
