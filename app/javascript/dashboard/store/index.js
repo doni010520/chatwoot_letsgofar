@@ -59,7 +59,6 @@ import copilotMessages from './captain/copilotMessages';
 import captainScenarios from './captain/scenarios';
 import captainTools from './captain/tools';
 import captainCustomTools from './captain/customTools';
-import captainCustomTools from './captain/customTools';
 import scheduledMessages from './modules/scheduledMessages';
 
 const plugins = [];
