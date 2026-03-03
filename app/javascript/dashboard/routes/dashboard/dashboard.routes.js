@@ -53,7 +53,7 @@ export default {
     {
       path: 'scheduled-messages',
       name: 'scheduled_messages',
-      component: () => import('./scheduled-messages/Index.vue'),
+      component: () => import('./scheduled_messages/Index.vue'),
       meta: {
         permissions: ['administrator', 'agent']
       }
