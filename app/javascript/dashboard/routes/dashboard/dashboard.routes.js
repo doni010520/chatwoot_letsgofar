@@ -31,16 +31,15 @@ export default {
         ...helpcenterRoutes.routes,
         ...campaignsRoutes.routes,
         ...kanbanRoutes.routes, // KANBAN
+        {
+          path: 'schedule-messages',
+          name: 'scheduled_messages',
+          component: () => import('./schedule_messages/Index.vue'),
+          meta: {
+            permissions: ['administrator', 'agent']
+          }
+        },
       ],
-    },
-
-    {
-      path: 'schedule-messages',
-      name: 'scheduled_messages',
-      component: () => import('./schedule_messages/Index.vue'),
-      meta: {
-        permissions: ['administrator', 'agent']
-      }
     },
     {
       path: frontendURL('accounts/:accountId/suspended'),
@@ -49,14 +48,6 @@ export default {
         permissions: ['administrator', 'agent', 'custom_role'],
       },
       component: Suspended,
-    },
-    {
-      path: 'scheduled-messages',
-      name: 'scheduled_messages',
-      component: () => import('./scheduled_messages/Index.vue'),
-      meta: {
-        permissions: ['administrator', 'agent']
-      }
     },
     {
       path: frontendURL('no-accounts'),
