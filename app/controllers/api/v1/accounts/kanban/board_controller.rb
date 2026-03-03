@@ -154,11 +154,31 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     if params[:custom_field].present? && params[:custom_value].present?
       field = @pipeline.kanban_custom_fields.find_by(field_key: params[:custom_field])
       if field
-        conversation_ids = KanbanCustomFieldValue
-          .where(kanban_custom_field_id: field.id)
-          .where('value LIKE ?', "%#{params[:custom_value]}%")
-          .pluck(:conversation_id)
-        conversations = conversations.where(id: conversation_ids)
+        # TRATAMENTO ESPECIAL PARA data_entrada
+        if params[:custom_field] == 'data_entrada'
+          date_value = params[:custom_value]
+          
+          # Ajustar para timezone do Brasil (UTC-3)
+          # Converte YYYY-MM-DD para range de 24h considerando timezone
+          begin
+            date = Date.parse(date_value)
+            # Início do dia em UTC-3 = 03:00 UTC
+            start_time = date.to_time.in_time_zone('America/Sao_Paulo').beginning_of_day.utc
+            # Fim do dia em UTC-3 = 02:59:59 UTC do dia seguinte
+            end_time = date.to_time.in_time_zone('America/Sao_Paulo').end_of_day.utc
+            
+            conversations = conversations.where(created_at: start_time..end_time)
+          rescue ArgumentError
+            # Data inválida, ignora filtro
+          end
+        else
+          # Filtro normal para outros campos
+          conversation_ids = KanbanCustomFieldValue
+            .where(kanban_custom_field_id: field.id)
+            .where('value LIKE ?', "%#{params[:custom_value]}%")
+            .pluck(:conversation_id)
+          conversations = conversations.where(id: conversation_ids)
+        end
       end
     end
 
@@ -360,3 +380,4 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 end
+
