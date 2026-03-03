@@ -74,28 +74,26 @@
       </div>
 
       <!-- Valor do Campo Personalizado -->
-      <div v-if="selectedCustomField" class="filter-item">
-        <select
-          v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'"
-          v-model="localFilters.custom_value"
-          class="filter-select"
-          @change="applyFilters"
-        >
-          <option value="">Todos</option>
-          <option v-for="opt in selectedFieldOptions" :key="opt" :value="opt">
-            {{ opt }}
+      <div v-if="customFields.length > 0" class="filter-item">
+        <select v-model="selectedCustomField" class="filter-select" @change="onCustomFieldSelect">
+          <option value="">🏷️ Campo personalizado</option>
+          <option v-for="field in customFields" :key="field.field_key" :value="field.field_key">
+            {{ field.name }}
           </option>
         </select>
-        <select
-          v-else-if="selectedFieldType === 'checkbox'"
-          v-model="localFilters.custom_value"
-          class="filter-select"
-          @change="applyFilters"
-        >
-          <option value="">Todos</option>
-          <option value="true">Sim</option>
-          <option value="false">Não</option>
-        </select>
+      </div>
+      
+      <div v-if="selectedCustomField" class="filter-item">
+        <input
+          v-if="selectedCustomField === 'data_entrada'"
+          v-model="dateInput"
+          type="text"
+          placeholder="dd/mm/aaaa"
+          class="filter-input"
+          maxlength="10"
+          @input="formatDateInput"
+        />
+        
         <input
           v-else
           v-model="localFilters.custom_value"
@@ -190,6 +188,36 @@ export default {
       custom_value: '',
       sort_by: 'last_activity',
     });
+
+    const dateInput = ref('');
+    
+    const formatDateInput = (event) => {
+      let value = event.target.value.replace(/\D/g, ''); // Remove não-dígitos
+      
+      // Formata dd/mm/aaaa
+      if (value.length >= 2) {
+        value = value.substring(0, 2) + '/' + value.substring(2);
+      }
+      if (value.length >= 5) {
+        value = value.substring(0, 5) + '/' + value.substring(5, 9);
+      }
+      
+      dateInput.value = value;
+      
+      // Se completou a data (10 caracteres: dd/mm/aaaa)
+      if (value.length === 10) {
+        const parts = value.split('/');
+        const day = parts[0];
+        const month = parts[1];
+        const year = parts[2];
+        
+        // Converte para YYYY-MM-DD para enviar ao backend
+        localFilters.value.custom_value = `${year}-${month}-${day}`;
+        applyFilters();
+      } else {
+        localFilters.value.custom_value = '';
+      }
+    };
 
     const selectedCustomField = ref('');
     let debounceTimer = null;
