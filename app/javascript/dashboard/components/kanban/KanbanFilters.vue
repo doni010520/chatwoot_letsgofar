@@ -63,6 +63,18 @@
         />
       </div>
 
+      <!-- Filtro de Data de Entrada -->
+      <div class="filter-item">
+        <input
+          v-model="dateInput"
+          type="text"
+          placeholder="📅 Data de entrada (dd/mm/aaaa)"
+          class="filter-input"
+          maxlength="10"
+          @input="formatDateInput"
+        />
+      </div>      
+
       <!-- Campos Personalizados -->
       <div v-if="customFields.length > 0" class="filter-item">
         <select v-model="selectedCustomField" class="filter-select" @change="onCustomFieldSelect">
@@ -176,36 +188,29 @@ export default {
       max_value: '',
       custom_field: '',
       custom_value: '',
+      date_field: '',
+      date_value: '',
       sort_by: 'last_activity',
     });
 
     const dateInput = ref('');
     
     const formatDateInput = (event) => {
-      let value = event.target.value.replace(/\D/g, ''); // Remove não-dígitos
+      let value = event.target.value.replace(/\D/g, '');
       
-      // Formata dd/mm/aaaa
-      if (value.length >= 2) {
-        value = value.substring(0, 2) + '/' + value.substring(2);
-      }
-      if (value.length >= 5) {
-        value = value.substring(0, 5) + '/' + value.substring(5, 9);
-      }
+      if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2);
+      if (value.length >= 5) value = value.substring(0, 5) + '/' + value.substring(5, 9);
       
       dateInput.value = value;
       
-      // Se completou a data (10 caracteres: dd/mm/aaaa)
       if (value.length === 10) {
-        const parts = value.split('/');
-        const day = parts[0];
-        const month = parts[1];
-        const year = parts[2];
-        
-        // Converte para YYYY-MM-DD para enviar ao backend
-        localFilters.value.custom_value = `${year}-${month}-${day}`;
+        const [day, month, year] = value.split('/');
+        localFilters.value.date_field = 'created_at';
+        localFilters.value.date_value = `${year}-${month}-${day}`;
         applyFilters();
       } else {
-        localFilters.value.custom_value = '';
+        localFilters.value.date_field = '';
+        localFilters.value.date_value = '';
       }
     };
 
