@@ -377,6 +377,8 @@ Rails.application.routes.draw do
               end
             end
 
+           resources :scheduled_messages, only: [:index, :create, :update, :destroy]
+
             # Permissões do CRM
             resources :permissions, only: [:index, :show, :update], param: :user_id do
               collection do
