@@ -4,14 +4,14 @@ class CreateAgentTasks < ActiveRecord::Migration[7.0]
   def change
     create_table :agent_tasks do |t|
       # Relacionamentos obrigatórios
-      t.references :account, null: false, foreign_key: true
-      t.references :created_by, null: false, foreign_key: { to_table: :users }
-      t.references :assigned_to, foreign_key: { to_table: :users }
+      t.references :account, null: false, foreign_key: true, index: false
+      t.references :created_by, null: false, foreign_key: { to_table: :users }, index: false
+      t.references :assigned_to, foreign_key: { to_table: :users }, index: false
 
       # Vínculos opcionais
-      t.references :contact, foreign_key: true
-      t.references :conversation, foreign_key: true
-      t.references :kanban_pipeline, foreign_key: true
+      t.references :contact, foreign_key: true, index: false
+      t.references :conversation, foreign_key: true, index: false
+      t.references :kanban_pipeline, foreign_key: true, index: false
 
       # Campos da tarefa
       t.string :title, null: false
