@@ -4,7 +4,7 @@ import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 
 import Button from 'dashboard/components-next/button/Button.vue';
-import Modal from 'dashboard/components-next/modal/Modal.vue';
+import Modal from 'dashboard/components/Modal.vue';
 
 const props = defineProps({
   task: {
@@ -172,199 +172,203 @@ onMounted(() => {
 </script>
 
 <template>
-  <Modal :title="modalTitle" size="lg" @close="handleClose">
-    <form @submit.prevent="handleSubmit" class="space-y-4">
-      <!-- Título -->
-      <div>
-        <label class="block text-sm font-medium text-n-slate-12 mb-1">
-          {{ t('TASKS.FORM.TITLE') }} *
-        </label>
-        <input
-          v-model="formData.title"
-          type="text"
-          :placeholder="t('TASKS.FORM.TITLE_PLACEHOLDER')"
-          class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
-          :class="{ 'border-ruby-9': errors.title }"
-        />
-        <p v-if="errors.title" class="mt-1 text-xs text-ruby-11">{{ errors.title }}</p>
-      </div>
-
-      <!-- Descrição -->
-      <div>
-        <label class="block text-sm font-medium text-n-slate-12 mb-1">
-          {{ t('TASKS.FORM.DESCRIPTION') }}
-        </label>
-        <textarea
-          v-model="formData.description"
-          :placeholder="t('TASKS.FORM.DESCRIPTION_PLACEHOLDER')"
-          rows="3"
-          class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand resize-none"
-        />
-      </div>
-
-      <!-- Linha: Responsável + Prioridade -->
-      <div class="grid grid-cols-2 gap-4">
+  <Modal :show="true" :on-close="handleClose">
+    <div class="p-6">
+      <h2 class="text-lg font-medium text-n-slate-12 mb-4">{{ modalTitle }}</h2>
+      
+      <form @submit.prevent="handleSubmit" class="space-y-4">
+        <!-- Título -->
         <div>
           <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.ASSIGNED_TO') }}
+            {{ t('TASKS.FORM.TITLE') }} *
           </label>
-          <select
-            v-model="formData.assigned_to_id"
+          <input
+            v-model="formData.title"
+            type="text"
+            :placeholder="t('TASKS.FORM.TITLE_PLACEHOLDER')"
             class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
-          >
-            <option :value="null">{{ t('TASKS.FORM.UNASSIGNED') }}</option>
-            <option v-for="agent in agents" :key="agent.id" :value="agent.id">
-              {{ agent.name }}
-            </option>
-          </select>
+            :class="{ 'border-ruby-9': errors.title }"
+          />
+          <p v-if="errors.title" class="mt-1 text-xs text-ruby-11">{{ errors.title }}</p>
         </div>
 
+        <!-- Descrição -->
         <div>
           <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.PRIORITY') }}
+            {{ t('TASKS.FORM.DESCRIPTION') }}
+          </label>
+          <textarea
+            v-model="formData.description"
+            :placeholder="t('TASKS.FORM.DESCRIPTION_PLACEHOLDER')"
+            rows="3"
+            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand resize-none"
+          />
+        </div>
+
+        <!-- Linha: Responsável + Prioridade -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-n-slate-12 mb-1">
+              {{ t('TASKS.FORM.ASSIGNED_TO') }}
+            </label>
+            <select
+              v-model="formData.assigned_to_id"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            >
+              <option :value="null">{{ t('TASKS.FORM.UNASSIGNED') }}</option>
+              <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+                {{ agent.name }}
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-n-slate-12 mb-1">
+              {{ t('TASKS.FORM.PRIORITY') }}
+            </label>
+            <select
+              v-model="formData.priority"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            >
+              <option v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Linha: Data + Hora -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-n-slate-12 mb-1">
+              {{ t('TASKS.FORM.DUE_DATE') }}
+            </label>
+            <input
+              v-model="formData.due_date"
+              type="date"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-n-slate-12 mb-1">
+              {{ t('TASKS.FORM.DUE_TIME') }}
+            </label>
+            <input
+              v-model="formData.due_time"
+              type="time"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            />
+          </div>
+        </div>
+
+        <!-- Status (apenas em edição) -->
+        <div v-if="isEditing">
+          <label class="block text-sm font-medium text-n-slate-12 mb-1">
+            {{ t('TASKS.FORM.STATUS') }}
           </label>
           <select
-            v-model="formData.priority"
+            v-model="formData.status"
             class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
           >
-            <option v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">
+            <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </option>
           </select>
         </div>
-      </div>
 
-      <!-- Linha: Data + Hora -->
-      <div class="grid grid-cols-2 gap-4">
+        <!-- Labels -->
         <div>
-          <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.DUE_DATE') }}
+          <label class="block text-sm font-medium text-n-slate-12 mb-2">
+            {{ t('TASKS.FORM.LABELS') }}
           </label>
-          <input
-            v-model="formData.due_date"
-            type="date"
-            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.DUE_TIME') }}
-          </label>
-          <input
-            v-model="formData.due_time"
-            type="time"
-            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
-          />
-        </div>
-      </div>
-
-      <!-- Status (apenas em edição) -->
-      <div v-if="isEditing">
-        <label class="block text-sm font-medium text-n-slate-12 mb-1">
-          {{ t('TASKS.FORM.STATUS') }}
-        </label>
-        <select
-          v-model="formData.status"
-          class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
-        >
-          <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
-            {{ opt.label }}
-          </option>
-        </select>
-      </div>
-
-      <!-- Labels -->
-      <div>
-        <label class="block text-sm font-medium text-n-slate-12 mb-2">
-          {{ t('TASKS.FORM.LABELS') }}
-        </label>
-        <div class="flex flex-wrap gap-2">
-          <button
-            v-for="label in labels"
-            :key="label.id"
-            type="button"
-            class="px-2 py-1 text-xs rounded-full border transition-colors"
-            :class="[
-              formData.label_ids.includes(label.id)
-                ? 'border-transparent'
-                : 'border-n-weak hover:border-n-slate-7',
-            ]"
-            :style="{
-              backgroundColor: formData.label_ids.includes(label.id) ? label.color : 'transparent',
-              color: formData.label_ids.includes(label.id) ? 'white' : label.color,
-            }"
-            @click="toggleLabel(label.id)"
-          >
-            {{ label.title }}
-          </button>
-        </div>
-      </div>
-
-      <!-- Subtarefas -->
-      <div>
-        <label class="block text-sm font-medium text-n-slate-12 mb-2">
-          {{ t('TASKS.FORM.SUBTASKS') }}
-        </label>
-
-        <div class="space-y-2">
-          <div
-            v-for="(item, index) in items.filter(i => !i._destroy)"
-            :key="item.id"
-            class="flex items-center gap-2"
-          >
-            <input
-              type="checkbox"
-              :checked="item.completed"
-              class="size-4 rounded border-n-slate-7"
-              @change="item.completed = $event.target.checked"
-            />
-            <input
-              v-model="item.title"
-              type="text"
-              class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
-            />
+          <div class="flex flex-wrap gap-2">
             <button
+              v-for="label in labels"
+              :key="label.id"
               type="button"
-              class="p-1 text-n-slate-9 hover:text-ruby-9"
-              @click="removeItem(index)"
+              class="px-2 py-1 text-xs rounded-full border transition-colors"
+              :class="[
+                formData.label_ids.includes(label.id)
+                  ? 'border-transparent'
+                  : 'border-n-weak hover:border-n-slate-7',
+              ]"
+              :style="{
+                backgroundColor: formData.label_ids.includes(label.id) ? label.color : 'transparent',
+                color: formData.label_ids.includes(label.id) ? 'white' : label.color,
+              }"
+              @click="toggleLabel(label.id)"
             >
-              <span class="i-lucide-x size-4" />
+              {{ label.title }}
             </button>
           </div>
+        </div>
 
-          <!-- Adicionar nova subtarefa -->
-          <div class="flex items-center gap-2">
-            <span class="i-lucide-plus size-4 text-n-slate-9" />
-            <input
-              v-model="newItemTitle"
-              type="text"
-              :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
-              class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
-              @keyup.enter="addItem"
-            />
-            <Button
-              type="button"
-              color="slate"
-              size="xs"
-              :disabled="!newItemTitle.trim()"
-              @click="addItem"
+        <!-- Subtarefas -->
+        <div>
+          <label class="block text-sm font-medium text-n-slate-12 mb-2">
+            {{ t('TASKS.FORM.SUBTASKS') }}
+          </label>
+
+          <div class="space-y-2">
+            <div
+              v-for="(item, index) in items.filter(i => !i._destroy)"
+              :key="item.id"
+              class="flex items-center gap-2"
             >
-              {{ t('TASKS.FORM.ADD') }}
-            </Button>
+              <input
+                type="checkbox"
+                :checked="item.completed"
+                class="size-4 rounded border-n-slate-7"
+                @change="item.completed = $event.target.checked"
+              />
+              <input
+                v-model="item.title"
+                type="text"
+                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+              />
+              <button
+                type="button"
+                class="p-1 text-n-slate-9 hover:text-ruby-9"
+                @click="removeItem(index)"
+              >
+                <span class="i-lucide-x size-4" />
+              </button>
+            </div>
+
+            <!-- Adicionar nova subtarefa -->
+            <div class="flex items-center gap-2">
+              <span class="i-lucide-plus size-4 text-n-slate-9" />
+              <input
+                v-model="newItemTitle"
+                type="text"
+                :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
+                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                @keyup.enter="addItem"
+              />
+              <Button
+                type="button"
+                color="slate"
+                size="xs"
+                :disabled="!newItemTitle.trim()"
+                @click="addItem"
+              >
+                {{ t('TASKS.FORM.ADD') }}
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Ações -->
-      <div class="flex justify-end gap-2 pt-4 border-t border-n-weak">
-        <Button type="button" color="slate" @click="handleClose">
-          {{ t('COMMON.CANCEL') }}
-        </Button>
-        <Button type="submit" color="primary" :loading="isSubmitting">
-          {{ isEditing ? t('COMMON.SAVE') : t('TASKS.FORM.CREATE') }}
-        </Button>
-      </div>
-    </form>
+        <!-- Ações -->
+        <div class="flex justify-end gap-2 pt-4 border-t border-n-weak">
+          <Button type="button" color="slate" @click="handleClose">
+            {{ t('COMMON.CANCEL') }}
+          </Button>
+          <Button type="submit" color="primary" :loading="isSubmitting">
+            {{ isEditing ? t('COMMON.SAVE') : t('TASKS.FORM.CREATE') }}
+          </Button>
+        </div>
+      </form>
+    </div>
   </Modal>
 </template>
