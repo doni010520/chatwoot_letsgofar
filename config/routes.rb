@@ -366,7 +366,39 @@ Rails.application.routes.draw do
           end
 
           resources :upload, only: [:create]
+         
+          # Agent Tasks
+          resources :agent_tasks do
+            collection do
+              get :calendar
+              get :stats
+              get :kanban
+            end
 
+            member do
+              post :complete
+              post :start
+              post :cancel
+              post :reopen
+              post :assign
+            end
+
+            resources :items, controller: 'agent_task_items', only: [:create, :update, :destroy] do
+              member do
+                post :toggle
+              end
+              collection do
+                post :reorder
+              end
+            end
+
+            resources :comments, controller: 'agent_task_comments', only: [:index, :create, :destroy]
+
+            resources :labels, controller: 'agent_task_labels', only: [:create, :destroy]
+          end
+
+          # Kanban
+          namespace :kanban do
           # Kanban
           namespace :kanban do
             # Tarefas do usuário (global)
