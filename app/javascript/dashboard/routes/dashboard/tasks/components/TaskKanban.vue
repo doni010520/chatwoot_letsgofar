@@ -181,3 +181,57 @@ watch(
           <!-- Header da coluna -->
           <div class="flex items-center justify-between px-3 py-2 border-b border-n-weak">
             <div class="flex items-center gap-2">
+              <span :class="[column.icon, column.color]" class="size-4" />
+              <span class="font-medium text-sm text-n-slate-12">
+                {{ column.title }}
+              </span>
+              <span
+                class="px-1.5 py-0.5 text-xs rounded-full"
+                :class="[column.bgColor, column.color]"
+              >
+                {{ column.tasks.length }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Cards da coluna -->
+          <div class="flex-1 overflow-y-auto p-2 space-y-2">
+            <div
+              v-for="task in column.tasks"
+              :key="task.id"
+              draggable="true"
+              class="cursor-grab active:cursor-grabbing"
+              @dragstart="onDragStart($event, task, column.key)"
+              @dragend="onDragEnd"
+            >
+              <TaskCard
+                :task="task"
+                :is-selected="selectedTaskId === task.id"
+                compact
+                @click="selectTask(task)"
+              />
+            </div>
+
+            <!-- Empty state -->
+            <div
+              v-if="column.tasks.length === 0"
+              class="flex flex-col items-center justify-center py-8 text-n-slate-9"
+            >
+              <span :class="column.icon" class="size-8 mb-2 opacity-50" />
+              <span class="text-sm">{{ t('TASKS.KANBAN.EMPTY_COLUMN') }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Painel de Detalhes -->
+    <TaskDetailPanel
+      v-if="selectedTask"
+      :task="selectedTask"
+      @close="closeDetailPanel"
+      @updated="onTaskUpdated"
+      @deleted="onTaskDeleted"
+    />
+  </div>
+</template>
