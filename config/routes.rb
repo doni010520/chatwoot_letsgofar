@@ -399,8 +399,7 @@ Rails.application.routes.draw do
 
           # Kanban
           namespace :kanban do
-          # Kanban
-          namespace :kanban do
+       
             # Tarefas do usuário (global)
             resource :user_tasks, only: [], controller: 'user_tasks' do
               collection do
