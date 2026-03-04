@@ -1,0 +1,147 @@
+{
+  "TASKS": {
+    "TITLE": "Tarefas",
+    "NEW_TASK": "Nova Tarefa",
+    "EDIT_TASK": "Editar Tarefa",
+    "DELETE_TASK": "Excluir Tarefa",
+    "DETAILS": "Detalhes da Tarefa",
+    "SEARCH_PLACEHOLDER": "Buscar tarefas...",
+    "UNASSIGNED": "Sem responsável",
+    "CREATED_BY": "Criado por",
+    "LINKED_CONTACT": "Contato vinculado",
+    "LINKED_CONVERSATION": "Conversa vinculada",
+    "CONFIRM_DELETE": "Tem certeza que deseja excluir esta tarefa?",
+    "CHECKLIST": "Checklist",
+    "COMMENTS": "Comentários",
+    "CHECKLIST_PROGRESS": "Progresso",
+    "CHECKLIST_EMPTY": "Nenhuma subtarefa adicionada",
+
+    "VIEWS": {
+      "LIST": "Lista",
+      "CALENDAR": "Calendário",
+      "KANBAN": "Kanban"
+    },
+
+    "STATUS": {
+      "PENDING": "Pendente",
+      "IN_PROGRESS": "Em Andamento",
+      "COMPLETED": "Concluída",
+      "CANCELLED": "Cancelada"
+    },
+
+    "PRIORITY": {
+      "URGENT": "Urgente",
+      "HIGH": "Alta",
+      "MEDIUM": "Média",
+      "LOW": "Baixa"
+    },
+
+    "DUE_DATE": {
+      "TODAY": "Hoje",
+      "TOMORROW": "Amanhã",
+      "OVERDUE": "Atrasada"
+    },
+
+    "FILTERS": {
+      "TITLE": "Filtros",
+      "ALL": "Todos",
+      "ACTIVE": "Ativas",
+      "OVERDUE": "Atrasadas",
+      "TODAY": "Hoje",
+      "TOMORROW": "Amanhã",
+      "THIS_WEEK": "Esta Semana",
+      "NEXT_WEEK": "Próxima Semana",
+      "THIS_MONTH": "Este Mês",
+      "NO_DATE": "Sem Data",
+      "MY_TASKS": "Minhas Tarefas",
+      "UNASSIGNED": "Sem Responsável",
+      "RESET": "Limpar Filtros",
+      "LINKED_TO": "Vinculado a",
+      "WITH_CONTACT": "Com Contato",
+      "WITH_CONVERSATION": "Com Conversa",
+      "WITH_PIPELINE": "Com Pipeline",
+      "STANDALONE": "Sem Vínculo",
+      "SORT_BY": "Ordenar por",
+      "SORT": {
+        "CREATED": "Data de Criação",
+        "DUE_DATE": "Data de Vencimento",
+        "PRIORITY": "Prioridade",
+        "TITLE": "Título",
+        "DESC": "Decrescente",
+        "ASC": "Crescente"
+      }
+    },
+
+    "FORM": {
+      "TITLE": "Título",
+      "TITLE_PLACEHOLDER": "Digite o título da tarefa",
+      "DESCRIPTION": "Descrição",
+      "DESCRIPTION_PLACEHOLDER": "Adicione uma descrição (opcional)",
+      "ASSIGNED_TO": "Responsável",
+      "UNASSIGNED": "Sem responsável",
+      "DUE_DATE": "Data de Vencimento",
+      "DUE_TIME": "Horário",
+      "PRIORITY": "Prioridade",
+      "STATUS": "Status",
+      "LABELS": "Labels",
+      "SUBTASKS": "Subtarefas",
+      "ADD_SUBTASK": "Adicionar subtarefa",
+      "ADD": "Adicionar",
+      "CREATE": "Criar Tarefa"
+    },
+
+    "ACTIONS": {
+      "COMPLETE": "Marcar como Concluída",
+      "START": "Iniciar",
+      "CANCEL": "Cancelar Tarefa",
+      "REOPEN": "Reabrir",
+      "ASSIGN": "Atribuir",
+      "DELETE": "Excluir"
+    },
+
+    "STATS": {
+      "SUMMARY": "Resumo",
+      "BY_STATUS": "Por Status",
+      "TOTAL_ACTIVE": "Total Ativas"
+    },
+
+    "CALENDAR": {
+      "TODAY": "Hoje"
+    },
+
+    "KANBAN": {
+      "EMPTY_COLUMN": "Nenhuma tarefa"
+    },
+
+    "COMMENTS": {
+      "EMPTY": "Nenhum comentário",
+      "PLACEHOLDER": "Escreva um comentário...",
+      "HINT": "Cmd+Enter para enviar",
+      "SEND": "Enviar",
+      "CONFIRM_DELETE": "Tem certeza que deseja excluir este comentário?",
+      "JUST_NOW": "Agora mesmo",
+      "MINUTES_AGO": "há {count} min",
+      "HOURS_AGO": "há {count}h",
+      "DAYS_AGO": "há {count}d"
+    },
+
+    "EMPTY_STATE": {
+      "TITLE": "Nenhuma tarefa encontrada",
+      "DESCRIPTION": "Crie sua primeira tarefa para começar a organizar seu trabalho."
+    },
+
+    "VALIDATION": {
+      "TITLE_REQUIRED": "O título é obrigatório"
+    }
+  },
+
+  "PAGINATION": {
+    "PREVIOUS": "Anterior",
+    "NEXT": "Próximo"
+  },
+
+  "COMMON": {
+    "CANCEL": "Cancelar",
+    "SAVE": "Salvar"
+  }
+}
