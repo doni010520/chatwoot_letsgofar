@@ -385,6 +385,13 @@ const menuItems = computed(() => {
       to: accountScopedRoute('scheduled_messages'),
       activeOn: ['scheduled_messages'],
     },
+     {
+      name: 'Tasks',
+      label: 'Tarefas',
+      icon: 'i-lucide-check-square',
+      to: accountScopedRoute('tasks_list'),
+      activeOn: ['tasks_list', 'tasks_calendar', 'tasks_kanban', 'tasks_dashboard'],
+    },
     {
       name: 'Captain',
       icon: 'i-woot-captain',
