@@ -396,3 +396,139 @@ const mutations = {
       priority: null,
       assigned_to_id: null,
       created_by_id: null,
+      due_date: null,
+      linked_to: null,
+      label_ids: [],
+      q: '',
+      sort_by: 'created_at',
+      sort_order: 'desc',
+    };
+  },
+
+  SET_PAGINATION: ($state, meta) => {
+    $state.pagination = {
+      currentPage: meta.current_page,
+      perPage: meta.per_page,
+      totalCount: meta.total_count,
+      totalPages: meta.total_pages,
+    };
+  },
+
+  SET_UI_FLAG: ($state, flag) => {
+    $state.uiFlags = { ...$state.uiFlags, ...flag };
+  },
+
+  ADD_TASK: ($state, task) => {
+    $state.tasks.unshift(task);
+  },
+
+  UPDATE_TASK: ($state, task) => {
+    const index = $state.tasks.findIndex(t => t.id === task.id);
+    if (index !== -1) {
+      $state.tasks.splice(index, 1, task);
+    }
+    if ($state.currentTask?.id === task.id) {
+      $state.currentTask = task;
+    }
+  },
+
+  REMOVE_TASK: ($state, taskId) => {
+    $state.tasks = $state.tasks.filter(t => t.id !== taskId);
+    if ($state.currentTask?.id === taskId) {
+      $state.currentTask = null;
+    }
+  },
+
+  ADD_TASK_ITEM: ($state, { taskId, item }) => {
+    if ($state.currentTask?.id === taskId) {
+      $state.currentTask.items = [...($state.currentTask.items || []), item];
+      $state.currentTask.items_count = ($state.currentTask.items_count || 0) + 1;
+    }
+  },
+
+  UPDATE_TASK_ITEM: ($state, { taskId, item }) => {
+    if ($state.currentTask?.id === taskId && $state.currentTask.items) {
+      const index = $state.currentTask.items.findIndex(i => i.id === item.id);
+      if (index !== -1) {
+        $state.currentTask.items.splice(index, 1, item);
+      }
+      $state.currentTask.items_completed_count = $state.currentTask.items.filter(
+        i => i.completed
+      ).length;
+    }
+  },
+
+  REMOVE_TASK_ITEM: ($state, { taskId, itemId }) => {
+    if ($state.currentTask?.id === taskId && $state.currentTask.items) {
+      const item = $state.currentTask.items.find(i => i.id === itemId);
+      $state.currentTask.items = $state.currentTask.items.filter(i => i.id !== itemId);
+      $state.currentTask.items_count = Math.max(0, ($state.currentTask.items_count || 1) - 1);
+      if (item?.completed) {
+        $state.currentTask.items_completed_count = Math.max(
+          0,
+          ($state.currentTask.items_completed_count || 1) - 1
+        );
+      }
+    }
+  },
+
+  ADD_TASK_COMMENT: ($state, { taskId, comment }) => {
+    if ($state.currentTask?.id === taskId) {
+      $state.currentTask.comments = [...($state.currentTask.comments || []), comment];
+      $state.currentTask.comments_count = ($state.currentTask.comments_count || 0) + 1;
+    }
+  },
+
+  REMOVE_TASK_COMMENT: ($state, { taskId, commentId }) => {
+    if ($state.currentTask?.id === taskId && $state.currentTask.comments) {
+      $state.currentTask.comments = $state.currentTask.comments.filter(c => c.id !== commentId);
+      $state.currentTask.comments_count = Math.max(
+        0,
+        ($state.currentTask.comments_count || 1) - 1
+      );
+    }
+  },
+
+  ADD_TASK_LABEL: ($state, { taskId, label }) => {
+    const updateLabels = task => {
+      if (task && task.id === taskId) {
+        task.labels = [...(task.labels || []), label];
+      }
+    };
+
+    updateLabels($state.currentTask);
+    const task = $state.tasks.find(t => t.id === taskId);
+    updateLabels(task);
+  },
+
+  REMOVE_TASK_LABEL: ($state, { taskId, labelId }) => {
+    const updateLabels = task => {
+      if (task && task.id === taskId && task.labels) {
+        task.labels = task.labels.filter(l => l.id !== labelId);
+      }
+    };
+
+    updateLabels($state.currentTask);
+    const task = $state.tasks.find(t => t.id === taskId);
+    updateLabels(task);
+  },
+
+  MOVE_TASK_KANBAN: ($state, { taskId, fromStatus, toStatus }) => {
+    const fromColumn = $state.kanbanData[fromStatus];
+    const taskIndex = fromColumn?.findIndex(t => t.id === taskId);
+
+    if (taskIndex !== -1) {
+      const [task] = fromColumn.splice(taskIndex, 1);
+      task.status = toStatus;
+      $state.kanbanData[toStatus].unshift(task);
+    }
+  },
+};
+
+export default {
+  namespaced: true,
+  state,
+  getters,
+  actions,
+  mutations,
+};
