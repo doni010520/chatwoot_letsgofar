@@ -2,11 +2,10 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
-
 import TaskCard from './TaskCard.vue';
 import TaskDetailPanel from './TaskDetailPanel.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
-import EmptyState from 'dashboard/components-next/empty-state/EmptyState.vue';
+import EmptyState from 'dashboard/components/widgets/EmptyState.vue';
 
 const store = useStore();
 const { t } = useI18n();
@@ -78,8 +77,7 @@ watch(filters, () => {
       <EmptyState
         v-else-if="tasks.length === 0"
         :title="t('TASKS.EMPTY_STATE.TITLE')"
-        :description="t('TASKS.EMPTY_STATE.DESCRIPTION')"
-        icon="i-lucide-check-square"
+        :message="t('TASKS.EMPTY_STATE.DESCRIPTION')"
       />
 
       <!-- Lista -->
