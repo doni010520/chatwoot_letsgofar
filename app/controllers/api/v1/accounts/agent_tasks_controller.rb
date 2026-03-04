@@ -240,4 +240,43 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       tasks.standalone
     else
       if params[:contact_id].present?
-        tasks.where(contac
+        tasks.where(contact_id: params[:contact_id])
+      elsif params[:conversation_id].present?
+        tasks.where(conversation_id: params[:conversation_id])
+      elsif params[:kanban_pipeline_id].present?
+        tasks.where(kanban_pipeline_id: params[:kanban_pipeline_id])
+      else
+        tasks
+      end
+    end
+  end
+
+  def filter_by_labels(tasks)
+    return tasks unless params[:label_ids].present?
+
+    label_ids = params[:label_ids].is_a?(Array) ? params[:label_ids] : params[:label_ids].split(',')
+    tasks.joins(:task_labels).where(agent_task_labels: { label_id: label_ids }).distinct
+  end
+
+  def apply_sorting(tasks)
+    sort_by = params[:sort_by] || 'created_at'
+    sort_order = params[:sort_order] || 'desc'
+
+    case sort_by
+    when 'due_date'
+      tasks.order(Arel.sql("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date #{sort_order}"))
+    when 'priority'
+      if sort_order == 'asc'
+        tasks.order(Arel.sql("CASE priority WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 WHEN 'urgent' THEN 4 END"))
+      else
+        tasks.by_priority
+      end
+    when 'title'
+      tasks.order(title: sort_order)
+    when 'status'
+      tasks.by_status
+    else
+      tasks.order(created_at: sort_order)
+    end
+  end
+end
