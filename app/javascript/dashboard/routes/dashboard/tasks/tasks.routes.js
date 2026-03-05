@@ -1,5 +1,3 @@
-import { frontendURL } from 'dashboard/helper/URLHelper';
-
 const TasksView = () => import('./TasksView.vue');
 const TaskList = () => import('./components/TaskList.vue');
 const TaskCalendar = () => import('./components/TaskCalendar.vue');
@@ -9,8 +7,7 @@ const TASKS_PERMISSIONS = ['administrator', 'agent', 'custom_role'];
 
 export const routes = [
   {
-    path: frontendURL('accounts/:accountId/tasks'),
-    name: 'tasks_dashboard',
+    path: 'tasks',
     component: TasksView,
     meta: {
       permissions: TASKS_PERMISSIONS,
