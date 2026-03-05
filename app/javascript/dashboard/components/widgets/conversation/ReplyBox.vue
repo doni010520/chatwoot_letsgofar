@@ -1308,8 +1308,6 @@ export default {
       :show="showScheduleModal"
       :message="message"
       :conversation-id="conversationId"
-      :account-id="accountId"
-      :inbox-id="inboxId"
       @close="closeScheduleModal"
       @scheduled="onMessageScheduled"
     />
