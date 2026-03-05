@@ -310,7 +310,7 @@ const handleStatusChange = async newStatus => {
       <Button
         v-if="isActive"
         class="w-full"
-        color="primary"
+        color="blue"
         icon="i-lucide-check"
         @click="handleComplete"
       >
