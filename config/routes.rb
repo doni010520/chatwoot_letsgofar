@@ -397,6 +397,8 @@ Rails.application.routes.draw do
             resources :labels, controller: 'agent_task_labels', only: [:create, :destroy]
           end
 
+          resources :scheduled_messages, only: [:index, :create, :update, :destroy]
+
           # Kanban
           namespace :kanban do
        
@@ -407,8 +409,6 @@ Rails.application.routes.draw do
                 get :index
               end
             end
-
-           resources :scheduled_messages, only: [:index, :create, :update, :destroy]
 
             # Permissões do CRM
             resources :permissions, only: [:index, :show, :update], param: :user_id do
