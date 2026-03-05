@@ -161,7 +161,7 @@ watch(
         <!-- Botão de criar -->
         <Button
           icon="i-lucide-plus"
-          color="primary"
+          color="blue"
           size="sm"
           @click="openCreateModal"
         >
