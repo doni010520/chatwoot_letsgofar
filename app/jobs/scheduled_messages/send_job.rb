@@ -1,4 +1,3 @@
-cat > app/jobs/scheduled_messages/send_job.rb << 'RUBY'
 class ScheduledMessages::SendJob < ApplicationJob
   queue_as :scheduled_jobs
 
@@ -29,11 +28,10 @@ class ScheduledMessages::SendJob < ApplicationJob
   def send_message(message)
     conversation = message.conversation || find_or_create_conversation(message)
     
-    # ✅ CORRIGIDO: 3 argumentos separados, não hash!
     Messages::MessageBuilder.new(
-      message.user,      # user
-      conversation,      # conversation
-      {                  # params
+      message.user,
+      conversation,
+      {
         content: message.content,
         message_type: :outgoing,
         private: false
@@ -61,4 +59,3 @@ class ScheduledMessages::SendJob < ApplicationJob
     conversation
   end
 end
-RUBY
