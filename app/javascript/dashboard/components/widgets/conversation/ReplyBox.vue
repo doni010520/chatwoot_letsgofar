@@ -1303,11 +1303,12 @@ export default {
       @on-send="onSendContentTemplateReply"
       @cancel="hideContentTemplatesModal"
     />
-
+    
     <ScheduleMessageModal
       :show="showScheduleModal"
       :message="message"
       :conversation-id="conversationId"
+      :contact-id="currentChat.meta.sender.id"
       @close="closeScheduleModal"
       @scheduled="onMessageScheduled"
     />
