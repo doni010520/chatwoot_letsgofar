@@ -3,9 +3,9 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import { useAccount } from 'dashboard/composables/useAccount';
 
 import Button from 'dashboard/components-next/button/Button.vue';
+import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import TaskFilters from './components/TaskFilters.vue';
 import TaskStats from './components/TaskStats.vue';
 import TaskModal from './components/TaskModal.vue';
@@ -14,11 +14,11 @@ const store = useStore();
 const route = useRoute();
 const router = useRouter();
 const { t } = useI18n();
-const { accountScopedRoute } = useAccount();
 
 // Estado local
 const showCreateModal = ref(false);
 const showFiltersPanel = ref(false);
+const searchInputValue = ref('');
 
 // Getters da store
 const stats = computed(() => store.getters['agentTasks/getStats']);
@@ -34,26 +34,11 @@ const currentView = computed(() => {
 });
 
 // Tabs de navegação
-const viewTabs = computed(() => [
-  {
-    key: 'list',
-    label: t('TASKS.VIEWS.LIST'),
-    icon: 'i-lucide-list',
-    route: 'tasks_list',
-  },
-  {
-    key: 'calendar',
-    label: t('TASKS.VIEWS.CALENDAR'),
-    icon: 'i-lucide-calendar',
-    route: 'tasks_calendar',
-  },
-  {
-    key: 'kanban',
-    label: t('TASKS.VIEWS.KANBAN'),
-    icon: 'i-lucide-kanban',
-    route: 'tasks_kanban',
-  },
-]);
+const viewTabs = [
+  { key: 'list', label: 'TASKS.VIEWS.LIST', icon: 'i-lucide-list', route: 'tasks_list' },
+  { key: 'calendar', label: 'TASKS.VIEWS.CALENDAR', icon: 'i-lucide-calendar', route: 'tasks_calendar' },
+  { key: 'kanban', label: 'TASKS.VIEWS.KANBAN', icon: 'i-lucide-kanban', route: 'tasks_kanban' },
+];
 
 // Métodos
 const switchView = view => {
@@ -72,13 +57,14 @@ const toggleFilters = () => {
   showFiltersPanel.value = !showFiltersPanel.value;
 };
 
-const onTaskCreated = task => {
+const onTaskCreated = () => {
   closeCreateModal();
   if (currentView.value === 'kanban') {
     store.dispatch('agentTasks/fetchKanban');
   } else {
     store.dispatch('agentTasks/fetchTasks');
   }
+  store.dispatch('agentTasks/fetchStats');
 };
 
 const onFilterChange = newFilters => {
@@ -87,18 +73,40 @@ const onFilterChange = newFilters => {
 
 const resetFilters = () => {
   store.dispatch('agentTasks/resetFilters');
+  searchInputValue.value = '';
+};
+
+const onSearchInput = event => {
+  const value = event.target.value;
+  searchInputValue.value = value;
+  onFilterChange({ q: value });
 };
 
 // Carregar dados iniciais
 onMounted(() => {
   store.dispatch('agentTasks/fetchStats');
 });
+
+// Sync search input com filters
+watch(
+  () => filters.value.q,
+  newVal => {
+    if (searchInputValue.value !== newVal) {
+      searchInputValue.value = newVal || '';
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-n-background">
+  <div
+    class="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1"
+  >
     <!-- Header -->
-    <header class="flex items-center justify-between px-4 py-3 border-b border-n-weak">
+    <header
+      class="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-3 border-b bg-n-surface-1 border-n-weak"
+    >
       <div class="flex items-center gap-4">
         <h1 class="text-lg font-semibold text-n-slate-12">
           {{ t('TASKS.TITLE') }}
@@ -109,6 +117,7 @@ onMounted(() => {
           <button
             v-for="tab in viewTabs"
             :key="tab.key"
+            type="button"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors"
             :class="[
               currentView === tab.key
@@ -118,7 +127,7 @@ onMounted(() => {
             @click="switchView(tab)"
           >
             <span :class="tab.icon" class="size-4" />
-            <span>{{ tab.label }}</span>
+            <span>{{ t(tab.label) }}</span>
           </button>
         </div>
       </div>
@@ -126,13 +135,15 @@ onMounted(() => {
       <div class="flex items-center gap-2">
         <!-- Busca rápida -->
         <div class="relative">
-          <span class="absolute left-3 top-1/2 -translate-y-1/2 i-lucide-search size-4 text-n-slate-10" />
+          <span
+            class="absolute left-3 top-1/2 -translate-y-1/2 i-lucide-search size-4 text-n-slate-10"
+          />
           <input
             type="text"
             :placeholder="t('TASKS.SEARCH_PLACEHOLDER')"
             class="pl-9 pr-3 py-1.5 w-64 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
-            :value="filters.q"
-            @input="e => onFilterChange({ q: e.target.value })"
+            :value="searchInputValue"
+            @input="onSearchInput"
           />
         </div>
 
@@ -145,9 +156,6 @@ onMounted(() => {
           @click="toggleFilters"
         >
           {{ t('TASKS.FILTERS.TITLE') }}
-          <span v-if="hasActiveFilters" class="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-white/20">
-            !
-          </span>
         </Button>
 
         <!-- Botão de criar -->
@@ -162,12 +170,12 @@ onMounted(() => {
       </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="flex flex-1 overflow-hidden">
-      <!-- Sidebar de Stats (opcional) -->
+    <!-- Main Content Area -->
+    <div class="flex flex-1 min-h-0 overflow-hidden">
+      <!-- Stats Sidebar (apenas na view de lista) -->
       <aside
         v-if="currentView === 'list'"
-        class="w-56 flex-shrink-0 border-r border-n-weak overflow-y-auto"
+        class="flex-shrink-0 w-56 overflow-y-auto border-r border-n-weak bg-n-surface-1"
       >
         <TaskStats :stats="stats" @filter-click="onFilterChange" />
       </aside>
@@ -175,7 +183,7 @@ onMounted(() => {
       <!-- Painel de Filtros (colapsável) -->
       <aside
         v-if="showFiltersPanel"
-        class="w-72 flex-shrink-0 border-r border-n-weak overflow-y-auto bg-n-alpha-1"
+        class="flex-shrink-0 overflow-y-auto border-r w-72 border-n-weak bg-n-alpha-1"
       >
         <TaskFilters
           :filters="filters"
@@ -185,8 +193,8 @@ onMounted(() => {
         />
       </aside>
 
-      <!-- Conteúdo Principal (router-view) -->
-      <main class="flex-1 overflow-hidden">
+      <!-- Conteúdo Principal -->
+      <main class="flex-1 min-w-0 overflow-hidden">
         <router-view />
       </main>
     </div>
