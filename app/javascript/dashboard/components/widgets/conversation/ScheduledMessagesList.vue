@@ -16,14 +16,15 @@
             {{ formatDate(msg.scheduled_at) }}
           </span>
           <p class="scheduled-message-item__text">
-            {{ truncateMessage(msg.message) }}
+            {{ truncateMessage(msg.content) }}
           </p>
         </div>
         <button
           class="scheduled-message-item__cancel"
+          :disabled="cancellingId === msg.id"
           @click="cancelMessage(msg.id)"
         >
-          ✕
+          {{ cancellingId === msg.id ? '⏳' : '✕' }}
         </button>
       </div>
     </div>
@@ -31,6 +32,8 @@
 </template>
 
 <script>
+import scheduledMessagesAPI from 'dashboard/api/scheduledMessages';
+
 export default {
   name: 'ScheduledMessagesList',
   props: {
@@ -43,6 +46,7 @@ export default {
     return {
       scheduledMessages: [],
       loading: false,
+      cancellingId: null,
     };
   },
   watch: {
@@ -59,11 +63,10 @@ export default {
     async fetchScheduledMessages() {
       this.loading = true;
       try {
-        const response = await fetch(
-          `https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-scheduled-list?conversation_id=${this.conversationId}`
-        );
-        const data = await response.json();
-        this.scheduledMessages = Array.isArray(data) ? data : [];
+        const response = await scheduledMessagesAPI.getAll({
+          conversation_id: this.conversationId,
+        });
+        this.scheduledMessages = response.data || [];
       } catch (error) {
         console.error('Erro ao buscar mensagens agendadas:', error);
         this.scheduledMessages = [];
@@ -72,18 +75,20 @@ export default {
       }
     },
     async cancelMessage(id) {
+      if (!confirm('Deseja realmente cancelar esta mensagem agendada?')) {
+        return;
+      }
+      
+      this.cancellingId = id;
+      
       try {
-        await fetch(
-          'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-scheduled-cancel',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id }),
-          }
-        );
+        await scheduledMessagesAPI.delete(id);
         this.fetchScheduledMessages();
       } catch (error) {
         console.error('Erro ao cancelar mensagem:', error);
+        alert('Erro ao cancelar mensagem. Tente novamente.');
+      } finally {
+        this.cancellingId = null;
       }
     },
     formatDate(dateString) {
@@ -149,7 +154,12 @@ export default {
   padding: 4px 8px;
 }
 
-.scheduled-message-item__cancel:hover {
+.scheduled-message-item__cancel:hover:not(:disabled) {
   color: red;
+}
+
+.scheduled-message-item__cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>
