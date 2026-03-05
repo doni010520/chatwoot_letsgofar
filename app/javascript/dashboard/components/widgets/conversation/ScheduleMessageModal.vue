@@ -22,19 +22,29 @@
         />
       </div>
 
+      <div v-if="errorMessage" class="error-panel mb-4">
+        ❌ {{ errorMessage }}
+      </div>
+
       <div class="flex justify-end gap-2">
-       <woot-button variant="clear" class="cursor-pointer" @click="onClose">
-        Cancelar
-       </woot-button>
-       <woot-button class="cursor-pointer" :disabled="!scheduledDateTime" @click="onSchedule">
-        Agendar
-       </woot-button>
+        <woot-button variant="clear" class="cursor-pointer" @click="onClose">
+          Cancelar
+        </woot-button>
+        <woot-button 
+          class="cursor-pointer" 
+          :disabled="!scheduledDateTime || isLoading" 
+          @click="onSchedule"
+        >
+          {{ isLoading ? '⏳ Agendando...' : 'Agendar' }}
+        </woot-button>
       </div>
     </div>
   </woot-modal>
 </template>
 
 <script>
+import scheduledMessagesAPI from 'dashboard/api/scheduledMessages';
+
 export default {
   name: 'ScheduleMessageModal',
   props: {
@@ -50,11 +60,7 @@ export default {
       type: Number,
       required: true,
     },
-    accountId: {
-      type: Number,
-      required: true,
-    },
-    inboxId: {
+    contactId: {
       type: Number,
       required: true,
     },
@@ -64,6 +70,8 @@ export default {
     return {
       scheduledDateTime: '',
       messageText: '',
+      errorMessage: '',
+      isLoading: false,
     };
   },
   computed: {
@@ -81,6 +89,7 @@ export default {
       if (newVal) {
         this.messageText = this.message;
         this.scheduledDateTime = '';
+        this.errorMessage = '';
       }
     },
   },
@@ -89,35 +98,45 @@ export default {
       this.$emit('close');
     },
     async onSchedule() {
-      if (!this.scheduledDateTime) return;
+      if (!this.scheduledDateTime) {
+        this.errorMessage = 'Selecione data e hora!';
+        return;
+      }
 
-      const webhookUrl = 'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-schedule';
+      this.isLoading = true;
+      this.errorMessage = '';
 
-      // ✅ Conversão automática: datetime local → UTC
       const scheduledDate = new Date(this.scheduledDateTime);
       const scheduledAt = scheduledDate.toISOString();
 
-      const payload = {
-        conversation_id: this.conversationId,
-        account_id: this.accountId,
-        inbox_id: this.inboxId,
-        message: this.messageText,
-        scheduled_at: scheduledAt,
-      };
-
       try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+        await scheduledMessagesAPI.create({
+          contact_id: this.contactId,
+          conversation_id: this.conversationId,
+          content: this.messageText,
+          scheduled_at: scheduledAt,
         });
 
         this.$emit('scheduled');
         this.onClose();
       } catch (error) {
         console.error('Erro ao agendar mensagem:', error);
+        this.errorMessage = `Erro: ${error.response?.data?.errors || error.message}`;
+      } finally {
+        this.isLoading = false;
       }
     }
   },
 };
 </script>
+
+<style scoped>
+.error-panel {
+  background: #fee;
+  border: 1px solid #fcc;
+  padding: 12px;
+  border-radius: 8px;
+  color: #c00;
+  font-size: 14px;
+}
+</style>
