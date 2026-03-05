@@ -1,0 +1,95 @@
+{
+  "TASKS": {
+    "TITLE": "Tasks",
+    "NEW_TASK": "New Task",
+    "SEARCH_PLACEHOLDER": "Search tasks...",
+    "VIEWS": {
+      "LIST": "List",
+      "CALENDAR": "Calendar",
+      "KANBAN": "Kanban"
+    },
+    "FILTERS": {
+      "TITLE": "Filters",
+      "OVERDUE": "Overdue",
+      "TODAY": "Today",
+      "THIS_WEEK": "This Week",
+      "MY_TASKS": "My Tasks",
+      "UNASSIGNED": "Unassigned",
+      "CLEAR": "Clear Filters",
+      "STATUS": "Status",
+      "PRIORITY": "Priority",
+      "ASSIGNEE": "Assignee",
+      "DUE_DATE": "Due Date",
+      "PIPELINE": "Pipeline",
+      "LABELS": "Labels"
+    },
+    "STATS": {
+      "SUMMARY": "Summary",
+      "BY_STATUS": "By Status",
+      "TOTAL_ACTIVE": "Total Active"
+    },
+    "STATUS": {
+      "PENDING": "Pending",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "PRIORITY": {
+      "LOW": "Low",
+      "MEDIUM": "Medium",
+      "HIGH": "High",
+      "URGENT": "Urgent"
+    },
+    "EMPTY_STATE": {
+      "TITLE": "No tasks found",
+      "DESCRIPTION": "Create your first task to get started organizing your work."
+    },
+    "FORM": {
+      "TITLE": "Title",
+      "TITLE_PLACEHOLDER": "Enter task title",
+      "DESCRIPTION": "Description",
+      "DESCRIPTION_PLACEHOLDER": "Enter task description",
+      "DUE_DATE": "Due Date",
+      "PRIORITY": "Priority",
+      "ASSIGNEE": "Assignee",
+      "STATUS": "Status",
+      "PIPELINE": "Pipeline",
+      "CONVERSATION": "Conversation",
+      "LABELS": "Labels",
+      "CHECKLIST": "Checklist",
+      "ADD_ITEM": "Add Item",
+      "SAVE": "Save Task",
+      "CANCEL": "Cancel",
+      "CREATE": "Create Task",
+      "UPDATE": "Update Task"
+    },
+    "ACTIONS": {
+      "EDIT": "Edit",
+      "DELETE": "Delete",
+      "COMPLETE": "Mark Complete",
+      "REOPEN": "Reopen",
+      "ASSIGN": "Assign",
+      "VIEW_CONVERSATION": "View Conversation"
+    },
+    "MESSAGES": {
+      "CREATED": "Task created successfully",
+      "UPDATED": "Task updated successfully",
+      "DELETED": "Task deleted successfully",
+      "COMPLETED": "Task completed",
+      "REOPENED": "Task reopened",
+      "ERROR": "An error occurred"
+    },
+    "COMMENTS": {
+      "TITLE": "Comments",
+      "PLACEHOLDER": "Add a comment...",
+      "SUBMIT": "Comment",
+      "EMPTY": "No comments yet"
+    },
+    "CALENDAR": {
+      "TODAY": "Today",
+      "MONTH": "Month",
+      "WEEK": "Week",
+      "DAY": "Day"
+    }
+  }
+}
