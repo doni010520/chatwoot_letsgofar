@@ -308,6 +308,13 @@ const menuItems = computed(() => {
           to: accountScopedRoute('home'),
         },
         {
+          name: 'ScheduledMessages',
+          label: 'Mensagens Agendadas',
+          icon: 'i-lucide-clock',
+          to: accountScopedRoute('scheduled_messages'),
+          activeOn: ['scheduled_messages'],
+        },
+        {
           name: 'Mentions',
           label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
           activeOn: ['conversation_through_mentions'],
@@ -377,13 +384,6 @@ const menuItems = computed(() => {
           })),
         },
       ],
-    },
-    {
-      name: 'ScheduledMessages',
-      label: 'Mensagens Agendadas',
-      icon: 'i-lucide-clock',
-      to: accountScopedRoute('scheduled_messages'),
-      activeOn: ['scheduled_messages'],
     },
      {
       name: 'Tasks',
