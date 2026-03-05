@@ -10,6 +10,7 @@ import helpcenterRoutes from './helpcenter/helpcenter.routes';
 import campaignsRoutes from './campaigns/campaigns.routes';
 import { routes as captainRoutes } from './captain/captain.routes';
 import kanbanRoutes from './kanban/kanban.routes'; // KANBAN
+import { routes as tasksRoutes } from './tasks/tasks.routes'; // TASKS
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import NoAccounts from './noAccounts/Index.vue';
@@ -31,6 +32,7 @@ export default {
         ...helpcenterRoutes.routes,
         ...campaignsRoutes.routes,
         ...kanbanRoutes.routes, // KANBAN
+        ...tasksRoutes, // TASKS
         {
           path: 'schedule-messages',
           name: 'scheduled_messages',
