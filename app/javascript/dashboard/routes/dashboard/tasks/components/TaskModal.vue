@@ -364,7 +364,7 @@ onMounted(() => {
           <Button type="button" color="slate" @click="handleClose">
             {{ t('COMMON.CANCEL') }}
           </Button>
-          <Button type="submit" color="primary" :loading="isSubmitting">
+          <Button type="submit" color="blue" :loading="isSubmitting">
             {{ isEditing ? t('COMMON.SAVE') : t('TASKS.FORM.CREATE') }}
           </Button>
         </div>
