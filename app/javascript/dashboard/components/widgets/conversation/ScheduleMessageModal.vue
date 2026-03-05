@@ -50,20 +50,13 @@ export default {
       type: Number,
       required: true,
     },
-    accountId: {
-      type: Number,
-      required: true,
-    },
-    inboxId: {
-      type: Number,
-      required: true,
-    },
   },
   emits: ['close', 'scheduled'],
   data() {
     return {
       scheduledDateTime: '',
       messageText: '',
+      isScheduling: false,
     };
   },
   computed: {
@@ -89,33 +82,29 @@ export default {
       this.$emit('close');
     },
     async onSchedule() {
-      if (!this.scheduledDateTime) return;
+      if (!this.scheduledDateTime || !this.messageText) return;
 
-      const webhookUrl = 'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-schedule';
-
-      // ✅ Conversão automática: datetime local → UTC
+      this.isScheduling = true;
       const scheduledDate = new Date(this.scheduledDateTime);
-      const scheduledAt = scheduledDate.toISOString();
 
       const payload = {
         conversation_id: this.conversationId,
-        account_id: this.accountId,
-        inbox_id: this.inboxId,
-        message: this.messageText,
-        scheduled_at: scheduledAt,
+        content: this.messageText,
+        scheduled_at: scheduledDate.toISOString(),
       };
 
       try {
-        await fetch(webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        await this.$store.dispatch('scheduledMessages/create', payload);
+        
+        // Atualiza a lista após criar
+        await this.$store.dispatch('scheduledMessages/getAll');
 
         this.$emit('scheduled');
         this.onClose();
       } catch (error) {
         console.error('Erro ao agendar mensagem:', error);
+      } finally {
+        this.isScheduling = false;
       }
     }
   },
