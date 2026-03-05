@@ -16,7 +16,7 @@
             {{ formatDate(msg.scheduled_at) }}
           </span>
           <p class="scheduled-message-item__text">
-            {{ truncateMessage(msg.content) }}
+            {{ truncateMessage(msg.message) }}
           </p>
         </div>
         <button
@@ -31,8 +31,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
-
 export default {
   name: 'ScheduledMessagesList',
   props: {
@@ -43,20 +41,9 @@ export default {
   },
   data() {
     return {
+      scheduledMessages: [],
       loading: false,
     };
-  },
-  computed: {
-    ...mapGetters({
-      messages: 'scheduledMessages/getScheduledMessages',
-    }),
-    scheduledMessages() {
-      // Filtrar apenas as mensagens da conversa atual e com status 'pending'
-      return this.messages.filter(
-        msg =>
-          msg.conversation_id === this.conversationId && msg.status === 'pending'
-      );
-    },
   },
   watch: {
     conversationId: {
@@ -72,18 +59,31 @@ export default {
     async fetchScheduledMessages() {
       this.loading = true;
       try {
-        await this.$store.dispatch('scheduledMessages/getAll');
+        const response = await fetch(
+          `https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-scheduled-list?conversation_id=${this.conversationId}`
+        );
+        const data = await response.json();
+        this.scheduledMessages = Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Erro ao buscar mensagens agendadas:', error);
+        this.scheduledMessages = [];
       } finally {
         this.loading = false;
       }
     },
     async cancelMessage(id) {
       try {
-        await this.$store.dispatch('scheduledMessages/delete', id);
+        await fetch(
+          'https://benitech-n8n.x3t6qy.easypanel.host/webhook/chatwoot-scheduled-cancel',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          }
+        );
+        this.fetchScheduledMessages();
       } catch (error) {
-        console.error('Erro ao cancelar mensagem agendada:', error);
+        console.error('Erro ao cancelar mensagem:', error);
       }
     },
     formatDate(dateString) {
@@ -96,7 +96,6 @@ export default {
       });
     },
     truncateMessage(message) {
-      if (!message) return '';
       return message.length > 50 ? message.substring(0, 50) + '...' : message;
     },
   },
