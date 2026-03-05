@@ -1,10 +1,10 @@
+cat > app/jobs/scheduled_messages/send_job.rb << 'RUBY'
 class ScheduledMessages::SendJob < ApplicationJob
   queue_as :scheduled_jobs
 
   def perform
     Rails.logger.info "[ScheduledMessages] Starting job at #{Time.current}"
     
-    # Busca apenas mensagens pending prontas para envio
     ScheduledMessage
       .where(status: :pending)
       .where('scheduled_at <= ?', Time.current)
@@ -29,10 +29,11 @@ class ScheduledMessages::SendJob < ApplicationJob
   def send_message(message)
     conversation = message.conversation || find_or_create_conversation(message)
     
+    # ✅ CORRIGIDO: 3 argumentos separados, não hash!
     Messages::MessageBuilder.new(
-      user: message.user,
-      conversation: conversation,
-      params: {
+      message.user,      # user
+      conversation,      # conversation
+      {                  # params
         content: message.content,
         message_type: :outgoing,
         private: false
@@ -41,15 +42,13 @@ class ScheduledMessages::SendJob < ApplicationJob
   end
   
   def find_or_create_conversation(message)
-    # Busca conversa aberta do contato
     conversation = message.contact.conversations
       .where(account_id: message.account_id)
       .where.not(status: :resolved)
       .last
     
-    # Se não existir, cria nova
     unless conversation
-      inbox = message.account.inboxes.find_by(id: message.inbox_id)
+      inbox = message.account.inboxes.first
       
       conversation = Conversation.create!(
         account: message.account,
@@ -62,3 +61,4 @@ class ScheduledMessages::SendJob < ApplicationJob
     conversation
   end
 end
+RUBY
