@@ -5,16 +5,14 @@ class ScheduledMessagesAPI extends ApiClient {
     super('scheduled_messages', { accountScoped: true });
   }
 
+  create(data) {
+    return window.axios.post(this.url, {
+      scheduled_message: data
+    });
+  }
+
   getAll(filters = {}) {
     return window.axios.get(this.url, { params: filters });
-  }
-
-  create(data) {
-    return window.axios.post(this.url, data);
-  }
-
-  update(id, data) {
-    return window.axios.put(`${this.url}/${id}`, data);
   }
 
   delete(id) {
