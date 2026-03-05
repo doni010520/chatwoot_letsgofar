@@ -5,13 +5,15 @@ const TaskList = () => import('./components/TaskList.vue');
 const TaskCalendar = () => import('./components/TaskCalendar.vue');
 const TaskKanban = () => import('./components/TaskKanban.vue');
 
+const TASKS_PERMISSIONS = ['administrator', 'agent', 'custom_role'];
+
 export const routes = [
   {
     path: frontendURL('accounts/:accountId/tasks'),
     name: 'tasks_dashboard',
     component: TasksView,
     meta: {
-      permissions: ['agent'],
+      permissions: TASKS_PERMISSIONS,
     },
     children: [
       {
@@ -19,7 +21,7 @@ export const routes = [
         name: 'tasks_list',
         component: TaskList,
         meta: {
-          permissions: ['agent'],
+          permissions: TASKS_PERMISSIONS,
         },
       },
       {
@@ -27,7 +29,7 @@ export const routes = [
         name: 'tasks_calendar',
         component: TaskCalendar,
         meta: {
-          permissions: ['agent'],
+          permissions: TASKS_PERMISSIONS,
         },
       },
       {
@@ -35,7 +37,7 @@ export const routes = [
         name: 'tasks_kanban',
         component: TaskKanban,
         meta: {
-          permissions: ['agent'],
+          permissions: TASKS_PERMISSIONS,
         },
       },
     ],
