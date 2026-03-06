@@ -350,6 +350,29 @@ const actions = {
     }
   },
 
+  // === FILES ===
+  async uploadFiles({ commit }, { taskId, files }) {
+    try {
+      const response = await AgentTasksAPI.uploadFiles(taskId, files);
+      commit('UPDATE_TASK', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      throw error;
+    }
+  },
+
+  async removeFile({ commit }, { taskId, fileId }) {
+    try {
+      const response = await AgentTasksAPI.removeFile(taskId, fileId);
+      commit('UPDATE_TASK', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error removing file:', error);
+      throw error;
+    }
+  },
+
   setFilters({ commit, dispatch }, filters) {
     commit('SET_FILTERS', filters);
     return dispatch('fetchTasks');
