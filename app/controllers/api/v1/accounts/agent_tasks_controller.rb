@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseController
-  before_action :set_agent_task, only: [:show, :update, :destroy, :complete, :start, :cancel, :reopen, :assign]
+  before_action :set_agent_task, only: [:show, :update, :destroy, :complete, :start, :cancel, :reopen, :assign, :remove_file]
 
   def index
     @agent_tasks = filtered_tasks
@@ -80,12 +80,23 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     render :show
   end
 
+  def remove_file
+    authorize @agent_task
+
+    file = @agent_task.files.find(params[:file_id])
+    file.purge
+
+    render :show
+  end
+
   # Endpoints especiais
   def calendar
     start_date = params[:start_date]&.to_date || Date.current.beginning_of_month
     end_date = params[:end_date]&.to_date || Date.current.end_of_month
 
-    @calendar_data = AgentTask.calendar_data(Current.account.id, start_date, end_date)
+    # Usa o policy_scope para respeitar as permissões do usuário
+    base_scope = policy_scope(AgentTask)
+    @calendar_data = AgentTask.calendar_data_for_scope(base_scope, start_date, end_date)
 
     render json: {
       data: @calendar_data,
@@ -98,7 +109,9 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   end
 
   def stats
-    @stats = AgentTask.stats_for_account(Current.account.id, Current.user.id)
+    # Usa o policy_scope para respeitar as permissões do usuário
+    base_scope = policy_scope(AgentTask)
+    @stats = AgentTask.stats_for_scope(base_scope, Current.user.id)
     render json: @stats
   end
 
@@ -132,7 +145,8 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       :conversation_id,
       :kanban_pipeline_id,
       label_ids: [],
-      items_attributes: [:id, :title, :completed, :position, :_destroy]
+      items_attributes: [:id, :title, :completed, :position, :_destroy],
+      files: []
     )
   end
 
