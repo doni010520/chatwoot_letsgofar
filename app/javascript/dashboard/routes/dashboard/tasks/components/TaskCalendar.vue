@@ -95,12 +95,12 @@ const getTasksForDay = dateString => {
   return calendarData.value[dateString] || [];
 };
 
-// Cores por prioridade
+// Cores por prioridade - mais suaves e legíveis
 const priorityColors = {
-  urgent: 'bg-ruby-9 text-white',
-  high: 'bg-orange-9 text-white',
-  medium: 'bg-amber-9 text-white',
-  low: 'bg-green-9 text-white',
+  urgent: 'bg-ruby-4 text-ruby-11 border-l-2 border-ruby-9',
+  high: 'bg-orange-4 text-orange-11 border-l-2 border-orange-9',
+  medium: 'bg-blue-4 text-blue-11 border-l-2 border-blue-9',
+  low: 'bg-green-4 text-green-11 border-l-2 border-green-9',
 };
 
 // Navegação
@@ -212,17 +212,17 @@ watch([currentMonth, currentYear], () => {
           <div
             v-for="day in calendarDays"
             :key="day.dateString"
-            class="min-h-28 p-1 rounded-lg border transition-colors"
+            class="min-h-32 p-2 rounded-lg border transition-colors"
             :class="[
               day.isCurrentMonth
                 ? 'border-n-weak bg-n-background'
-                : 'border-transparent bg-n-alpha-1',
-              day.isToday ? 'ring-2 ring-n-brand' : '',
+                : 'border-transparent bg-n-alpha-1 opacity-50',
+              day.isToday ? 'ring-2 ring-n-brand ring-offset-1' : '',
             ]"
           >
             <!-- Número do dia -->
             <div
-              class="text-sm font-medium mb-1 px-1"
+              class="text-sm font-semibold mb-2"
               :class="[
                 day.isToday
                   ? 'text-n-brand'
@@ -235,27 +235,29 @@ watch([currentMonth, currentYear], () => {
             </div>
 
             <!-- Tarefas do dia -->
-            <div class="space-y-0.5 max-h-20 overflow-y-auto">
+            <div class="space-y-1 max-h-24 overflow-y-auto">
               <button
-                v-for="task in getTasksForDay(day.dateString).slice(0, 3)"
+                v-for="task in getTasksForDay(day.dateString).slice(0, 4)"
                 :key="task.id"
-                class="w-full text-left px-1.5 py-0.5 text-xs rounded truncate"
+                class="w-full text-left px-2 py-1 text-xs rounded-md transition-colors hover:opacity-80"
                 :class="priorityColors[task.priority]"
-                :title="task.title"
+                :title="`${task.due_time || ''} ${task.title}`"
                 @click="selectTask(task)"
               >
-                <span v-if="task.due_time" class="opacity-75 mr-1">
-                  {{ task.due_time }}
-                </span>
-                {{ task.title }}
+                <div class="flex items-center gap-1">
+                  <span v-if="task.due_time" class="font-medium flex-shrink-0">
+                    {{ task.due_time }}
+                  </span>
+                  <span class="truncate">{{ task.title }}</span>
+                </div>
               </button>
 
               <!-- Indicador de mais tarefas -->
               <div
-                v-if="getTasksForDay(day.dateString).length > 3"
-                class="text-xs text-n-slate-10 px-1"
+                v-if="getTasksForDay(day.dateString).length > 4"
+                class="text-xs text-n-slate-10 px-2 py-1 font-medium"
               >
-                +{{ getTasksForDay(day.dateString).length - 3 }} mais
+                +{{ getTasksForDay(day.dateString).length - 4 }} mais
               </div>
             </div>
           </div>
