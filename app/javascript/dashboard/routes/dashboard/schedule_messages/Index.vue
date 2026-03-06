@@ -28,13 +28,10 @@
     <div class="list-toolbar">
       <div class="list-toolbar__left">
         <div class="list-toolbar__search">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
           <input
             v-model="searchQuery"
             type="text"
-            placeholder="Buscar por contato..."
+            placeholder="Buscar por contato ou mensagem..."
             @input="onSearchChange"
           />
         </div>
@@ -86,13 +83,25 @@
               </span>
             </th>
             <th class="list-table__th list-table__th--sortable" @click="sortBy('scheduled_at')">
-              <span>Data/Hora Agendada</span>
+              <span>Envio Agendado</span>
               <span class="sort-icon" v-if="sortField === 'scheduled_at'">
                 {{ sortDirection === 'asc' ? '↑' : '↓' }}
               </span>
             </th>
             <th class="list-table__th">Status</th>
             <th class="list-table__th">Mensagem</th>
+            <th class="list-table__th list-table__th--sortable" @click="sortBy('created_by')">
+              <span>Agendado por</span>
+              <span class="sort-icon" v-if="sortField === 'created_by'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
+            <th class="list-table__th list-table__th--sortable" @click="sortBy('created_at')">
+              <span>Criado em</span>
+              <span class="sort-icon" v-if="sortField === 'created_at'">
+                {{ sortDirection === 'asc' ? '↑' : '↓' }}
+              </span>
+            </th>
             <th class="list-table__th list-table__th--actions">Ações</th>
           </tr>
         </thead>
@@ -112,7 +121,13 @@
             </td>
             <td class="list-table__td list-table__td--name">
               <div class="contact-item">
-                <div class="contact-avatar" :style="{ backgroundColor: getAvatarColor(msg.contact.name) }">
+                <img 
+                  v-if="msg.contact.avatar" 
+                  :src="msg.contact.avatar" 
+                  :alt="msg.contact.name"
+                  class="contact-avatar-img"
+                />
+                <div v-else class="contact-avatar" :style="{ backgroundColor: getAvatarColor(msg.contact.name) }">
                   {{ getInitials(msg.contact.name) }}
                 </div>
                 <div class="contact-info">
@@ -141,6 +156,23 @@
             <td class="list-table__td list-table__td--message">
               <span class="message-preview">{{ truncateMessage(msg.content) }}</span>
             </td>
+            <td class="list-table__td list-table__td--user">
+              <div class="user-info">
+                <img 
+                  v-if="msg.created_by?.avatar" 
+                  :src="msg.created_by.avatar" 
+                  :alt="msg.created_by.name"
+                  class="user-avatar-img"
+                />
+                <div v-else class="user-avatar" :style="{ backgroundColor: getAvatarColor(msg.created_by?.name) }">
+                  {{ getInitials(msg.created_by?.name) }}
+                </div>
+                <span class="user-name">{{ msg.created_by?.name || '-' }}</span>
+              </div>
+            </td>
+            <td class="list-table__td list-table__td--date-small">
+              {{ formatDateTime(msg.created_at) }}
+            </td>
             <td class="list-table__td list-table__td--actions" @click.stop>
               <div class="actions-menu">
                 <button class="action-btn" title="Editar" @click="editMessage(msg)">
@@ -159,7 +191,7 @@
             </td>
           </tr>
           <tr v-if="paginatedMessages.length === 0">
-            <td colspan="6" class="list-table__empty">
+            <td colspan="8" class="list-table__empty">
               <div class="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -195,6 +227,47 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Edição -->
+    <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Editar Mensagem Agendada</h3>
+          <button class="modal-close" @click="closeEditModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Contato</label>
+            <input 
+              type="text" 
+              :value="editingMessage.contact?.name" 
+              disabled
+              class="form-input form-input--disabled"
+            />
+          </div>
+          <div class="form-group">
+            <label>Data/Hora</label>
+            <input 
+              v-model="editingMessage.scheduled_at" 
+              type="datetime-local"
+              class="form-input"
+            />
+          </div>
+          <div class="form-group">
+            <label>Mensagem</label>
+            <textarea 
+              v-model="editingMessage.content" 
+              rows="4"
+              class="form-textarea"
+            ></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="closeEditModal">Cancelar</button>
+            <button class="btn-save" @click="saveMessage">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -217,6 +290,8 @@ export default {
     const perPage = ref(25);
     const sortField = ref('scheduled_at');
     const sortDirection = ref('asc');
+    const showEditModal = ref(false);
+    const editingMessage = ref({});
     
     const filters = ref({
       search: '',
@@ -228,7 +303,7 @@ export default {
     const filteredMessages = computed(() => {
       let result = [...messages.value];
 
-      // Filtro de busca
+      // Filtro de busca (contato E mensagem)
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
         result = result.filter(msg => 
@@ -255,6 +330,14 @@ export default {
           case 'scheduled_at':
             aVal = new Date(a.scheduled_at);
             bVal = new Date(b.scheduled_at);
+            break;
+          case 'created_by':
+            aVal = a.created_by?.name || '';
+            bVal = b.created_by?.name || '';
+            break;
+          case 'created_at':
+            aVal = new Date(a.created_at);
+            bVal = new Date(b.created_at);
             break;
           default:
             return 0;
@@ -401,8 +484,23 @@ export default {
     };
 
     const editMessage = (msg) => {
-      // TODO: Implementar edição
-      console.log('Editar:', msg);
+      editingMessage.value = { ...msg };
+      showEditModal.value = true;
+    };
+
+    const closeEditModal = () => {
+      showEditModal.value = false;
+      editingMessage.value = {};
+    };
+
+    const saveMessage = async () => {
+      try {
+        await store.dispatch('scheduledMessages/update', editingMessage.value);
+        await loadMessages();
+        closeEditModal();
+      } catch (error) {
+        console.error('Erro ao salvar:', error);
+      }
     };
 
     const deleteMessage = async (msg) => {
@@ -417,7 +515,6 @@ export default {
     };
 
     const openScheduleModal = () => {
-      // TODO: Abrir modal de agendamento
       console.log('Agendar nova mensagem');
     };
 
@@ -436,6 +533,8 @@ export default {
       sortField,
       sortDirection,
       filters,
+      showEditModal,
+      editingMessage,
       filteredMessages,
       paginatedMessages,
       totalPages,
@@ -457,6 +556,8 @@ export default {
       getInitials,
       getAvatarColor,
       editMessage,
+      closeEditModal,
+      saveMessage,
       deleteMessage,
       openScheduleModal
     };
@@ -549,20 +650,9 @@ export default {
     flex: 1;
     max-width: 400px;
 
-    .search-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 16px;
-      height: 16px;
-      color: var(--s-400);
-      pointer-events: none;
-    }
-
     input {
       width: 100%;
-      padding: 10px 14px 10px 40px;
+      padding: 10px 16px;
       border: 1px solid var(--s-200);
       border-radius: 6px;
       font-size: 14px;
@@ -605,6 +695,12 @@ export default {
     &:focus {
       outline: none;
       border-color: var(--w-500);
+    }
+
+    option {
+      background: var(--white);
+      color: var(--s-900);
+      padding: 8px;
     }
   }
 
@@ -741,15 +837,25 @@ export default {
     }
 
     &--name {
-      min-width: 220px;
-    }
-
-    &--date {
       min-width: 200px;
     }
 
+    &--date {
+      min-width: 180px;
+    }
+
     &--message {
-      max-width: 350px;
+      max-width: 300px;
+    }
+
+    &--user {
+      min-width: 160px;
+    }
+
+    &--date-small {
+      min-width: 160px;
+      font-size: 13px;
+      color: var(--s-600);
     }
 
     &--actions {
@@ -770,17 +876,25 @@ export default {
   gap: 12px;
 }
 
+.contact-avatar-img,
 .contact-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.contact-avatar-img {
+  object-fit: cover;
+}
+
+.contact-avatar {
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--white);
   font-weight: 600;
   font-size: 14px;
-  flex-shrink: 0;
 }
 
 .contact-info {
@@ -848,6 +962,41 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-avatar-img,
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.user-avatar-img {
+  object-fit: cover;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--s-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .actions-menu {
@@ -940,11 +1089,18 @@ export default {
     border-radius: 6px;
     font-size: 13px;
     background: var(--white);
+    color: var(--s-900);
     cursor: pointer;
 
     &:focus {
       outline: none;
       border-color: var(--w-500);
+    }
+
+    option {
+      background: var(--white);
+      color: var(--s-900);
+      padding: 8px;
     }
   }
 
@@ -959,6 +1115,7 @@ export default {
   border: 1px solid var(--s-200);
   border-radius: 6px;
   background: var(--white);
+  color: var(--s-900);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.15s;
@@ -978,6 +1135,144 @@ export default {
   font-size: 13px;
   color: var(--s-600);
   padding: 0 8px;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--s-100);
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--s-900);
+  }
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--s-400);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+
+  &:hover {
+    background: var(--s-50);
+    color: var(--s-900);
+  }
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+
+  label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--s-700);
+  }
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--s-200);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--s-900);
+  background: var(--white);
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    border-color: var(--w-500);
+  }
+
+  &--disabled {
+    background: var(--s-50);
+    color: var(--s-500);
+    cursor: not-allowed;
+  }
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.btn-cancel,
+.btn-save {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-cancel {
+  background: var(--white);
+  border: 1px solid var(--s-200);
+  color: var(--s-700);
+
+  &:hover {
+    background: var(--s-50);
+  }
+}
+
+.btn-save {
+  background: var(--w-500);
+  border: none;
+  color: var(--white);
+
+  &:hover {
+    background: var(--w-600);
+  }
 }
 
 /* Dark Mode */
@@ -1006,6 +1301,11 @@ export default {
       background: var(--s-900);
       border-color: var(--s-700);
       color: var(--s-200);
+
+      option {
+        background: var(--s-900);
+        color: var(--s-200);
+      }
     }
 
     &__clear {
@@ -1035,7 +1335,8 @@ export default {
     }
   }
 
-  .contact-info__name {
+  .contact-info__name,
+  .user-name {
     color: var(--s-100);
   }
 
@@ -1065,6 +1366,11 @@ export default {
       background: var(--s-900);
       border-color: var(--s-700);
       color: var(--s-200);
+
+      option {
+        background: var(--s-900);
+        color: var(--s-200);
+      }
     }
   }
 
@@ -1076,6 +1382,35 @@ export default {
     &:hover:not(:disabled) {
       background: var(--s-700);
       border-color: var(--s-600);
+    }
+  }
+
+  .modal-content {
+    background: var(--s-800);
+  }
+
+  .modal-header {
+    border-bottom-color: var(--s-700);
+
+    h3 {
+      color: var(--s-100);
+    }
+  }
+
+  .form-input,
+  .form-textarea {
+    background: var(--s-900);
+    border-color: var(--s-700);
+    color: var(--s-100);
+  }
+
+  .btn-cancel {
+    background: var(--s-900);
+    border-color: var(--s-700);
+    color: var(--s-200);
+
+    &:hover {
+      background: var(--s-700);
     }
   }
 }
