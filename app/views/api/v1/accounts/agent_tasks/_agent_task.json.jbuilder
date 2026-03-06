@@ -68,6 +68,17 @@ json.labels agent_task.labels do |label|
   json.color label.color
 end
 
+json.files agent_task.files.map { |file|
+  {
+    id: file.id,
+    filename: file.filename.to_s,
+    content_type: file.content_type,
+    byte_size: file.byte_size,
+    url: Rails.application.routes.url_helpers.rails_blob_path(file, only_path: true)
+  }
+}
+
+json.files_count agent_task.files.count
 json.items_count agent_task.items.count
 json.items_completed_count agent_task.items.completed.count
 json.comments_count agent_task.comments.count
