@@ -17,6 +17,9 @@ class AgentTask < ApplicationRecord
   has_many :task_labels, class_name: 'AgentTaskLabel', dependent: :destroy
   has_many :labels, through: :task_labels
 
+  # Anexos
+  has_many_attached :files
+
   # Aceita nested attributes
   accepts_nested_attributes_for :items, allow_destroy: true
 
@@ -183,9 +186,8 @@ class AgentTask < ApplicationRecord
 
   # Classe methods para estatísticas
   class << self
-    def stats_for_account(account_id, user_id = nil)
-      base_scope = where(account_id: account_id)
-
+    # Agora recebe um scope base já filtrado por permissões
+    def stats_for_scope(base_scope, user_id = nil)
       {
         by_status: {
           pending: base_scope.pending.count,
@@ -208,8 +210,14 @@ class AgentTask < ApplicationRecord
       }
     end
 
-    def calendar_data(account_id, start_date, end_date)
-      tasks = where(account_id: account_id)
+    # Mantém compatibilidade mas agora é só um wrapper
+    def stats_for_account(account_id, user_id = nil)
+      stats_for_scope(where(account_id: account_id), user_id)
+    end
+
+    # Agora recebe um scope base já filtrado por permissões
+    def calendar_data_for_scope(base_scope, start_date, end_date)
+      tasks = base_scope
               .for_calendar(start_date, end_date)
               .includes(:assigned_to, :labels)
               .order(:due_date, :due_time)
@@ -227,6 +235,11 @@ class AgentTask < ApplicationRecord
           }
         end
       end
+    end
+
+    # Mantém compatibilidade
+    def calendar_data(account_id, start_date, end_date)
+      calendar_data_for_scope(where(account_id: account_id), start_date, end_date)
     end
   end
 end
