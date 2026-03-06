@@ -37,7 +37,9 @@ const priorityStyle = computed(() => priorityConfig[props.task.priority] || prio
 const formattedDueDate = computed(() => {
   if (!props.task.due_date) return null;
 
-  const dueDate = new Date(props.task.due_date);
+  // Parse da data considerando timezone local (evita problema de UTC)
+  const dateParts = props.task.due_date.split('-');
+  const dueDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
