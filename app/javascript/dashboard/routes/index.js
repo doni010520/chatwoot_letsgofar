@@ -1,12 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { frontendURL } from '../helper/URLHelper';
 import dashboard from './dashboard/dashboard.routes';
-import tasksRoutes from './dashboard/tasks/tasks.routes';
 import store from 'dashboard/store';
 import { validateLoggedInRoutes } from '../helper/routeHelpers';
 import AnalyticsHelper from '../helper/AnalyticsHelper';
 
-const routes = [...dashboard.routes, ...tasksRoutes.routes];
+// As rotas de tasks já estão incluídas em dashboard.routes como children do AppContainer
+const routes = [...dashboard.routes];
 
 export const router = createRouter({ history: createWebHistory(), routes });
 
