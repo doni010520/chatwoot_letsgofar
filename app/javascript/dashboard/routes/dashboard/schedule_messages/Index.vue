@@ -93,12 +93,6 @@
             </th>
             <th class="list-table__th">Status</th>
             <th class="list-table__th">Mensagem</th>
-            <th class="list-table__th list-table__th--sortable" @click="sortBy('updated_at')">
-              <span>Última Atualização</span>
-              <span class="sort-icon" v-if="sortField === 'updated_at'">
-                {{ sortDirection === 'asc' ? '↑' : '↓' }}
-              </span>
-            </th>
             <th class="list-table__th list-table__th--actions">Ações</th>
           </tr>
         </thead>
@@ -147,9 +141,6 @@
             <td class="list-table__td list-table__td--message">
               <span class="message-preview">{{ truncateMessage(msg.content) }}</span>
             </td>
-            <td class="list-table__td list-table__td--date-small">
-              {{ formatDate(msg.updated_at) }}
-            </td>
             <td class="list-table__td list-table__td--actions" @click.stop>
               <div class="actions-menu">
                 <button class="action-btn" title="Editar" @click="editMessage(msg)">
@@ -168,7 +159,7 @@
             </td>
           </tr>
           <tr v-if="paginatedMessages.length === 0">
-            <td colspan="7" class="list-table__empty">
+            <td colspan="6" class="list-table__empty">
               <div class="empty-state">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
@@ -264,10 +255,6 @@ export default {
           case 'scheduled_at':
             aVal = new Date(a.scheduled_at);
             bVal = new Date(b.scheduled_at);
-            break;
-          case 'updated_at':
-            aVal = new Date(a.updated_at);
-            bVal = new Date(b.updated_at);
             break;
           default:
             return 0;
@@ -378,20 +365,6 @@ export default {
       });
     };
 
-    const formatDate = (date) => {
-      if (!date) return '-';
-      const d = new Date(date);
-      const now = new Date();
-      const diff = Math.floor((now - d) / 1000);
-
-      if (diff < 60) return 'Agora';
-      if (diff < 3600) return `${Math.floor(diff / 60)}min atrás`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)}h atrás`;
-      if (diff < 172800) return 'Ontem';
-      
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    };
-
     const statusLabel = (status) => {
       const labels = {
         pending: 'Pendente',
@@ -479,7 +452,6 @@ export default {
       toggleSelectAll,
       clearFilters,
       formatDateTime,
-      formatDate,
       statusLabel,
       truncateMessage,
       getInitials,
@@ -505,20 +477,19 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--s-100);
   background: var(--white);
 
   &__left {
     display: flex;
     align-items: center;
-    gap: 12px;
   }
 
   &__title {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin: 0;
     font-size: 20px;
     font-weight: 600;
@@ -530,18 +501,13 @@ export default {
     height: 24px;
     color: var(--s-600);
   }
-
-  &__actions {
-    display: flex;
-    gap: 12px;
-  }
 }
 
 .btn-new {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 10px 20px;
   background: var(--w-500);
   color: var(--white);
   border: none;
@@ -569,6 +535,7 @@ export default {
   padding: 16px 24px;
   border-bottom: 1px solid var(--s-100);
   background: var(--s-25);
+  gap: 16px;
 
   &__left {
     display: flex;
@@ -584,21 +551,23 @@ export default {
 
     .search-icon {
       position: absolute;
-      left: 12px;
+      left: 14px;
       top: 50%;
       transform: translateY(-50%);
       width: 16px;
       height: 16px;
       color: var(--s-400);
+      pointer-events: none;
     }
 
     input {
       width: 100%;
-      padding: 8px 12px 8px 36px;
+      padding: 10px 14px 10px 40px;
       border: 1px solid var(--s-200);
       border-radius: 6px;
       font-size: 14px;
       background: var(--white);
+      color: var(--s-900);
 
       &:focus {
         outline: none;
@@ -620,14 +589,17 @@ export default {
   &__right {
     display: flex;
     gap: 12px;
+    flex-shrink: 0;
   }
 
   &__filter {
-    padding: 8px 12px;
+    min-width: 160px;
+    padding: 10px 14px;
     border: 1px solid var(--s-200);
     border-radius: 6px;
     font-size: 14px;
     background: var(--white);
+    color: var(--s-900);
     cursor: pointer;
 
     &:focus {
@@ -637,13 +609,14 @@ export default {
   }
 
   &__clear {
-    padding: 8px 12px;
+    padding: 10px 16px;
     background: var(--s-100);
     border: none;
     border-radius: 6px;
     font-size: 13px;
     color: var(--s-700);
     cursor: pointer;
+    white-space: nowrap;
 
     &:hover {
       background: var(--s-200);
@@ -707,7 +680,7 @@ export default {
   &__th {
     position: sticky;
     top: 0;
-    padding: 12px 16px;
+    padding: 14px 16px;
     text-align: left;
     font-weight: 600;
     font-size: 12px;
@@ -733,18 +706,17 @@ export default {
     }
 
     &--checkbox {
-      width: 40px;
+      width: 48px;
     }
 
     &--actions {
-      width: 100px;
+      width: 120px;
       text-align: right;
     }
   }
 
   &__row {
     transition: background 0.15s;
-    cursor: pointer;
 
     &:hover {
       background: var(--s-25);
@@ -760,34 +732,28 @@ export default {
   }
 
   &__td {
-    padding: 12px 16px;
+    padding: 14px 16px;
     border-bottom: 1px solid var(--s-100);
     color: var(--s-700);
 
     &--checkbox {
-      width: 40px;
+      width: 48px;
     }
 
     &--name {
-      min-width: 200px;
+      min-width: 220px;
     }
 
     &--date {
-      min-width: 180px;
-    }
-
-    &--date-small {
-      min-width: 120px;
-      font-size: 13px;
-      color: var(--s-500);
+      min-width: 200px;
     }
 
     &--message {
-      max-width: 300px;
+      max-width: 350px;
     }
 
     &--actions {
-      width: 100px;
+      width: 120px;
       text-align: right;
     }
   }
@@ -805,22 +771,22 @@ export default {
 }
 
 .contact-avatar {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--white);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .contact-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
 
   &__name {
@@ -842,10 +808,11 @@ export default {
   align-items: center;
   gap: 8px;
   font-weight: 500;
+  color: var(--s-800);
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     color: var(--s-400);
     flex-shrink: 0;
   }
@@ -853,7 +820,7 @@ export default {
 
 .status-badge {
   display: inline-flex;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
@@ -876,12 +843,16 @@ export default {
 
 .message-preview {
   color: var(--s-600);
-  line-height: 1.4;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .actions-menu {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
@@ -889,8 +860,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   border: 1px solid var(--s-200);
   border-radius: 6px;
@@ -899,8 +870,8 @@ export default {
   transition: all 0.15s;
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: 15px;
+    height: 15px;
     color: var(--s-600);
   }
 
@@ -948,7 +919,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
+  padding: 14px 24px;
   border-top: 1px solid var(--s-100);
   background: var(--s-25);
 
@@ -964,7 +935,7 @@ export default {
   }
 
   &__per-page {
-    padding: 6px 10px;
+    padding: 8px 12px;
     border: 1px solid var(--s-200);
     border-radius: 6px;
     font-size: 13px;
@@ -984,7 +955,7 @@ export default {
 }
 
 .pagination-btn {
-  padding: 6px 10px;
+  padding: 8px 12px;
   border: 1px solid var(--s-200);
   border-radius: 6px;
   background: var(--white);
@@ -1011,33 +982,24 @@ export default {
 
 /* Dark Mode */
 .dark {
-  .scheduled-messages-view {
-    background: var(--s-900);
-  }
-
+  .scheduled-messages-view,
   .page-header {
     background: var(--s-900);
     border-bottom-color: var(--s-700);
+  }
 
-    &__title {
-      color: var(--s-100);
-    }
-
-    &__icon {
-      color: var(--s-400);
-    }
+  .page-header__title {
+    color: var(--s-100);
   }
 
   .list-toolbar {
     background: var(--s-800);
     border-bottom-color: var(--s-700);
 
-    &__search {
-      input {
-        background: var(--s-900);
-        border-color: var(--s-700);
-        color: var(--s-100);
-      }
+    &__search input {
+      background: var(--s-900);
+      border-color: var(--s-700);
+      color: var(--s-100);
     }
 
     &__filter {
@@ -1118,4 +1080,3 @@ export default {
   }
 }
 </style>
-/app/javascript/dashboard/routes/dashboard/schedule_messages/Index.vue
