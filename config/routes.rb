@@ -381,6 +381,7 @@ Rails.application.routes.draw do
               post :cancel
               post :reopen
               post :assign
+              delete 'files/:file_id', action: :remove_file, as: :remove_file
             end
 
             resources :items, controller: 'agent_task_items', only: [:create, :update, :destroy] do
