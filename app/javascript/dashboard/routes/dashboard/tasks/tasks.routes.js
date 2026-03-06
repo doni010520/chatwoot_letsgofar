@@ -1,9 +1,6 @@
 import { frontendURL } from '../../../helper/URLHelper';
 
-const TasksView = () => import('./TasksView.vue');
-const TaskList = () => import('./components/TaskList.vue');
-const TaskCalendar = () => import('./components/TaskCalendar.vue');
-const TaskKanban = () => import('./components/TaskKanban.vue');
+const TasksIndex = () => import('./TasksIndex.vue');
 
 const TASKS_PERMISSIONS = ['administrator', 'agent', 'custom_role'];
 
@@ -11,36 +8,27 @@ export default {
   routes: [
     {
       path: frontendURL('accounts/:accountId/tasks'),
-      component: TasksView,
+      name: 'tasks_list',
       meta: {
         permissions: TASKS_PERMISSIONS,
       },
-      children: [
-        {
-          path: '',
-          name: 'tasks_list',
-          component: TaskList,
-          meta: {
-            permissions: TASKS_PERMISSIONS,
-          },
-        },
-        {
-          path: 'calendar',
-          name: 'tasks_calendar',
-          component: TaskCalendar,
-          meta: {
-            permissions: TASKS_PERMISSIONS,
-          },
-        },
-        {
-          path: 'kanban',
-          name: 'tasks_kanban',
-          component: TaskKanban,
-          meta: {
-            permissions: TASKS_PERMISSIONS,
-          },
-        },
-      ],
+      component: TasksIndex,
+    },
+    {
+      path: frontendURL('accounts/:accountId/tasks/calendar'),
+      name: 'tasks_calendar',
+      meta: {
+        permissions: TASKS_PERMISSIONS,
+      },
+      component: TasksIndex,
+    },
+    {
+      path: frontendURL('accounts/:accountId/tasks/kanban'),
+      name: 'tasks_kanban',
+      meta: {
+        permissions: TASKS_PERMISSIONS,
+      },
+      component: TasksIndex,
     },
   ],
 };
