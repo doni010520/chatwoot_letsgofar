@@ -1172,22 +1172,25 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .modal-content {
-  background: var(--white);
+  background: #1a1d21;
   border-radius: 12px;
-  width: 600px;
-  max-width: 90%;
-  max-height: 85vh;
+  width: 700px;
+  max-width: 100%;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  position: relative;
 
   &--view {
     width: 700px;
@@ -1198,15 +1201,17 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--s-100);
+  padding: 24px 28px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
+  background: #1a1d21;
+  border-radius: 12px 12px 0 0;
 
   h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: var(--s-900);
+    color: #ffffff;
   }
 }
 
@@ -1214,7 +1219,7 @@ export default {
   background: none;
   border: none;
   font-size: 24px;
-  color: var(--s-400);
+  color: rgba(255, 255, 255, 0.5);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -1223,29 +1228,36 @@ export default {
   align-items: center;
   justify-content: center;
   border-radius: 6px;
+  transition: all 0.2s;
 
   &:hover {
-    background: var(--s-50);
-    color: var(--s-900);
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
   }
 }
 
 .modal-body {
-  padding: 24px;
+  padding: 28px;
   overflow-y: auto;
   flex: 1;
+  background: #1a1d21;
+  border-radius: 0 0 12px 12px;
 
   &::-webkit-scrollbar {
     width: 6px;
   }
 
   &::-webkit-scrollbar-track {
-    background: var(--s-50);
+    background: rgba(255, 255, 255, 0.05);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--s-300);
+    background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
   }
 }
 
@@ -1257,12 +1269,12 @@ export default {
   }
 
   &__title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    color: var(--s-500);
+    color: rgba(255, 255, 255, 0.5);
     margin: 0 0 12px 0;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
   }
 }
 
@@ -1303,13 +1315,13 @@ export default {
   &__name {
     font-size: 18px;
     font-weight: 600;
-    color: var(--s-900);
+    color: #ffffff;
     margin-bottom: 4px;
   }
 
   &__phone {
     font-size: 14px;
-    color: var(--s-600);
+    color: rgba(255, 255, 255, 0.6);
   }
 }
 
@@ -1318,23 +1330,23 @@ export default {
   align-items: center;
   gap: 10px;
   font-size: 15px;
-  color: var(--s-800);
+  color: #ffffff;
   font-weight: 500;
 
   svg {
     width: 18px;
     height: 18px;
-    color: var(--s-400);
+    color: rgba(255, 255, 255, 0.5);
     flex-shrink: 0;
   }
 }
 
 .message-full {
   padding: 16px;
-  background: var(--s-25);
-  border: 1px solid var(--s-100);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  color: var(--s-800);
+  color: rgba(255, 255, 255, 0.9);
   line-height: 1.6;
   font-size: 14px;
   white-space: pre-wrap;
@@ -1365,7 +1377,7 @@ export default {
 
   &__name {
     font-size: 14px;
-    color: var(--s-800);
+    color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
   }
 }
@@ -1374,13 +1386,13 @@ export default {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: 28px;
   padding-top: 24px;
-  border-top: 1px solid var(--s-100);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .btn-close {
-  padding: 10px 24px;
+  padding: 11px 28px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
@@ -1395,7 +1407,7 @@ export default {
   }
 }
 
-/* Dark Mode */
+/* Dark Mode (já está dark por padrão no modal, mas mantendo para compatibilidade) */
 .dark {
   .scheduled-messages-view,
   .page-header {
@@ -1503,36 +1515,6 @@ export default {
       background: var(--s-700);
       border-color: var(--s-600);
     }
-  }
-
-  .modal-content {
-    background: var(--s-800);
-  }
-
-  .modal-header {
-    border-bottom-color: var(--s-700);
-
-    h3 {
-      color: var(--s-100);
-    }
-  }
-
-  .view-section__title {
-    color: var(--s-400);
-  }
-
-  .contact-detail__name {
-    color: var(--s-100);
-  }
-
-  .message-full {
-    background: var(--s-900);
-    border-color: var(--s-700);
-    color: var(--s-200);
-  }
-
-  .modal-actions {
-    border-top-color: var(--s-700);
   }
 }
 </style>
