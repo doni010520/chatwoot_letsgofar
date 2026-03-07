@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import TaskCard from './TaskCard.vue';
@@ -12,6 +12,8 @@ const { t } = useI18n();
 
 // Estado local
 const selectedTaskId = ref(null);
+const isInitialized = ref(false);
+let debounceTimer = null;
 
 // Getters
 const tasks = computed(() => store.getters['agentTasks/getTasks']);
@@ -26,8 +28,22 @@ const selectedTask = computed(() => {
 });
 
 // Métodos
-const loadTasks = (page = 1) => {
-  store.dispatch('agentTasks/fetchTasks', { page });
+const loadTasks = async (page = 1) => {
+  try {
+    await store.dispatch('agentTasks/fetchTasks', { page });
+  } catch (error) {
+    console.error('Error loading tasks:', error);
+  }
+};
+
+// Debounced load para evitar múltiplas requisições
+const debouncedLoadTasks = (page = 1) => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+  debounceTimer = setTimeout(() => {
+    loadTasks(page);
+  }, 150);
 };
 
 const selectTask = async task => {
@@ -54,14 +70,31 @@ const loadPage = page => {
 };
 
 // Carregar ao montar
-onMounted(() => {
-  loadTasks();
+onMounted(async () => {
+  await loadTasks();
+  // Marca como inicializado após um pequeno delay para evitar conflito com o watch
+  setTimeout(() => {
+    isInitialized.value = true;
+  }, 200);
 });
 
-// Recarregar quando filtros mudarem
-watch(filters, () => {
-  loadTasks(1);
-}, { deep: true });
+// Limpar timer ao desmontar
+onBeforeUnmount(() => {
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
+});
+
+// Recarregar quando filtros mudarem (apenas depois de inicializado, com debounce)
+watch(
+  filters,
+  () => {
+    if (isInitialized.value) {
+      debouncedLoadTasks(1);
+    }
+  },
+  { deep: true }
+);
 </script>
 
 <template>
@@ -69,13 +102,13 @@ watch(filters, () => {
     <!-- Lista de Tarefas -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Loading -->
-      <div v-if="uiFlags.isLoading" class="flex items-center justify-center h-full">
+      <div v-if="uiFlags.isLoading && tasks.length === 0" class="flex items-center justify-center h-full">
         <Spinner size="large" />
       </div>
 
       <!-- Empty State -->
       <EmptyState
-        v-else-if="tasks.length === 0"
+        v-else-if="!uiFlags.isLoading && tasks.length === 0"
         :title="t('TASKS.EMPTY_STATE.TITLE')"
         :message="t('TASKS.EMPTY_STATE.DESCRIPTION')"
       />
