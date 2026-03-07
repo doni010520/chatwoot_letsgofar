@@ -168,12 +168,6 @@
             </td>
             <td class="list-table__td list-table__td--actions" @click.stop>
               <div class="actions-menu">
-                <button class="action-btn" title="Editar" @click="editMessage(msg)">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </button>
                 <button class="action-btn action-btn--danger" title="Excluir" @click="deleteMessage(msg)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
@@ -220,52 +214,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal de Edição -->
-    <div v-if="showEditModal" class="modal-overlay" @click.self="closeEditModal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Editar Mensagem Agendada</h3>
-          <button class="modal-close" @click="closeEditModal">✕</button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Contato</label>
-            <input 
-              type="text" 
-              :value="editingMessage.contact?.name" 
-              disabled
-              class="form-input form-input--disabled"
-            />
-          </div>
-          <div class="form-group">
-            <label>Data/Hora do Envio</label>
-            <input 
-              v-model="editingScheduledAt" 
-              type="datetime-local"
-              class="form-input"
-            />
-          </div>
-          <div class="form-group">
-            <label>Mensagem</label>
-            <textarea 
-              v-model="editingMessage.content" 
-              rows="4"
-              class="form-textarea"
-            ></textarea>
-          </div>
-          <div v-if="saveError" class="error-message">
-            {{ saveError }}
-          </div>
-          <div class="modal-actions">
-            <button class="btn-cancel" @click="closeEditModal">Cancelar</button>
-            <button class="btn-save" @click="saveMessage" :disabled="isSaving">
-              {{ isSaving ? 'Salvando...' : 'Salvar' }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -288,11 +236,6 @@ export default {
     const perPage = ref(25);
     const sortField = ref('scheduled_at');
     const sortDirection = ref('asc');
-    const showEditModal = ref(false);
-    const editingMessage = ref({});
-    const editingScheduledAt = ref('');
-    const isSaving = ref(false);
-    const saveError = ref('');
     
     const filters = ref({
       search: '',
@@ -375,7 +318,6 @@ export default {
 
     // Methods
     const getUserInfo = (msg) => {
-      // Tenta múltiplas propriedades possíveis
       const user = msg.created_by || msg.user || msg.sender || msg.agent;
       
       if (user && user.name) {
@@ -385,7 +327,6 @@ export default {
         };
       }
       
-      // Fallback: usuário atual do Vuex
       const currentUser = store.getters.getCurrentUser;
       return {
         name: currentUser?.name || 'Sistema',
@@ -398,7 +339,6 @@ export default {
       try {
         const response = await store.dispatch('scheduledMessages/getAll', filters.value);
         messages.value = response.data || [];
-        console.log('Mensagens carregadas:', messages.value); // Debug
       } catch (error) {
         console.error('Erro ao carregar mensagens:', error);
         messages.value = [];
@@ -504,63 +444,6 @@ export default {
       return colors[index];
     };
 
-    const editMessage = (msg) => {
-      editingMessage.value = { ...msg };
-      
-      // Converte scheduled_at para formato datetime-local
-      if (msg.scheduled_at) {
-        const date = new Date(msg.scheduled_at);
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        editingScheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
-      }
-      
-      saveError.value = '';
-      showEditModal.value = true;
-    };
-
-    const closeEditModal = () => {
-      showEditModal.value = false;
-      editingMessage.value = {};
-      editingScheduledAt.value = '';
-      saveError.value = '';
-    };
-
-    const saveMessage = async () => {
-      if (!editingScheduledAt.value) {
-        saveError.value = 'Por favor, selecione uma data e hora.';
-        return;
-      }
-
-      isSaving.value = true;
-      saveError.value = '';
-
-      try {
-        // Converte datetime-local de volta para ISO
-        const scheduledDate = new Date(editingScheduledAt.value);
-        
-        const payload = {
-          id: editingMessage.value.id,
-          scheduled_at: scheduledDate.toISOString(),
-          content: editingMessage.value.content
-        };
-
-        console.log('Salvando mensagem:', payload); // Debug
-
-        await store.dispatch('scheduledMessages/update', payload);
-        await loadMessages();
-        closeEditModal();
-      } catch (error) {
-        console.error('Erro ao salvar:', error);
-        saveError.value = error.message || 'Erro ao salvar a mensagem. Tente novamente.';
-      } finally {
-        isSaving.value = false;
-      }
-    };
-
     const deleteMessage = async (msg) => {
       if (!confirm('Deseja excluir esta mensagem agendada?')) return;
       
@@ -588,11 +471,6 @@ export default {
       sortField,
       sortDirection,
       filters,
-      showEditModal,
-      editingMessage,
-      editingScheduledAt,
-      isSaving,
-      saveError,
       filteredMessages,
       paginatedMessages,
       totalPages,
@@ -614,9 +492,6 @@ export default {
       truncateMessage,
       getInitials,
       getAvatarColor,
-      editMessage,
-      closeEditModal,
-      saveMessage,
       deleteMessage
     };
   }
@@ -840,7 +715,7 @@ export default {
     }
 
     &--actions {
-      width: 120px;
+      width: 80px;
       text-align: right;
     }
   }
@@ -893,7 +768,7 @@ export default {
     }
 
     &--actions {
-      width: 120px;
+      width: 80px;
       text-align: right;
     }
   }
@@ -1171,159 +1046,6 @@ export default {
   padding: 0 8px;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: var(--white);
-  border-radius: 12px;
-  width: 500px;
-  max-width: 90%;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 24px;
-  border-bottom: 1px solid var(--s-100);
-
-  h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--s-900);
-  }
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--s-400);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-
-  &:hover {
-    background: var(--s-50);
-    color: var(--s-900);
-  }
-}
-
-.modal-body {
-  padding: 24px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-
-  label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--s-700);
-  }
-}
-
-.form-input,
-.form-textarea {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1px solid var(--s-200);
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--s-900);
-  background: var(--white);
-  font-family: inherit;
-
-  &:focus {
-    outline: none;
-    border-color: var(--w-500);
-  }
-
-  &--disabled {
-    background: var(--s-50);
-    color: var(--s-500);
-    cursor: not-allowed;
-  }
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.error-message {
-  padding: 12px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #991b1b;
-  font-size: 13px;
-  margin-bottom: 16px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-
-.btn-cancel,
-.btn-save {
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.btn-cancel {
-  background: var(--white);
-  border: 1px solid var(--s-200);
-  color: var(--s-700);
-
-  &:hover {
-    background: var(--s-50);
-  }
-}
-
-.btn-save {
-  background: var(--w-500);
-  border: none;
-  color: var(--white);
-
-  &:hover:not(:disabled) {
-    background: var(--w-600);
-  }
-}
-
 /* Dark Mode */
 .dark {
   .scheduled-messages-view,
@@ -1431,35 +1153,6 @@ export default {
     &:hover:not(:disabled) {
       background: var(--s-700);
       border-color: var(--s-600);
-    }
-  }
-
-  .modal-content {
-    background: var(--s-800);
-  }
-
-  .modal-header {
-    border-bottom-color: var(--s-700);
-
-    h3 {
-      color: var(--s-100);
-    }
-  }
-
-  .form-input,
-  .form-textarea {
-    background: var(--s-900);
-    border-color: var(--s-700);
-    color: var(--s-100);
-  }
-
-  .btn-cancel {
-    background: var(--s-900);
-    border-color: var(--s-700);
-    color: var(--s-200);
-
-    &:hover {
-      background: var(--s-700);
     }
   }
 }
