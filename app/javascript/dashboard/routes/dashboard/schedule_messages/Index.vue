@@ -1,5 +1,3 @@
-<!-- /app/javascript/dashboard/routes/dashboard/schedule_messages/Index.vue -->
-
 <template>
   <div class="scheduled-messages-view">
     <!-- Header -->
@@ -104,6 +102,7 @@
             :key="msg.id"
             class="list-table__row"
             :class="{ 'list-table__row--selected': selectedIds.includes(msg.id) }"
+            @dblclick="viewMessage(msg)"
           >
             <td class="list-table__td list-table__td--checkbox" @click.stop>
               <input
@@ -214,6 +213,104 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Visualização -->
+    <div v-if="showViewModal" class="modal-overlay" @click.self="closeViewModal">
+      <div class="modal-content modal-content--view">
+        <div class="modal-header">
+          <h3>Detalhes do Agendamento</h3>
+          <button class="modal-close" @click="closeViewModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- Contato -->
+          <div class="view-section">
+            <h4 class="view-section__title">Contato</h4>
+            <div class="contact-detail">
+              <img 
+                v-if="viewingMessage.contact?.avatar" 
+                :src="viewingMessage.contact.avatar" 
+                :alt="viewingMessage.contact.name"
+                class="contact-detail__avatar"
+              />
+              <div v-else class="contact-detail__avatar contact-detail__avatar--initials" 
+                   :style="{ backgroundColor: getAvatarColor(viewingMessage.contact?.name) }">
+                {{ getInitials(viewingMessage.contact?.name) }}
+              </div>
+              <div class="contact-detail__info">
+                <div class="contact-detail__name">{{ viewingMessage.contact?.name || 'Sem nome' }}</div>
+                <div class="contact-detail__phone">{{ viewingMessage.contact?.phone || '-' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agendamento -->
+          <div class="view-section">
+            <h4 class="view-section__title">Envio Agendado Para</h4>
+            <div class="view-info">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span>{{ formatDateTime(viewingMessage.scheduled_at) }}</span>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="view-section">
+            <h4 class="view-section__title">Status</h4>
+            <span
+              class="status-badge status-badge--large"
+              :class="`status-badge--${viewingMessage.status}`"
+            >
+              {{ statusLabel(viewingMessage.status) }}
+            </span>
+          </div>
+
+          <!-- Mensagem -->
+          <div class="view-section">
+            <h4 class="view-section__title">Mensagem</h4>
+            <div class="message-full">{{ viewingMessage.content || '-' }}</div>
+          </div>
+
+          <!-- Informações de Criação -->
+          <div class="view-section-grid">
+            <div class="view-section">
+              <h4 class="view-section__title">Agendado Por</h4>
+              <div class="user-detail">
+                <img 
+                  v-if="getUserInfo(viewingMessage).avatar" 
+                  :src="getUserInfo(viewingMessage).avatar" 
+                  :alt="getUserInfo(viewingMessage).name"
+                  class="user-detail__avatar"
+                />
+                <div v-else class="user-detail__avatar user-detail__avatar--initials"
+                     :style="{ backgroundColor: getAvatarColor(getUserInfo(viewingMessage).name) }">
+                  {{ getInitials(getUserInfo(viewingMessage).name) }}
+                </div>
+                <span class="user-detail__name">{{ getUserInfo(viewingMessage).name }}</span>
+              </div>
+            </div>
+
+            <div class="view-section">
+              <h4 class="view-section__title">Criado Em</h4>
+              <div class="view-info">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>{{ formatDateTime(viewingMessage.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn-close" @click="closeViewModal">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -236,6 +333,8 @@ export default {
     const perPage = ref(25);
     const sortField = ref('scheduled_at');
     const sortDirection = ref('asc');
+    const showViewModal = ref(false);
+    const viewingMessage = ref({});
     
     const filters = ref({
       search: '',
@@ -444,6 +543,16 @@ export default {
       return colors[index];
     };
 
+    const viewMessage = (msg) => {
+      viewingMessage.value = { ...msg };
+      showViewModal.value = true;
+    };
+
+    const closeViewModal = () => {
+      showViewModal.value = false;
+      viewingMessage.value = {};
+    };
+
     const deleteMessage = async (msg) => {
       if (!confirm('Deseja excluir esta mensagem agendada?')) return;
       
@@ -471,6 +580,8 @@ export default {
       sortField,
       sortDirection,
       filters,
+      showViewModal,
+      viewingMessage,
       filteredMessages,
       paginatedMessages,
       totalPages,
@@ -492,6 +603,8 @@ export default {
       truncateMessage,
       getInitials,
       getAvatarColor,
+      viewMessage,
+      closeViewModal,
       deleteMessage
     };
   }
@@ -722,6 +835,7 @@ export default {
 
   &__row {
     transition: background 0.15s;
+    cursor: pointer;
 
     &:hover {
       background: var(--s-25);
@@ -847,6 +961,11 @@ export default {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+
+  &--large {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
 
   &--pending {
     background: #fef3c7;
@@ -1046,6 +1165,236 @@ export default {
   padding: 0 8px;
 }
 
+/* Modal de Visualização */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: 12px;
+  width: 600px;
+  max-width: 90%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+  &--view {
+    width: 700px;
+  }
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--s-100);
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--s-900);
+  }
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--s-400);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+
+  &:hover {
+    background: var(--s-50);
+    color: var(--s-900);
+  }
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--s-50);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--s-300);
+    border-radius: 3px;
+  }
+}
+
+.view-section {
+  margin-bottom: 24px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &__title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--s-500);
+    margin: 0 0 12px 0;
+    letter-spacing: 0.5px;
+  }
+}
+
+.view-section-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.contact-detail {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  &__avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+
+    &--initials {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 600;
+      font-size: 20px;
+    }
+  }
+
+  &__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--s-900);
+    margin-bottom: 4px;
+  }
+
+  &__phone {
+    font-size: 14px;
+    color: var(--s-600);
+  }
+}
+
+.view-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--s-800);
+  font-weight: 500;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    color: var(--s-400);
+    flex-shrink: 0;
+  }
+}
+
+.message-full {
+  padding: 16px;
+  background: var(--s-25);
+  border: 1px solid var(--s-100);
+  border-radius: 8px;
+  color: var(--s-800);
+  line-height: 1.6;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.user-detail {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &__avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+
+    &--initials {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 600;
+      font-size: 13px;
+    }
+  }
+
+  &__name {
+    font-size: 14px;
+    color: var(--s-800);
+    font-weight: 500;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--s-100);
+}
+
+.btn-close {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--w-500);
+  border: none;
+  color: var(--white);
+
+  &:hover {
+    background: var(--w-600);
+  }
+}
+
 /* Dark Mode */
 .dark {
   .scheduled-messages-view,
@@ -1154,6 +1503,36 @@ export default {
       background: var(--s-700);
       border-color: var(--s-600);
     }
+  }
+
+  .modal-content {
+    background: var(--s-800);
+  }
+
+  .modal-header {
+    border-bottom-color: var(--s-700);
+
+    h3 {
+      color: var(--s-100);
+    }
+  }
+
+  .view-section__title {
+    color: var(--s-400);
+  }
+
+  .contact-detail__name {
+    color: var(--s-100);
+  }
+
+  .message-full {
+    background: var(--s-900);
+    border-color: var(--s-700);
+    color: var(--s-200);
+  }
+
+  .modal-actions {
+    border-top-color: var(--s-700);
   }
 }
 </style>
