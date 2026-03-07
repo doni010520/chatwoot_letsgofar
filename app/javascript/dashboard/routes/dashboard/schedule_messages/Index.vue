@@ -1184,16 +1184,16 @@ export default {
 .modal-content {
   background: #1a1d21;
   border-radius: 12px;
-  width: 700px;
+  width: 600px;
   max-width: 100%;
-  max-height: 90vh;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   position: relative;
 
   &--view {
-    width: 700px;
+    width: 600px;
   }
 }
 
@@ -1201,7 +1201,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 28px;
+  padding: 20px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
   background: #1a1d21;
@@ -1237,7 +1237,7 @@ export default {
 }
 
 .modal-body {
-  padding: 28px;
+  padding: 24px;
   overflow-y: auto;
   flex: 1;
   background: #1a1d21;
@@ -1262,7 +1262,7 @@ export default {
 }
 
 .view-section {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 
   &:last-child {
     margin-bottom: 0;
@@ -1273,7 +1273,7 @@ export default {
     font-weight: 600;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.5);
-    margin: 0 0 12px 0;
+    margin: 0 0 10px 0;
     letter-spacing: 0.8px;
   }
 }
@@ -1281,18 +1281,18 @@ export default {
 .view-section-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .contact-detail {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 
   &__avatar {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -1303,7 +1303,7 @@ export default {
       justify-content: center;
       color: var(--white);
       font-weight: 600;
-      font-size: 20px;
+      font-size: 18px;
     }
   }
 
@@ -1313,14 +1313,14 @@ export default {
   }
 
   &__name {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
     color: #ffffff;
     margin-bottom: 4px;
   }
 
   &__phone {
-    font-size: 14px;
+    font-size: 13px;
     color: rgba(255, 255, 255, 0.6);
   }
 }
@@ -1329,20 +1329,20 @@ export default {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 15px;
+  font-size: 14px;
   color: #ffffff;
   font-weight: 500;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     color: rgba(255, 255, 255, 0.5);
     flex-shrink: 0;
   }
 }
 
 .message-full {
-  padding: 16px;
+  padding: 14px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
@@ -1351,16 +1351,36 @@ export default {
   font-size: 14px;
   white-space: pre-wrap;
   word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+  }
 }
 
 .user-detail {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 
   &__avatar {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
@@ -1371,12 +1391,12 @@ export default {
       justify-content: center;
       color: var(--white);
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
     }
   }
 
   &__name {
-    font-size: 14px;
+    font-size: 13px;
     color: rgba(255, 255, 255, 0.9);
     font-weight: 500;
   }
@@ -1386,13 +1406,13 @@ export default {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: 28px;
-  padding-top: 24px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .btn-close {
-  padding: 11px 28px;
+  padding: 10px 24px;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
@@ -1406,7 +1426,7 @@ export default {
     background: var(--w-600);
   }
 }
-
+  
 /* Dark Mode (já está dark por padrão no modal, mas mantendo para compatibilidade) */
 .dark {
   .scheduled-messages-view,
