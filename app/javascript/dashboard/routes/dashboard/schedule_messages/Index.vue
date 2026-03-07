@@ -1,3 +1,5 @@
+<!-- /app/javascript/dashboard/routes/dashboard/schedule_messages/Index.vue -->
+
 <template>
   <div class="scheduled-messages-view">
     <!-- Header -->
@@ -12,15 +14,6 @@
           </svg>
           Mensagens Agendadas
         </h1>
-      </div>
-      <div class="page-header__actions">
-        <button class="btn-new" @click="openScheduleModal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Agendar Nova
-        </button>
       </div>
     </div>
 
@@ -159,15 +152,15 @@
             <td class="list-table__td list-table__td--user">
               <div class="user-info">
                 <img 
-                  v-if="msg.created_by?.avatar" 
-                  :src="msg.created_by.avatar" 
-                  :alt="msg.created_by.name"
+                  v-if="getUserInfo(msg).avatar" 
+                  :src="getUserInfo(msg).avatar" 
+                  :alt="getUserInfo(msg).name"
                   class="user-avatar-img"
                 />
-                <div v-else class="user-avatar" :style="{ backgroundColor: getAvatarColor(msg.created_by?.name) }">
-                  {{ getInitials(msg.created_by?.name) }}
+                <div v-else class="user-avatar" :style="{ backgroundColor: getAvatarColor(getUserInfo(msg).name) }">
+                  {{ getInitials(getUserInfo(msg).name) }}
                 </div>
-                <span class="user-name">{{ msg.created_by?.name || '-' }}</span>
+                <span class="user-name">{{ getUserInfo(msg).name }}</span>
               </div>
             </td>
             <td class="list-table__td list-table__td--date-small">
@@ -246,9 +239,9 @@
             />
           </div>
           <div class="form-group">
-            <label>Data/Hora</label>
+            <label>Data/Hora do Envio</label>
             <input 
-              v-model="editingMessage.scheduled_at" 
+              v-model="editingScheduledAt" 
               type="datetime-local"
               class="form-input"
             />
@@ -261,9 +254,14 @@
               class="form-textarea"
             ></textarea>
           </div>
+          <div v-if="saveError" class="error-message">
+            {{ saveError }}
+          </div>
           <div class="modal-actions">
             <button class="btn-cancel" @click="closeEditModal">Cancelar</button>
-            <button class="btn-save" @click="saveMessage">Salvar</button>
+            <button class="btn-save" @click="saveMessage" :disabled="isSaving">
+              {{ isSaving ? 'Salvando...' : 'Salvar' }}
+            </button>
           </div>
         </div>
       </div>
@@ -292,6 +290,9 @@ export default {
     const sortDirection = ref('asc');
     const showEditModal = ref(false);
     const editingMessage = ref({});
+    const editingScheduledAt = ref('');
+    const isSaving = ref(false);
+    const saveError = ref('');
     
     const filters = ref({
       search: '',
@@ -303,7 +304,6 @@ export default {
     const filteredMessages = computed(() => {
       let result = [...messages.value];
 
-      // Filtro de busca (contato E mensagem)
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase();
         result = result.filter(msg => 
@@ -313,12 +313,10 @@ export default {
         );
       }
 
-      // Filtro de status
       if (filters.value.status) {
         result = result.filter(msg => msg.status === filters.value.status);
       }
 
-      // Ordenação
       result.sort((a, b) => {
         let aVal, bVal;
         
@@ -332,8 +330,8 @@ export default {
             bVal = new Date(b.scheduled_at);
             break;
           case 'created_by':
-            aVal = a.created_by?.name || '';
-            bVal = b.created_by?.name || '';
+            aVal = getUserInfo(a).name;
+            bVal = getUserInfo(b).name;
             break;
           case 'created_at':
             aVal = new Date(a.created_at);
@@ -376,11 +374,31 @@ export default {
     });
 
     // Methods
+    const getUserInfo = (msg) => {
+      // Tenta múltiplas propriedades possíveis
+      const user = msg.created_by || msg.user || msg.sender || msg.agent;
+      
+      if (user && user.name) {
+        return {
+          name: user.name,
+          avatar: user.avatar || user.avatar_url || null
+        };
+      }
+      
+      // Fallback: usuário atual do Vuex
+      const currentUser = store.getters.getCurrentUser;
+      return {
+        name: currentUser?.name || 'Sistema',
+        avatar: currentUser?.avatar_url || null
+      };
+    };
+
     const loadMessages = async () => {
       loading.value = true;
       try {
         const response = await store.dispatch('scheduledMessages/getAll', filters.value);
         messages.value = response.data || [];
+        console.log('Mensagens carregadas:', messages.value); // Debug
       } catch (error) {
         console.error('Erro ao carregar mensagens:', error);
         messages.value = [];
@@ -439,13 +457,16 @@ export default {
     const formatDateTime = (date) => {
       if (!date) return '-';
       const d = new Date(date);
-      return d.toLocaleString('pt-BR', {
+      const dateStr = d.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
-        year: 'numeric',
+        year: 'numeric'
+      });
+      const timeStr = d.toLocaleTimeString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit'
       });
+      return `${dateStr} às ${timeStr}`;
     };
 
     const statusLabel = (status) => {
@@ -485,21 +506,58 @@ export default {
 
     const editMessage = (msg) => {
       editingMessage.value = { ...msg };
+      
+      // Converte scheduled_at para formato datetime-local
+      if (msg.scheduled_at) {
+        const date = new Date(msg.scheduled_at);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        editingScheduledAt.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+      
+      saveError.value = '';
       showEditModal.value = true;
     };
 
     const closeEditModal = () => {
       showEditModal.value = false;
       editingMessage.value = {};
+      editingScheduledAt.value = '';
+      saveError.value = '';
     };
 
     const saveMessage = async () => {
+      if (!editingScheduledAt.value) {
+        saveError.value = 'Por favor, selecione uma data e hora.';
+        return;
+      }
+
+      isSaving.value = true;
+      saveError.value = '';
+
       try {
-        await store.dispatch('scheduledMessages/update', editingMessage.value);
+        // Converte datetime-local de volta para ISO
+        const scheduledDate = new Date(editingScheduledAt.value);
+        
+        const payload = {
+          id: editingMessage.value.id,
+          scheduled_at: scheduledDate.toISOString(),
+          content: editingMessage.value.content
+        };
+
+        console.log('Salvando mensagem:', payload); // Debug
+
+        await store.dispatch('scheduledMessages/update', payload);
         await loadMessages();
         closeEditModal();
       } catch (error) {
         console.error('Erro ao salvar:', error);
+        saveError.value = error.message || 'Erro ao salvar a mensagem. Tente novamente.';
+      } finally {
+        isSaving.value = false;
       }
     };
 
@@ -511,11 +569,8 @@ export default {
         await loadMessages();
       } catch (error) {
         console.error('Erro ao deletar:', error);
+        alert('Erro ao excluir a mensagem. Tente novamente.');
       }
-    };
-
-    const openScheduleModal = () => {
-      console.log('Agendar nova mensagem');
     };
 
     // Lifecycle
@@ -535,6 +590,9 @@ export default {
       filters,
       showEditModal,
       editingMessage,
+      editingScheduledAt,
+      isSaving,
+      saveError,
       filteredMessages,
       paginatedMessages,
       totalPages,
@@ -543,6 +601,7 @@ export default {
       isAllSelected,
       isIndeterminate,
       hasFilters,
+      getUserInfo,
       loadMessages,
       onSearchChange,
       sortBy,
@@ -558,8 +617,7 @@ export default {
       editMessage,
       closeEditModal,
       saveMessage,
-      deleteMessage,
-      openScheduleModal
+      deleteMessage
     };
   }
 };
@@ -601,30 +659,6 @@ export default {
     width: 24px;
     height: 24px;
     color: var(--s-600);
-  }
-}
-
-.btn-new {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: var(--w-500);
-  color: var(--white);
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  &:hover {
-    background: var(--w-600);
   }
 }
 
@@ -1238,6 +1272,16 @@ export default {
   min-height: 100px;
 }
 
+.error-message {
+  padding: 12px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #991b1b;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
 .modal-actions {
   display: flex;
   gap: 12px;
@@ -1253,6 +1297,11 @@ export default {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 .btn-cancel {
@@ -1270,7 +1319,7 @@ export default {
   border: none;
   color: var(--white);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--w-600);
   }
 }
