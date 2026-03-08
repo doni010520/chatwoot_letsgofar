@@ -137,21 +137,28 @@ watch(
         </div>
       </div>
 
-      <!-- Lado direito: Busca + Filtros + Criar (ALINHADOS) -->
-      <div class="header-actions">
-        <!-- Campo de busca -->
-        <div class="search-box">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.3-4.3"/>
-          </svg>
+      <!-- Lado direito: Busca + Filtros + Criar -->
+      <div class="flex items-center gap-2 h-9">
+        <!-- Busca -->
+        <div class="relative flex items-center h-9">
           <input
             type="text"
             placeholder="Buscar..."
-            class="search-input"
+            class="h-9 pl-9 pr-3 w-36 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-transparent"
             :value="searchInputValue"
             @input="onSearchInput"
           />
+          <svg
+            class="absolute left-3 w-4 h-4 text-n-slate-10 pointer-events-none"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" stroke-linecap="round" />
+          </svg>
         </div>
 
         <!-- Botão de filtros -->
@@ -216,58 +223,3 @@ watch(
     />
   </div>
 </template>
-
-<style scoped>
-/* Container das ações do header - ALINHAMENTO VERTICAL */
-.header-actions {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  height: 36px; /* Altura fixa para garantir alinhamento */
-}
-
-/* Campo de busca */
-.search-box {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 36px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  width: 16px;
-  height: 16px;
-  color: #64748b;
-  pointer-events: none;
-}
-
-.search-input {
-  height: 36px;
-  padding: 0 12px 0 34px;
-  width: 140px;
-  font-size: 14px;
-  line-height: 36px;
-  border-radius: 8px;
-  border: 1px solid rgba(100, 116, 139, 0.4);
-  background: rgba(30, 41, 59, 0.8);
-  color: #f1f5f9;
-}
-
-.search-input::placeholder {
-  color: #64748b;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
-}
-
-/* Garantir que os botões do Chatwoot tenham a mesma altura */
-.header-actions :deep(button) {
-  height: 36px !important;
-}
-</style>
