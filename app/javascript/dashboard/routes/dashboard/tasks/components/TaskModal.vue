@@ -37,6 +37,11 @@ const formData = ref({
 const newItemTitle = ref('');
 const items = ref([]);
 
+// Anexos
+const filesToUpload = ref([]);
+const fileInput = ref(null);
+const isDragging = ref(false);
+
 // UI Flags
 const isSubmitting = ref(false);
 const errors = ref({});
@@ -48,26 +53,80 @@ const labels = computed(() => store.getters['labels/getLabels'] || []);
 // É edição?
 const isEditing = computed(() => !!props.task);
 const modalTitle = computed(() =>
-  isEditing.value ? t('TASKS.EDIT_TASK') : t('TASKS.NEW_TASK')
+  isEditing.value ? 'Editar Tarefa' : 'Nova Tarefa'
 );
 
 // Opções de prioridade
 const priorityOptions = [
-  { value: 'low', label: t('TASKS.PRIORITY.LOW') },
-  { value: 'medium', label: t('TASKS.PRIORITY.MEDIUM') },
-  { value: 'high', label: t('TASKS.PRIORITY.HIGH') },
-  { value: 'urgent', label: t('TASKS.PRIORITY.URGENT') },
+  { value: 'low', label: 'Baixa' },
+  { value: 'medium', label: 'Média' },
+  { value: 'high', label: 'Alta' },
+  { value: 'urgent', label: 'Urgente' },
 ];
 
 // Opções de status
 const statusOptions = [
-  { value: 'pending', label: t('TASKS.STATUS.PENDING') },
-  { value: 'in_progress', label: t('TASKS.STATUS.IN_PROGRESS') },
-  { value: 'completed', label: t('TASKS.STATUS.COMPLETED') },
-  { value: 'cancelled', label: t('TASKS.STATUS.CANCELLED') },
+  { value: 'pending', label: 'Pendente' },
+  { value: 'in_progress', label: 'Em Andamento' },
+  { value: 'completed', label: 'Concluída' },
+  { value: 'cancelled', label: 'Cancelada' },
 ];
 
-// Handlers
+// Handlers de arquivo
+const openFilePicker = () => {
+  fileInput.value?.click();
+};
+
+const handleFileSelect = event => {
+  const selectedFiles = Array.from(event.target.files || []);
+  if (selectedFiles.length > 0) {
+    filesToUpload.value = [...filesToUpload.value, ...selectedFiles];
+  }
+  event.target.value = '';
+};
+
+const handleDrop = event => {
+  event.preventDefault();
+  isDragging.value = false;
+  const droppedFiles = Array.from(event.dataTransfer?.files || []);
+  if (droppedFiles.length > 0) {
+    filesToUpload.value = [...filesToUpload.value, ...droppedFiles];
+  }
+};
+
+const handleDragOver = event => {
+  event.preventDefault();
+  isDragging.value = true;
+};
+
+const handleDragLeave = () => {
+  isDragging.value = false;
+};
+
+const removeFile = index => {
+  filesToUpload.value.splice(index, 1);
+};
+
+const formatFileSize = bytes => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+
+const getFileIcon = file => {
+  const type = file.type || '';
+  if (type.startsWith('image/')) return 'i-lucide-image';
+  if (type.startsWith('video/')) return 'i-lucide-video';
+  if (type.startsWith('audio/')) return 'i-lucide-music';
+  if (type.includes('pdf')) return 'i-lucide-file-text';
+  if (type.includes('spreadsheet') || type.includes('excel')) return 'i-lucide-table';
+  if (type.includes('document') || type.includes('word')) return 'i-lucide-file-text';
+  return 'i-lucide-file';
+};
+
+// Handlers de subtarefas
 const addItem = () => {
   if (!newItemTitle.value.trim()) return;
 
@@ -102,7 +161,7 @@ const validateForm = () => {
   errors.value = {};
 
   if (!formData.value.title.trim()) {
-    errors.value.title = t('TASKS.VALIDATION.TITLE_REQUIRED');
+    errors.value.title = 'O título é obrigatório';
   }
 
   return Object.keys(errors.value).length === 0;
@@ -131,9 +190,28 @@ const handleSubmit = async () => {
         taskId: props.task.id,
         taskData,
       });
+      
+      // Upload de arquivos se houver
+      if (filesToUpload.value.length > 0) {
+        await store.dispatch('agentTasks/uploadFiles', {
+          taskId: props.task.id,
+          files: filesToUpload.value,
+        });
+      }
+      
       emit('updated');
     } else {
+      // Criar tarefa primeiro
       const newTask = await store.dispatch('agentTasks/createTask', taskData);
+      
+      // Depois fazer upload dos arquivos com o ID da nova tarefa
+      if (filesToUpload.value.length > 0 && newTask?.id) {
+        await store.dispatch('agentTasks/uploadFiles', {
+          taskId: newTask.id,
+          files: filesToUpload.value,
+        });
+      }
+      
       emit('created', newTask);
     }
   } catch (error) {
@@ -173,20 +251,20 @@ onMounted(() => {
 
 <template>
   <Modal :show="true" :on-close="handleClose">
-    <div class="p-6">
+    <div class="p-6 max-h-[85vh] overflow-y-auto">
       <h2 class="text-lg font-medium text-n-slate-12 mb-4">{{ modalTitle }}</h2>
       
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <!-- Título -->
         <div>
           <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.TITLE') }} *
+            Título *
           </label>
           <input
             v-model="formData.title"
             type="text"
-            :placeholder="t('TASKS.FORM.TITLE_PLACEHOLDER')"
-            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            placeholder="Ex: Ligar para cliente"
+            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand"
             :class="{ 'border-ruby-9': errors.title }"
           />
           <p v-if="errors.title" class="mt-1 text-xs text-ruby-11">{{ errors.title }}</p>
@@ -195,13 +273,13 @@ onMounted(() => {
         <!-- Descrição -->
         <div>
           <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.DESCRIPTION') }}
+            Descrição
           </label>
           <textarea
             v-model="formData.description"
-            :placeholder="t('TASKS.FORM.DESCRIPTION_PLACEHOLDER')"
+            placeholder="Detalhes da tarefa..."
             rows="3"
-            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand resize-none"
+            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand resize-none"
           />
         </div>
 
@@ -209,13 +287,13 @@ onMounted(() => {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-n-slate-12 mb-1">
-              {{ t('TASKS.FORM.ASSIGNED_TO') }}
+              Responsável
             </label>
             <select
               v-model="formData.assigned_to_id"
-              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
             >
-              <option :value="null">{{ t('TASKS.FORM.UNASSIGNED') }}</option>
+              <option :value="null">Sem responsável</option>
               <option v-for="agent in agents" :key="agent.id" :value="agent.id">
                 {{ agent.name }}
               </option>
@@ -224,11 +302,11 @@ onMounted(() => {
 
           <div>
             <label class="block text-sm font-medium text-n-slate-12 mb-1">
-              {{ t('TASKS.FORM.PRIORITY') }}
+              Prioridade
             </label>
             <select
               v-model="formData.priority"
-              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
             >
               <option v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">
                 {{ opt.label }}
@@ -241,23 +319,23 @@ onMounted(() => {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-n-slate-12 mb-1">
-              {{ t('TASKS.FORM.DUE_DATE') }}
+              Data de Vencimento
             </label>
             <input
               v-model="formData.due_date"
               type="date"
-              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
             />
           </div>
 
           <div>
             <label class="block text-sm font-medium text-n-slate-12 mb-1">
-              {{ t('TASKS.FORM.DUE_TIME') }}
+              Hora
             </label>
             <input
               v-model="formData.due_time"
               type="time"
-              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+              class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
             />
           </div>
         </div>
@@ -265,11 +343,11 @@ onMounted(() => {
         <!-- Status (apenas em edição) -->
         <div v-if="isEditing">
           <label class="block text-sm font-medium text-n-slate-12 mb-1">
-            {{ t('TASKS.FORM.STATUS') }}
+            Status
           </label>
           <select
             v-model="formData.status"
-            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
           >
             <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
@@ -278,9 +356,9 @@ onMounted(() => {
         </div>
 
         <!-- Labels -->
-        <div>
+        <div v-if="labels.length > 0">
           <label class="block text-sm font-medium text-n-slate-12 mb-2">
-            {{ t('TASKS.FORM.LABELS') }}
+            Labels
           </label>
           <div class="flex flex-wrap gap-2">
             <button
@@ -304,10 +382,67 @@ onMounted(() => {
           </div>
         </div>
 
+        <!-- Anexos -->
+        <div>
+          <label class="block text-sm font-medium text-n-slate-12 mb-2">
+            Anexos
+          </label>
+          
+          <!-- Drop zone -->
+          <div
+            class="border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer mb-3"
+            :class="[
+              isDragging
+                ? 'border-n-brand bg-n-alpha-2'
+                : 'border-n-weak hover:border-n-brand',
+            ]"
+            @click="openFilePicker"
+            @drop="handleDrop"
+            @dragover="handleDragOver"
+            @dragleave="handleDragLeave"
+          >
+            <input
+              ref="fileInput"
+              type="file"
+              multiple
+              class="hidden"
+              @change="handleFileSelect"
+            />
+            <div class="flex flex-col items-center gap-1">
+              <span class="i-lucide-upload-cloud size-6 text-n-slate-10" />
+              <span class="text-sm text-n-slate-11">
+                Arraste arquivos ou <span class="text-n-brand">clique para selecionar</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Lista de arquivos selecionados -->
+          <div v-if="filesToUpload.length > 0" class="space-y-2">
+            <div
+              v-for="(file, index) in filesToUpload"
+              :key="index"
+              class="flex items-center gap-3 p-2 rounded-lg bg-n-alpha-1"
+            >
+              <span :class="getFileIcon(file)" class="size-5 text-n-slate-11 flex-shrink-0" />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-n-slate-12 truncate">{{ file.name }}</p>
+                <p class="text-xs text-n-slate-10">{{ formatFileSize(file.size) }}</p>
+              </div>
+              <button
+                type="button"
+                class="p-1 text-n-slate-9 hover:text-ruby-9 transition-colors"
+                @click="removeFile(index)"
+              >
+                <span class="i-lucide-x size-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Subtarefas -->
         <div>
           <label class="block text-sm font-medium text-n-slate-12 mb-2">
-            {{ t('TASKS.FORM.SUBTASKS') }}
+            Subtarefas
           </label>
 
           <div class="space-y-2">
@@ -325,7 +460,7 @@ onMounted(() => {
               <input
                 v-model="item.title"
                 type="text"
-                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
               />
               <button
                 type="button"
@@ -342,8 +477,8 @@ onMounted(() => {
               <input
                 v-model="newItemTitle"
                 type="text"
-                :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
-                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                placeholder="Adicionar subtarefa..."
+                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand"
                 @keyup.enter="addItem"
               />
               <Button
@@ -353,7 +488,7 @@ onMounted(() => {
                 :disabled="!newItemTitle.trim()"
                 @click="addItem"
               >
-                {{ t('TASKS.FORM.ADD') }}
+                Adicionar
               </Button>
             </div>
           </div>
@@ -362,10 +497,10 @@ onMounted(() => {
         <!-- Ações -->
         <div class="flex justify-end gap-2 pt-4 border-t border-n-weak">
           <Button type="button" color="slate" @click="handleClose">
-            {{ t('COMMON.CANCEL') }}
+            Cancelar
           </Button>
           <Button type="submit" color="blue" :loading="isSubmitting">
-            {{ isEditing ? t('COMMON.SAVE') : t('TASKS.FORM.CREATE') }}
+            {{ isEditing ? 'Salvar' : 'Criar Tarefa' }}
           </Button>
         </div>
       </form>
