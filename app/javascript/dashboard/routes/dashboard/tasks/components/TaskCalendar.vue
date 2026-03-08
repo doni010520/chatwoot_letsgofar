@@ -13,6 +13,7 @@ const { t } = useI18n();
 // Estado local
 const currentDate = ref(new Date());
 const selectedTaskId = ref(null);
+const hoveredDay = ref(null);
 
 // Getters
 const calendarData = computed(() => store.getters['agentTasks/getCalendarData']);
@@ -27,7 +28,15 @@ const monthName = computed(() => {
   return currentDate.value.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 });
 
-const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const weekDays = [
+  { short: 'Dom', full: 'Domingo' },
+  { short: 'Seg', full: 'Segunda' },
+  { short: 'Ter', full: 'Terça' },
+  { short: 'Qua', full: 'Quarta' },
+  { short: 'Qui', full: 'Quinta' },
+  { short: 'Sex', full: 'Sexta' },
+  { short: 'Sáb', full: 'Sábado' },
+];
 
 // Gerar dias do calendário
 const calendarDays = computed(() => {
@@ -51,6 +60,7 @@ const calendarDays = computed(() => {
       day: date.getDate(),
       isCurrentMonth: false,
       isToday: false,
+      isWeekend: date.getDay() === 0 || date.getDay() === 6,
     });
   }
 
@@ -67,6 +77,7 @@ const calendarDays = computed(() => {
         date.getDate() === today.getDate() &&
         date.getMonth() === today.getMonth() &&
         date.getFullYear() === today.getFullYear(),
+      isWeekend: date.getDay() === 0 || date.getDay() === 6,
     });
   }
 
@@ -80,6 +91,7 @@ const calendarDays = computed(() => {
       day: i,
       isCurrentMonth: false,
       isToday: false,
+      isWeekend: date.getDay() === 0 || date.getDay() === 6,
     });
   }
 
@@ -95,12 +107,15 @@ const getTasksForDay = dateString => {
   return calendarData.value[dateString] || [];
 };
 
-// Cores por prioridade - mais suaves e legíveis
-const priorityColors = {
-  urgent: 'bg-ruby-4 text-ruby-11 border-l-2 border-ruby-9',
-  high: 'bg-orange-4 text-orange-11 border-l-2 border-orange-9',
-  medium: 'bg-blue-4 text-blue-11 border-l-2 border-blue-9',
-  low: 'bg-green-4 text-green-11 border-l-2 border-green-9',
+// Cores por prioridade - mais vibrantes e legíveis
+const getPriorityStyle = priority => {
+  const styles = {
+    urgent: 'bg-ruby-500 text-white',
+    high: 'bg-orange-500 text-white',
+    medium: 'bg-blue-500 text-white',
+    low: 'bg-green-500 text-white',
+  };
+  return styles[priority] || styles.medium;
 };
 
 // Navegação
@@ -159,34 +174,37 @@ watch([currentMonth, currentYear], () => {
 </script>
 
 <template>
-  <div class="flex h-full">
+  <div class="flex h-full bg-n-alpha-1">
     <!-- Calendário -->
     <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Header do Calendário -->
-      <div class="flex items-center justify-between px-4 py-3 border-b border-n-weak">
-        <div class="flex items-center gap-2">
-          <Button
-            icon="i-lucide-chevron-left"
-            color="slate"
-            size="sm"
-            @click="goToPrevMonth"
-          />
-          <Button
-            icon="i-lucide-chevron-right"
-            color="slate"
-            size="sm"
-            @click="goToNextMonth"
-          />
-          <h2 class="text-lg font-semibold text-n-slate-12 capitalize ml-2">
+      <!-- Header do Calendário - mais elegante -->
+      <div class="flex items-center justify-between px-6 py-4 bg-n-background border-b border-n-weak">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-1 bg-n-alpha-2 rounded-xl p-1">
+            <button
+              class="p-2 rounded-lg hover:bg-n-alpha-3 transition-colors"
+              @click="goToPrevMonth"
+            >
+              <span class="i-lucide-chevron-left size-5 text-n-slate-11" />
+            </button>
+            <button
+              class="p-2 rounded-lg hover:bg-n-alpha-3 transition-colors"
+              @click="goToNextMonth"
+            >
+              <span class="i-lucide-chevron-right size-5 text-n-slate-11" />
+            </button>
+          </div>
+          <h2 class="text-xl font-bold text-n-slate-12 capitalize">
             {{ monthName }}
           </h2>
         </div>
 
-        <div class="flex items-center gap-2">
-          <Button color="slate" size="sm" @click="goToToday">
-            {{ t('TASKS.CALENDAR.TODAY') }}
-          </Button>
-        </div>
+        <button 
+          class="px-4 py-2 text-sm font-medium rounded-xl bg-n-alpha-2 text-n-slate-11 hover:bg-n-alpha-3 hover:text-n-slate-12 transition-colors"
+          @click="goToToday"
+        >
+          Hoje
+        </button>
       </div>
 
       <!-- Loading -->
@@ -197,68 +215,93 @@ watch([currentMonth, currentYear], () => {
       <!-- Grid do Calendário -->
       <div v-else class="flex-1 overflow-auto p-4">
         <!-- Cabeçalho dos dias da semana -->
-        <div class="grid grid-cols-7 gap-1 mb-2">
+        <div class="grid grid-cols-7 gap-2 mb-3">
           <div
-            v-for="day in weekDays"
-            :key="day"
-            class="text-center text-sm font-medium text-n-slate-10 py-2"
+            v-for="(day, index) in weekDays"
+            :key="day.short"
+            class="text-center py-3 text-sm font-semibold rounded-xl"
+            :class="[
+              index === 0 || index === 6 
+                ? 'text-n-slate-9 bg-n-alpha-1' 
+                : 'text-n-slate-11 bg-n-alpha-2'
+            ]"
           >
-            {{ day }}
+            {{ day.short }}
           </div>
         </div>
 
         <!-- Grid dos dias -->
-        <div class="grid grid-cols-7 gap-1">
+        <div class="grid grid-cols-7 gap-2">
           <div
             v-for="day in calendarDays"
             :key="day.dateString"
-            class="min-h-32 p-2 rounded-lg border transition-colors"
+            class="min-h-36 rounded-xl border transition-all duration-200"
             :class="[
               day.isCurrentMonth
-                ? 'border-n-weak bg-n-background'
-                : 'border-transparent bg-n-alpha-1 opacity-50',
-              day.isToday ? 'ring-2 ring-n-brand ring-offset-1' : '',
+                ? day.isWeekend 
+                  ? 'bg-n-alpha-1 border-n-weak/50' 
+                  : 'bg-n-background border-n-weak hover:border-n-slate-6 hover:shadow-sm'
+                : 'bg-transparent border-transparent',
+              day.isToday ? 'ring-2 ring-n-brand ring-offset-2 ring-offset-n-alpha-1' : '',
+              hoveredDay === day.dateString && day.isCurrentMonth ? 'shadow-md' : '',
             ]"
+            @mouseenter="hoveredDay = day.dateString"
+            @mouseleave="hoveredDay = null"
           >
-            <!-- Número do dia -->
-            <div
-              class="text-sm font-semibold mb-2"
-              :class="[
-                day.isToday
-                  ? 'text-n-brand'
-                  : day.isCurrentMonth
-                    ? 'text-n-slate-12'
-                    : 'text-n-slate-8',
-              ]"
-            >
-              {{ day.day }}
+            <!-- Cabeçalho do dia -->
+            <div class="flex items-center justify-between p-2 pb-1">
+              <span
+                class="text-sm font-bold w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                :class="[
+                  day.isToday
+                    ? 'bg-n-brand text-white'
+                    : day.isCurrentMonth
+                      ? 'text-n-slate-12'
+                      : 'text-n-slate-6',
+                ]"
+              >
+                {{ day.day }}
+              </span>
+              
+              <!-- Badge de quantidade se tiver muitas tarefas -->
+              <span 
+                v-if="getTasksForDay(day.dateString).length > 3"
+                class="text-xs font-medium px-2 py-0.5 rounded-full bg-n-alpha-3 text-n-slate-10"
+              >
+                {{ getTasksForDay(day.dateString).length }} tarefas
+              </span>
             </div>
 
             <!-- Tarefas do dia -->
-            <div class="space-y-1 max-h-24 overflow-y-auto">
+            <div 
+              v-if="day.isCurrentMonth"
+              class="px-2 pb-2 space-y-1.5 max-h-24 overflow-y-auto scrollbar-thin"
+            >
               <button
-                v-for="task in getTasksForDay(day.dateString).slice(0, 4)"
+                v-for="task in getTasksForDay(day.dateString).slice(0, 3)"
                 :key="task.id"
-                class="w-full text-left px-2 py-1 text-xs rounded-md transition-colors hover:opacity-80"
-                :class="priorityColors[task.priority]"
+                class="w-full text-left group"
                 :title="`${task.due_time || ''} ${task.title}`"
                 @click="selectTask(task)"
               >
-                <div class="flex items-center gap-1">
-                  <span v-if="task.due_time" class="font-medium flex-shrink-0">
+                <div 
+                  class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-all duration-150 group-hover:scale-[1.02] group-hover:shadow-sm"
+                  :class="getPriorityStyle(task.priority)"
+                >
+                  <span v-if="task.due_time" class="font-bold flex-shrink-0 opacity-90">
                     {{ task.due_time }}
                   </span>
-                  <span class="truncate">{{ task.title }}</span>
+                  <span class="truncate font-medium">{{ task.title }}</span>
                 </div>
               </button>
 
               <!-- Indicador de mais tarefas -->
-              <div
-                v-if="getTasksForDay(day.dateString).length > 4"
-                class="text-xs text-n-slate-10 px-2 py-1 font-medium"
+              <button
+                v-if="getTasksForDay(day.dateString).length > 3"
+                class="w-full text-center text-xs text-n-slate-10 py-1 hover:text-n-slate-12 font-medium rounded-lg hover:bg-n-alpha-2 transition-colors"
               >
-                +{{ getTasksForDay(day.dateString).length - 4 }} mais
-              </div>
+                +{{ getTasksForDay(day.dateString).length - 3 }} mais
+              </button>
             </div>
           </div>
         </div>
@@ -275,3 +318,19 @@ watch([currentMonth, currentYear], () => {
     />
   </div>
 </template>
+
+<style scoped>
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+</style>
