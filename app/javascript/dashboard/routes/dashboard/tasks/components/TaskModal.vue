@@ -37,42 +37,13 @@ const formData = ref({
 const newItemTitle = ref('');
 const items = ref([]);
 
-// Anexos
+// ==========================================
+// ANEXOS - Upload de arquivos
+// ==========================================
 const filesToUpload = ref([]);
 const fileInput = ref(null);
 const isDragging = ref(false);
 
-// UI Flags
-const isSubmitting = ref(false);
-const errors = ref({});
-
-// Getters
-const agents = computed(() => store.getters['agents/getAgents'] || []);
-const labels = computed(() => store.getters['labels/getLabels'] || []);
-
-// É edição?
-const isEditing = computed(() => !!props.task);
-const modalTitle = computed(() =>
-  isEditing.value ? 'Editar Tarefa' : 'Nova Tarefa'
-);
-
-// Opções de prioridade
-const priorityOptions = [
-  { value: 'low', label: 'Baixa' },
-  { value: 'medium', label: 'Média' },
-  { value: 'high', label: 'Alta' },
-  { value: 'urgent', label: 'Urgente' },
-];
-
-// Opções de status
-const statusOptions = [
-  { value: 'pending', label: 'Pendente' },
-  { value: 'in_progress', label: 'Em Andamento' },
-  { value: 'completed', label: 'Concluída' },
-  { value: 'cancelled', label: 'Cancelada' },
-];
-
-// Handlers de arquivo
 const openFilePicker = () => {
   fileInput.value?.click();
 };
@@ -125,6 +96,37 @@ const getFileIcon = file => {
   if (type.includes('document') || type.includes('word')) return 'i-lucide-file-text';
   return 'i-lucide-file';
 };
+// ==========================================
+
+// UI Flags
+const isSubmitting = ref(false);
+const errors = ref({});
+
+// Getters
+const agents = computed(() => store.getters['agents/getAgents'] || []);
+const labels = computed(() => store.getters['labels/getLabels'] || []);
+
+// É edição?
+const isEditing = computed(() => !!props.task);
+const modalTitle = computed(() =>
+  isEditing.value ? 'Editar Tarefa' : 'Nova Tarefa'
+);
+
+// Opções de prioridade
+const priorityOptions = [
+  { value: 'low', label: 'Baixa' },
+  { value: 'medium', label: 'Média' },
+  { value: 'high', label: 'Alta' },
+  { value: 'urgent', label: 'Urgente' },
+];
+
+// Opções de status
+const statusOptions = [
+  { value: 'pending', label: 'Pendente' },
+  { value: 'in_progress', label: 'Em Andamento' },
+  { value: 'completed', label: 'Concluída' },
+  { value: 'cancelled', label: 'Cancelada' },
+];
 
 // Handlers de subtarefas
 const addItem = () => {
@@ -191,7 +193,7 @@ const handleSubmit = async () => {
         taskData,
       });
       
-      // Upload de arquivos se houver
+      // Upload de arquivos se houver (edição)
       if (filesToUpload.value.length > 0) {
         await store.dispatch('agentTasks/uploadFiles', {
           taskId: props.task.id,
@@ -201,10 +203,10 @@ const handleSubmit = async () => {
       
       emit('updated');
     } else {
-      // Criar tarefa primeiro
+      // CRIAR TAREFA PRIMEIRO
       const newTask = await store.dispatch('agentTasks/createTask', taskData);
       
-      // Depois fazer upload dos arquivos com o ID da nova tarefa
+      // DEPOIS FAZER UPLOAD DOS ARQUIVOS COM O ID DA NOVA TAREFA
       if (filesToUpload.value.length > 0 && newTask?.id) {
         await store.dispatch('agentTasks/uploadFiles', {
           taskId: newTask.id,
@@ -263,7 +265,7 @@ onMounted(() => {
           <input
             v-model="formData.title"
             type="text"
-            placeholder="Ex: Ligar para cliente"
+            placeholder="Digite o título da tarefa"
             class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand"
             :class="{ 'border-ruby-9': errors.title }"
           />
@@ -277,7 +279,7 @@ onMounted(() => {
           </label>
           <textarea
             v-model="formData.description"
-            placeholder="Detalhes da tarefa..."
+            placeholder="Adicione uma descrição (opcional)"
             rows="3"
             class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand resize-none"
           />
@@ -330,7 +332,7 @@ onMounted(() => {
 
           <div>
             <label class="block text-sm font-medium text-n-slate-12 mb-1">
-              Hora
+              Horário
             </label>
             <input
               v-model="formData.due_time"
@@ -382,19 +384,22 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Anexos -->
-        <div>
+        <!-- ==========================================
+             ANEXOS - Seção de upload de arquivos
+             ========================================== -->
+        <div class="border-t border-n-weak pt-4">
           <label class="block text-sm font-medium text-n-slate-12 mb-2">
+            <span class="i-lucide-paperclip size-4 inline-block mr-1 align-text-bottom" />
             Anexos
           </label>
           
-          <!-- Drop zone -->
+          <!-- Área de upload (drag & drop) -->
           <div
-            class="border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer mb-3"
+            class="border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer"
             :class="[
               isDragging
-                ? 'border-n-brand bg-n-alpha-2'
-                : 'border-n-weak hover:border-n-brand',
+                ? 'border-n-brand bg-n-brand/10'
+                : 'border-n-weak hover:border-n-brand hover:bg-n-alpha-1',
             ]"
             @click="openFilePicker"
             @drop="handleDrop"
@@ -408,20 +413,22 @@ onMounted(() => {
               class="hidden"
               @change="handleFileSelect"
             />
-            <div class="flex flex-col items-center gap-1">
-              <span class="i-lucide-upload-cloud size-6 text-n-slate-10" />
-              <span class="text-sm text-n-slate-11">
-                Arraste arquivos ou <span class="text-n-brand">clique para selecionar</span>
-              </span>
+            <div class="flex flex-col items-center gap-2">
+              <span class="i-lucide-upload-cloud size-8 text-n-slate-10" />
+              <div class="text-sm text-n-slate-11">
+                <span class="text-n-brand font-medium">Clique para selecionar</span>
+                ou arraste arquivos aqui
+              </div>
+              <span class="text-xs text-n-slate-9">PDF, imagens, documentos, etc.</span>
             </div>
           </div>
 
           <!-- Lista de arquivos selecionados -->
-          <div v-if="filesToUpload.length > 0" class="space-y-2">
+          <div v-if="filesToUpload.length > 0" class="mt-3 space-y-2">
             <div
               v-for="(file, index) in filesToUpload"
               :key="index"
-              class="flex items-center gap-3 p-2 rounded-lg bg-n-alpha-1"
+              class="flex items-center gap-3 p-2 rounded-lg bg-n-alpha-2 border border-n-weak"
             >
               <span :class="getFileIcon(file)" class="size-5 text-n-slate-11 flex-shrink-0" />
               <div class="flex-1 min-w-0">
@@ -430,14 +437,15 @@ onMounted(() => {
               </div>
               <button
                 type="button"
-                class="p-1 text-n-slate-9 hover:text-ruby-9 transition-colors"
-                @click="removeFile(index)"
+                class="p-1.5 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-colors"
+                @click.stop="removeFile(index)"
               >
                 <span class="i-lucide-x size-4" />
               </button>
             </div>
           </div>
         </div>
+        <!-- ========================================== -->
 
         <!-- Subtarefas -->
         <div>
@@ -477,7 +485,7 @@ onMounted(() => {
               <input
                 v-model="newItemTitle"
                 type="text"
-                placeholder="Adicionar subtarefa..."
+                placeholder="Adicionar subtarefa"
                 class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand"
                 @keyup.enter="addItem"
               />
