@@ -29,7 +29,9 @@ const uiFlags = computed(() => store.getters['agentTasks/getUIFlags']);
 
 // Obter tarefas por coluna
 const getColumnTasks = status => {
-  return kanbanData.value[status] || [];
+  const data = kanbanData.value;
+  if (!data) return [];
+  return data[status] || [];
 };
 
 const getColumnCount = status => {
@@ -60,11 +62,11 @@ const formatDueDate = task => {
   const diffDays = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
   
   if (diffDays < 0) {
-    return { text: 'Atrasada', class: 'text-ruby-400', isOverdue: true };
+    return { text: 'Atrasada', class: 'text-ruby-11', isOverdue: true };
   } else if (diffDays === 0) {
-    return { text: 'Hoje', class: 'text-amber-400', isOverdue: false };
+    return { text: 'Hoje', class: 'text-amber-11', isOverdue: false };
   } else if (diffDays === 1) {
-    return { text: 'Amanhã', class: 'text-blue-400', isOverdue: false };
+    return { text: 'Amanhã', class: 'text-blue-11', isOverdue: false };
   } else {
     const formatted = dueDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     return { text: formatted, class: 'text-n-slate-11', isOverdue: false };
@@ -73,10 +75,10 @@ const formatDueDate = task => {
 
 const getPriorityConfig = priority => {
   const configs = {
-    urgent: { label: 'Urgente', bg: 'bg-ruby-500/20', text: 'text-ruby-400', border: 'border-ruby-500/30' },
-    high: { label: 'Alta', bg: 'bg-orange-500/20', text: 'text-orange-400', border: 'border-orange-500/30' },
-    medium: { label: 'Média', bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30' },
-    low: { label: 'Baixa', bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' },
+    urgent: { label: 'Urgente', bg: 'bg-ruby-3', text: 'text-ruby-11', border: 'border-ruby-6' },
+    high: { label: 'Alta', bg: 'bg-orange-3', text: 'text-orange-11', border: 'border-orange-6' },
+    medium: { label: 'Média', bg: 'bg-amber-3', text: 'text-amber-11', border: 'border-amber-6' },
+    low: { label: 'Baixa', bg: 'bg-green-3', text: 'text-green-11', border: 'border-green-6' },
   };
   return configs[priority] || configs.medium;
 };
@@ -143,16 +145,16 @@ onBeforeUnmount(() => {
       <div
         v-for="column in columns"
         :key="column.key"
-        class="kanban-column"
+        class="w-80 min-w-[320px] flex flex-col rounded-xl border border-n-weak bg-n-alpha-1 overflow-hidden"
       >
         <!-- Header da Coluna -->
         <div 
-          class="kanban-column-header"
+          class="flex items-center justify-between px-4 py-3 border-b-2 bg-n-surface-2"
           :class="getColumnHeaderColor(column.color)"
         >
           <div class="flex items-center gap-2">
             <span :class="column.icon" class="size-5" />
-            <span class="font-semibold">{{ column.label }}</span>
+            <span class="font-semibold text-n-slate-12">{{ column.label }}</span>
           </div>
           <span 
             class="px-2 py-0.5 text-sm font-medium rounded-full"
@@ -163,11 +165,11 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Lista de Cards -->
-        <div class="kanban-column-body">
+        <div class="flex-1 overflow-y-auto p-3 space-y-3">
           <div
             v-for="task in getColumnTasks(column.key)"
             :key="task.id"
-            class="kanban-card"
+            class="p-4 rounded-lg border border-n-weak bg-n-surface-3 hover:border-n-slate-8 cursor-pointer transition-all hover:shadow-lg"
           >
             <!-- Header do Card: Título + Avatar -->
             <div class="flex items-start justify-between gap-2 mb-2">
@@ -184,7 +186,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Badges: Prioridade + Data -->
-            <div class="flex items-center flex-wrap gap-2 mt-auto">
+            <div class="flex items-center flex-wrap gap-2 mt-3">
               <span 
                 class="px-2 py-0.5 text-xs font-medium rounded border"
                 :class="[getPriorityConfig(task.priority).bg, getPriorityConfig(task.priority).text, getPriorityConfig(task.priority).border]"
@@ -216,7 +218,7 @@ onBeforeUnmount(() => {
           <!-- Empty State -->
           <div
             v-if="getColumnTasks(column.key).length === 0"
-            class="kanban-empty"
+            class="flex flex-col items-center justify-center py-8 text-center"
           >
             <span class="i-lucide-inbox size-8 text-n-slate-8 mb-2" />
             <span class="text-sm text-n-slate-10">Nenhuma tarefa</span>
@@ -226,59 +228,3 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.kanban-column {
-  width: 320px;
-  min-width: 320px;
-  display: flex;
-  flex-direction: column;
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 12px;
-  border: 1px solid rgba(71, 85, 105, 0.3);
-  overflow: hidden;
-}
-
-.kanban-column-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(30, 41, 59, 0.8);
-  border-bottom: 2px solid;
-}
-
-.kanban-column-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.kanban-card {
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.9) 0%, rgba(30, 41, 59, 0.95) 100%);
-  border: 1px solid rgba(100, 116, 139, 0.4);
-  border-radius: 10px;
-  padding: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.kanban-card:hover {
-  border-color: rgba(100, 116, 139, 0.6);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.kanban-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-  text-align: center;
-}
-</style>
