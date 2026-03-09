@@ -57,14 +57,19 @@ const toggleFilters = () => {
   showFiltersPanel.value = !showFiltersPanel.value;
 };
 
-const onTaskCreated = () => {
+const onTaskCreated = async () => {
   closeCreateModal();
+  
+  // Recarregar dados
   if (currentView.value === 'kanban') {
-    store.dispatch('agentTasks/fetchKanban');
+    await store.dispatch('agentTasks/fetchKanban');
   } else {
-    store.dispatch('agentTasks/fetchTasks');
+    await store.dispatch('agentTasks/fetchTasks', { 
+      page: store.state.agentTasks.pagination.currentPage 
+    });
   }
-  store.dispatch('agentTasks/fetchStats');
+  
+  await store.dispatch('agentTasks/fetchStats');
 };
 
 const onFilterChange = newFilters => {
