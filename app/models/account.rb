@@ -116,6 +116,7 @@ class Account < ApplicationRecord
   has_many :hooks, dependent: :destroy_async, class_name: 'Integrations::Hook'
   has_many :inboxes, dependent: :destroy_async
   has_many :kanban_pipelines, dependent: :destroy  # KANBAN
+  has_many :kanban_tasks, dependent: :destroy  # KANBAN TASKS
   has_many :labels, dependent: :destroy_async
   has_many :line_channels, dependent: :destroy_async, class_name: '::Channel::Line'
   has_many :mentions, dependent: :destroy_async
