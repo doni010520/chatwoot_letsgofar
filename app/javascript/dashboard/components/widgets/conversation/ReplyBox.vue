@@ -19,7 +19,6 @@ import MessageSignatureMissingAlert from './MessageSignatureMissingAlert.vue';
 import ReplyBoxBanner from './ReplyBoxBanner.vue';
 import QuotedEmailPreview from './QuotedEmailPreview.vue';
 import ScheduleMessageModal from './ScheduleMessageModal.vue';
-import ScheduledMessagesList from './ScheduledMessagesList.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
 import AudioRecorder from 'dashboard/components/widgets/WootWriter/AudioRecorder.vue';
@@ -80,7 +79,6 @@ export default {
     CopilotEditorSection,
     CopilotReplyBottomPanel,
     ScheduleMessageModal,
-    ScheduledMessagesList,
   },
   mixins: [inboxMixin, fileUploadMixin, keyboardEventListenerMixins],
   props: {
@@ -1102,7 +1100,6 @@ export default {
 </script>
 
 <template>
-  <ScheduledMessagesList :conversation-id="conversationId" />
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
   <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
     <ReplyTopPanel
