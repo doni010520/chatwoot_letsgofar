@@ -55,12 +55,7 @@ class AgentTaskPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      if user.administrator?
-        scope.where(account_id: account.id)
-      else
-        scope.where(account_id: account.id)
-             .where('assigned_to_id = :user_id OR created_by_id = :user_id', user_id: user.id)
-      end
+      scope.where(account_id: account.id)
     end
   end
 
