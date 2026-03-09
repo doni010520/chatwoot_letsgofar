@@ -80,13 +80,48 @@ const checklistProgress = computed(() => {
 const isCompleted = computed(() => props.task.status === 'completed');
 const isCancelled = computed(() => props.task.status === 'cancelled');
 
+// Verificar se está atrasada
+const isOverdue = computed(() => {
+  if (!props.task.due_date || isCompleted.value || isCancelled.value) return false;
+  const parts = props.task.due_date.split('-');
+  const dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return dueDate < today;
+});
+
+// Verificar se vence hoje
+const isDueToday = computed(() => {
+  if (!props.task.due_date || isCompleted.value || isCancelled.value) return false;
+  const parts = props.task.due_date.split('-');
+  const dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return dueDate.toDateString() === today.toDateString();
+});
+
+// Verificar se está em dia (tem data e não está atrasada)
+const isOnTrack = computed(() => {
+  if (!props.task.due_date || isCompleted.value || isCancelled.value) return false;
+  return !isOverdue.value && !isDueToday.value;
+});
+
+// Classes da borda baseada no status
+const statusBorderClass = computed(() => {
+  if (isCompleted.value) return 'border-l-4 border-l-green-9';
+  if (isCancelled.value) return 'border-l-4 border-l-n-slate-5';
+  if (isOverdue.value) return 'border-l-4 border-l-ruby-9 shadow-[0_0_10px_rgba(229,62,62,0.2)]';
+  if (isDueToday.value) return 'border-l-4 border-l-amber-9 shadow-[0_0_10px_rgba(217,119,6,0.15)]';
+  if (isOnTrack.value) return 'border-l-4 border-l-green-7';
+  return 'border-l-4 border-l-n-slate-4';
+});
+
 // Handlers
 const handleClick = () => {
   emit('click', props.task);
 };
 
-const handleComplete = e => {
-  e.stopPropagation();
+const handleComplete = () => {
   if (!isCompleted.value && !isCancelled.value) {
     emit('complete', props.task);
   }
@@ -97,6 +132,7 @@ const handleComplete = e => {
   <div
     class="group flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all"
     :class="[
+      statusBorderClass,
       isSelected
         ? 'border-n-brand bg-n-brand/5'
         : 'border-n-weak hover:border-n-slate-7 hover:bg-n-alpha-1',
@@ -117,7 +153,7 @@ const handleComplete = e => {
       ]"
       :disabled="isCancelled"
       :title="isCompleted ? 'Tarefa concluída' : isCancelled ? 'Tarefa cancelada' : 'Marcar como concluída'"
-      @click="handleComplete"
+      @click.stop="handleComplete"
     >
       <span v-if="isCompleted" class="i-lucide-check size-3" />
       <span v-else-if="isCancelled" class="i-lucide-x size-3 text-n-slate-9" />
