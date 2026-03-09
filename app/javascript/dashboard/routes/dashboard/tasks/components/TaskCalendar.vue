@@ -107,15 +107,27 @@ const getTasksForDay = dateString => {
   return calendarData.value[dateString] || [];
 };
 
-// Cores por prioridade - mais vibrantes e legíveis
-const getPriorityStyle = priority => {
+// Cores por prioridade - usando sistema Radix UI do Chatwoot
+const getPriorityStyle = (priority, status) => {
+  // Se a tarefa estiver concluída, usar cor verde
+  if (status === 'completed') {
+    return 'bg-green-9 text-white';
+  }
+  
+  // Se cancelada, usar cor cinza
+  if (status === 'cancelled') {
+    return 'bg-n-slate-6 text-n-slate-11';
+  }
+  
   const styles = {
-    urgent: 'bg-ruby-500 text-white',
-    high: 'bg-orange-500 text-white',
-    medium: 'bg-blue-500 text-white',
-    low: 'bg-green-500 text-white',
+    urgent: 'bg-ruby-9 text-white',
+    high: 'bg-orange-9 text-white',
+    medium: 'bg-blue-9 text-white',
+    low: 'bg-green-9 text-white',
   };
-  return styles[priority] || styles.medium;
+  
+  // Sempre retornar uma cor (default para azul se não tiver prioridade)
+  return styles[priority] || 'bg-blue-9 text-white';
 };
 
 // Navegação
@@ -286,7 +298,7 @@ watch([currentMonth, currentYear], () => {
               >
                 <div 
                   class="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-lg transition-all duration-150 group-hover:scale-[1.02] group-hover:shadow-sm"
-                  :class="getPriorityStyle(task.priority)"
+                  :class="getPriorityStyle(task.priority, task.status)"
                 >
                   <span v-if="task.due_time" class="font-bold flex-shrink-0 opacity-90">
                     {{ task.due_time }}
