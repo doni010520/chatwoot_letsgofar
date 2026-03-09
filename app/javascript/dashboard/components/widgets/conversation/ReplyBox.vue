@@ -21,6 +21,7 @@ import QuotedEmailPreview from './QuotedEmailPreview.vue';
 import ScheduleMessageModal from './ScheduleMessageModal.vue';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import WootMessageEditor from 'dashboard/components/widgets/WootWriter/Editor.vue';
+import ScheduledMessagesList from './ScheduledMessagesList.vue';
 import AudioRecorder from 'dashboard/components/widgets/WootWriter/AudioRecorder.vue';
 import { AUDIO_FORMATS } from 'shared/constants/messages';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
@@ -79,6 +80,7 @@ export default {
     CopilotEditorSection,
     CopilotReplyBottomPanel,
     ScheduleMessageModal,
+    ScheduledMessagesList,
   },
   mixins: [inboxMixin, fileUploadMixin, keyboardEventListenerMixins],
   props: {
@@ -1100,6 +1102,7 @@ export default {
 </script>
 
 <template>
+  <ScheduledMessagesList v-if="false" :conversation-id="conversationId" />
   <ReplyBoxBanner :message="message" :is-on-private-note="isOnPrivateNote" />
   <div ref="replyEditor" class="reply-box" :class="replyBoxClass">
     <ReplyTopPanel
