@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 
 const props = defineProps({
@@ -8,193 +9,237 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  isSelected: {
+    type: Boolean,
+    default: false,
+  },
+  compact: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(['click', 'updated']);
+const emit = defineEmits(['click', 'complete']);
 
 const { t } = useI18n();
 
-// Configuração de prioridade
-const priorityConfig = computed(() => {
-  const configs = {
-    urgent: { 
-      label: 'Urgente', 
-      bg: 'bg-ruby-500/20', 
-      text: 'text-ruby-400',
-      border: 'border-ruby-500/40',
-      bar: 'bg-ruby-500'
-    },
-    high: { 
-      label: 'Alta', 
-      bg: 'bg-orange-500/20', 
-      text: 'text-orange-400',
-      border: 'border-orange-500/40',
-      bar: 'bg-orange-500'
-    },
-    medium: { 
-      label: 'Média', 
-      bg: 'bg-amber-500/20', 
-      text: 'text-amber-400',
-      border: 'border-amber-500/40',
-      bar: 'bg-amber-500'
-    },
-    low: { 
-      label: 'Baixa', 
-      bg: 'bg-green-500/20', 
-      text: 'text-green-400',
-      border: 'border-green-500/40',
-      bar: 'bg-green-500'
-    },
-  };
-  return configs[props.task.priority] || configs.medium;
-});
+// Cores por prioridade
+const priorityConfig = {
+  urgent: { color: 'text-ruby-11', bg: 'bg-ruby-3', border: 'border-ruby-6', icon: 'i-lucide-alert-circle' },
+  high: { color: 'text-orange-11', bg: 'bg-orange-3', border: 'border-orange-6', icon: 'i-lucide-arrow-up' },
+  medium: { color: 'text-amber-11', bg: 'bg-amber-3', border: 'border-amber-6', icon: 'i-lucide-minus' },
+  low: { color: 'text-green-11', bg: 'bg-green-3', border: 'border-green-6', icon: 'i-lucide-arrow-down' },
+};
 
-// Data de vencimento
-const dueInfo = computed(() => {
+const priorityStyle = computed(() => priorityConfig[props.task.priority] || priorityConfig.medium);
+
+// Formatar data
+const formattedDueDate = computed(() => {
   if (!props.task.due_date) return null;
+
+  // Usar split para evitar problemas de timezone
+  const parts = props.task.due_date.split('-');
+  const dueDate = new Date(parts[0], parts[1] - 1, parts[2]);
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
-  const [year, month, day] = props.task.due_date.split('-').map(Number);
-  const dueDate = new Date(year, month - 1, day);
-  dueDate.setHours(0, 0, 0, 0);
-  
-  const diffDays = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
-  
-  if (diffDays < 0) {
-    return { text: 'Atrasada', class: 'text-ruby-400 bg-ruby-500/10', isOverdue: true };
-  } else if (diffDays === 0) {
-    return { text: 'Hoje', class: 'text-amber-400 bg-amber-500/10', isOverdue: false };
-  } else if (diffDays === 1) {
-    return { text: 'Amanhã', class: 'text-blue-400 bg-blue-500/10', isOverdue: false };
-  } else {
-    const formatted = dueDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    return { text: formatted, class: 'text-n-slate-11 bg-n-alpha-2', isOverdue: false };
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+
+  if (dueDate.toDateString() === today.toDateString()) {
+    return { text: t('TASKS.DUE_DATE.TODAY'), class: 'text-amber-11' };
   }
-});
+  if (dueDate.toDateString() === tomorrow.toDateString()) {
+    return { text: t('TASKS.DUE_DATE.TOMORROW'), class: 'text-n-slate-11' };
+  }
+  if (diffDays < 0) {
+    return { text: t('TASKS.DUE_DATE.OVERDUE'), class: 'text-ruby-11 font-medium' };
+  }
+  if (diffDays <= 7) {
+    return {
+      text: dueDate.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' }),
+      class: 'text-n-slate-11',
+    };
+  }
 
-// Status
-const statusConfig = computed(() => {
-  const configs = {
-    pending: { label: 'Pendente', icon: 'i-lucide-circle-dashed', color: 'text-slate-400' },
-    in_progress: { label: 'Em Andamento', icon: 'i-lucide-play-circle', color: 'text-blue-400' },
-    completed: { label: 'Concluída', icon: 'i-lucide-check-circle', color: 'text-green-400' },
-    cancelled: { label: 'Cancelada', icon: 'i-lucide-x-circle', color: 'text-gray-400' },
+  return {
+    text: dueDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+    class: 'text-n-slate-10',
   };
-  return configs[props.task.status] || configs.pending;
 });
 
+// Checklist progress
+const checklistProgress = computed(() => {
+  if (!props.task.items_count || props.task.items_count === 0) return null;
+  return `${props.task.items_completed_count || 0}/${props.task.items_count}`;
+});
+
+const isCompleted = computed(() => props.task.status === 'completed');
+const isCancelled = computed(() => props.task.status === 'cancelled');
+
+// Handlers
 const handleClick = () => {
   emit('click', props.task);
+};
+
+const handleComplete = e => {
+  e.stopPropagation();
+  if (!isCompleted.value && !isCancelled.value) {
+    emit('complete', props.task);
+  }
 };
 </script>
 
 <template>
   <div
-    class="task-card"
+    class="group flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all"
+    :class="[
+      isSelected
+        ? 'border-n-brand bg-n-brand/5'
+        : 'border-n-weak hover:border-n-slate-7 hover:bg-n-alpha-1',
+      isCompleted || isCancelled ? 'opacity-60' : '',
+    ]"
     @click="handleClick"
   >
-    <!-- Barra de prioridade no topo -->
-    <div class="task-card-bar" :class="priorityConfig.bar" />
-    
-    <div class="task-card-content">
-      <!-- Header: Título + Avatar -->
-      <div class="flex items-start justify-between gap-3 mb-3">
-        <h3 class="font-semibold text-n-slate-12 leading-tight flex-1">
-          {{ task.title }}
-        </h3>
-        <Avatar
-          v-if="task.assigned_to"
-          :name="task.assigned_to.name"
-          :src="task.assigned_to.avatar_url"
-          size="28px"
-          class="flex-shrink-0"
-        />
-      </div>
+    <!-- Checkbox para marcar como concluída -->
+    <button
+      type="button"
+      class="flex-shrink-0 mt-0.5 size-5 rounded border-2 flex items-center justify-center transition-all"
+      :class="[
+        isCompleted
+          ? 'border-green-9 bg-green-9 text-white'
+          : isCancelled
+            ? 'border-n-slate-6 bg-n-slate-4 cursor-not-allowed'
+            : 'border-n-slate-7 hover:border-green-7 hover:bg-green-3 group-hover:border-n-slate-8',
+      ]"
+      :disabled="isCancelled"
+      :title="isCompleted ? 'Tarefa concluída' : isCancelled ? 'Tarefa cancelada' : 'Marcar como concluída'"
+      @click="handleComplete"
+    >
+      <span v-if="isCompleted" class="i-lucide-check size-3" />
+      <span v-else-if="isCancelled" class="i-lucide-x size-3 text-n-slate-9" />
+    </button>
 
-      <!-- Descrição (se houver) -->
-      <p 
-        v-if="task.description" 
-        class="text-sm text-n-slate-11 mb-3 line-clamp-2"
-      >
-        {{ task.description }}
-      </p>
+    <!-- Conteúdo -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex-1 min-w-0">
+          <!-- Título -->
+          <h3
+            class="text-sm font-medium truncate"
+            :class="isCompleted ? 'line-through text-n-slate-10' : 'text-n-slate-12'"
+          >
+            {{ task.title }}
+          </h3>
 
-      <!-- Footer: Badges -->
-      <div class="flex items-center flex-wrap gap-2">
-        <!-- Prioridade -->
-        <span 
-          class="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-md border"
-          :class="[priorityConfig.bg, priorityConfig.text, priorityConfig.border]"
+          <!-- Descrição (se não compact) -->
+          <p
+            v-if="!compact && task.description"
+            class="mt-0.5 text-xs text-n-slate-10 line-clamp-1"
+          >
+            {{ task.description }}
+          </p>
+
+          <!-- Meta info -->
+          <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+            <!-- Prioridade -->
+            <span
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded"
+              :class="[priorityStyle.bg, priorityStyle.color]"
+            >
+              <span :class="priorityStyle.icon" class="size-3" />
+              {{ t(`TASKS.PRIORITY.${task.priority.toUpperCase()}`) }}
+            </span>
+
+            <!-- Data de vencimento -->
+            <span
+              v-if="formattedDueDate"
+              class="inline-flex items-center gap-1 text-xs"
+              :class="formattedDueDate.class"
+            >
+              <span class="i-lucide-calendar size-3" />
+              {{ formattedDueDate.text }}
+              <span v-if="task.due_time" class="text-n-slate-10">
+                {{ task.due_time }}
+              </span>
+            </span>
+
+            <!-- Checklist -->
+            <span
+              v-if="checklistProgress"
+              class="inline-flex items-center gap-1 text-xs text-n-slate-10"
+            >
+              <span class="i-lucide-check-square size-3" />
+              {{ checklistProgress }}
+            </span>
+
+            <!-- Comentários -->
+            <span
+              v-if="task.comments_count > 0"
+              class="inline-flex items-center gap-1 text-xs text-n-slate-10"
+            >
+              <span class="i-lucide-message-square size-3" />
+              {{ task.comments_count }}
+            </span>
+
+            <!-- Anexos -->
+            <span
+              v-if="task.files_count > 0"
+              class="inline-flex items-center gap-1 text-xs text-n-slate-10"
+            >
+              <span class="i-lucide-paperclip size-3" />
+              {{ task.files_count }}
+            </span>
+
+            <!-- Vínculo com contato -->
+            <span
+              v-if="task.contact"
+              class="inline-flex items-center gap-1 text-xs text-n-slate-10"
+            >
+              <span class="i-lucide-user size-3" />
+              {{ task.contact.name }}
+            </span>
+          </div>
+
+          <!-- Labels -->
+          <div v-if="task.labels && task.labels.length > 0" class="flex items-center gap-1 mt-2">
+            <span
+              v-for="label in task.labels.slice(0, 3)"
+              :key="label.id"
+              class="px-1.5 py-0.5 text-xs rounded"
+              :style="{ backgroundColor: label.color + '20', color: label.color }"
+            >
+              {{ label.title }}
+            </span>
+            <span
+              v-if="task.labels.length > 3"
+              class="text-xs text-n-slate-10"
+            >
+              +{{ task.labels.length - 3 }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Avatar do responsável -->
+        <div v-if="task.assigned_to" class="flex-shrink-0">
+          <Avatar
+            :name="task.assigned_to.name"
+            :src="task.assigned_to.avatar_url"
+            size="24px"
+            :title="task.assigned_to.name"
+          />
+        </div>
+        <div
+          v-else
+          class="flex-shrink-0 size-6 rounded-full border-2 border-dashed border-n-slate-6 flex items-center justify-center"
+          :title="t('TASKS.UNASSIGNED')"
         >
-          {{ priorityConfig.label }}
-        </span>
-
-        <!-- Data de vencimento -->
-        <span 
-          v-if="dueInfo"
-          class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md"
-          :class="dueInfo.class"
-        >
-          <span class="i-lucide-calendar size-3" />
-          {{ dueInfo.text }}
-          <span v-if="task.due_time" class="opacity-80">{{ task.due_time }}</span>
-        </span>
-
-        <!-- Subtarefas -->
-        <span 
-          v-if="task.items_count > 0"
-          class="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-n-slate-11 bg-n-alpha-2 rounded-md"
-        >
-          <span class="i-lucide-list-checks size-3" />
-          {{ task.items_completed_count || 0 }}/{{ task.items_count }}
-        </span>
-
-        <!-- Comentários -->
-        <span 
-          v-if="task.comments_count > 0"
-          class="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-n-slate-11 bg-n-alpha-2 rounded-md"
-        >
-          <span class="i-lucide-message-circle size-3" />
-          {{ task.comments_count }}
-        </span>
+          <span class="i-lucide-user size-3 text-n-slate-8" />
+        </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.task-card {
-  position: relative;
-  background: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
-  border: 1px solid rgba(100, 116, 139, 0.4);
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.task-card:hover {
-  border-color: rgba(100, 116, 139, 0.6);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-}
-
-.task-card-bar {
-  height: 3px;
-  width: 100%;
-}
-
-.task-card-content {
-  padding: 14px 16px;
-}
-
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-</style>
