@@ -1,197 +1,149 @@
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
-
 import TaskCard from './TaskCard.vue';
 import TaskDetailPanel from './TaskDetailPanel.vue';
-import Button from 'dashboard/components-next/button/Button.vue';
+import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 const store = useStore();
 const { t } = useI18n();
 
 // Estado local
-const selectedTask = ref(null);
-const isInitialized = ref(false);
-
-// Debounce timer
-let debounceTimer = null;
+const selectedTaskId = ref(null);
 
 // Getters
-const tasks = computed(() => store.getters['agentTasks/getTasks'] || []);
+const tasks = computed(() => store.getters['agentTasks/getTasks']);
+const uiFlags = computed(() => store.getters['agentTasks/getUIFlags']);
 const pagination = computed(() => store.getters['agentTasks/getPagination']);
 const filters = computed(() => store.getters['agentTasks/getFilters']);
-const uiFlags = computed(() => store.getters['agentTasks/getUIFlags']);
 
-// Fetch tasks com debounce
-const fetchTasks = (page = 1) => {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
-  }
-  debounceTimer = setTimeout(() => {
-    store.dispatch('agentTasks/fetchTasks', { page });
-  }, 150);
-};
+// Task selecionada
+const selectedTask = computed(() => {
+  if (!selectedTaskId.value) return null;
+  return store.getters['agentTasks/getCurrentTask'];
+});
 
 // Métodos
-const onPageChange = page => {
-  fetchTasks(page);
+const loadTasks = (page = 1) => {
+  store.dispatch('agentTasks/fetchTasks', { page });
 };
 
-const openTaskDetails = task => {
-  selectedTask.value = task;
+const selectTask = async task => {
+  selectedTaskId.value = task.id;
+  await store.dispatch('agentTasks/fetchTask', task.id);
 };
 
-const closeTaskDetails = () => {
-  selectedTask.value = null;
+const closeDetailPanel = () => {
+  selectedTaskId.value = null;
+  store.dispatch('agentTasks/clearCurrentTask');
 };
 
 const onTaskUpdated = () => {
-  fetchTasks(pagination.value.currentPage);
-  store.dispatch('agentTasks/fetchStats');
+  loadTasks(pagination.value.currentPage);
 };
 
 const onTaskDeleted = () => {
-  closeTaskDetails();
-  fetchTasks(pagination.value.currentPage);
-  store.dispatch('agentTasks/fetchStats');
+  closeDetailPanel();
+  loadTasks(pagination.value.currentPage);
 };
 
-// Watch filters com debounce
-watch(
-  () => filters.value,
-  () => {
-    if (isInitialized.value) {
-      fetchTasks(1);
-    }
-  },
-  { deep: true }
-);
-
-// Carregar dados iniciais
-onMounted(() => {
-  // Pequeno delay para evitar race condition com outros componentes
-  setTimeout(() => {
-    isInitialized.value = true;
-    fetchTasks();
-  }, 200);
-});
-
-// Cleanup
-onBeforeUnmount(() => {
-  if (debounceTimer) {
-    clearTimeout(debounceTimer);
+// Handler para marcar como concluída via checkbox
+const onTaskComplete = async task => {
+  try {
+    await store.dispatch('agentTasks/completeTask', task.id);
+    // Recarregar lista e stats
+    loadTasks(pagination.value.currentPage);
+    store.dispatch('agentTasks/fetchStats');
+  } catch (error) {
+    console.error('Error completing task:', error);
   }
+};
+
+const loadPage = page => {
+  loadTasks(page);
+};
+
+// Carregar ao montar
+onMounted(() => {
+  loadTasks();
 });
+
+// Recarregar quando filtros mudarem
+watch(filters, () => {
+  loadTasks(1);
+}, { deep: true });
 </script>
 
 <template>
   <div class="flex h-full">
-    <!-- Lista principal -->
-    <div class="flex-1 flex flex-col min-w-0">
-      <!-- Loading state -->
-      <div v-if="uiFlags.isLoading && tasks.length === 0" class="flex items-center justify-center h-full">
-        <div class="flex flex-col items-center gap-3">
-          <span class="i-lucide-loader-2 size-8 text-n-brand animate-spin" />
-          <span class="text-sm text-n-slate-11">Carregando tarefas...</span>
-        </div>
+    <!-- Lista de Tarefas -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Loading -->
+      <div v-if="uiFlags.isLoading" class="flex items-center justify-center h-full">
+        <Spinner size="large" />
       </div>
 
-      <!-- Empty state -->
-      <div 
-        v-else-if="!uiFlags.isLoading && tasks.length === 0" 
-        class="flex items-center justify-center h-full p-8"
+      <!-- Empty State -->
+      <div
+        v-else-if="tasks.length === 0"
+        class="flex flex-col items-center justify-center h-full text-n-slate-9"
       >
-        <div class="text-center max-w-sm">
-          <div class="size-20 rounded-2xl bg-gradient-to-br from-n-alpha-3 to-n-alpha-1 flex items-center justify-center mx-auto mb-4 border border-n-weak">
-            <span class="i-lucide-inbox size-10 text-n-slate-9" />
-          </div>
-          <h3 class="text-lg font-semibold text-n-slate-12 mb-2">
-            Nenhuma tarefa encontrada
-          </h3>
-          <p class="text-sm text-n-slate-10 mb-4">
-            Crie sua primeira tarefa clicando no botão "Nova Tarefa" acima.
-          </p>
-        </div>
+        <span class="i-lucide-inbox size-12 mb-3 opacity-50" />
+        <h3 class="text-lg font-medium text-n-slate-11 mb-1">
+          {{ t('TASKS.EMPTY_STATE.TITLE') }}
+        </h3>
+        <p class="text-sm">
+          {{ t('TASKS.EMPTY_STATE.DESCRIPTION') }}
+        </p>
       </div>
 
-      <!-- Lista de tarefas -->
-      <div v-else class="flex-1 overflow-y-auto p-5">
-        <div class="grid gap-3">
+      <!-- Lista -->
+      <div v-else class="flex-1 overflow-y-auto p-4">
+        <div class="space-y-2">
           <TaskCard
             v-for="task in tasks"
             :key="task.id"
             :task="task"
-            @click="openTaskDetails(task)"
-            @updated="onTaskUpdated"
+            :is-selected="selectedTaskId === task.id"
+            @click="selectTask(task)"
+            @complete="onTaskComplete"
           />
         </div>
 
         <!-- Paginação -->
         <div
           v-if="pagination.totalPages > 1"
-          class="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-n-weak"
+          class="flex items-center justify-center gap-2 mt-6 pb-4"
         >
-          <Button
-            color="slate"
-            size="sm"
+          <button
+            class="px-3 py-1.5 text-sm rounded-lg border border-n-weak hover:bg-n-alpha-2 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="pagination.currentPage === 1"
-            @click="onPageChange(pagination.currentPage - 1)"
+            @click="loadPage(pagination.currentPage - 1)"
           >
-            <span class="i-lucide-chevron-left size-4" />
-            Anterior
-          </Button>
+            {{ t('PAGINATION.PREVIOUS') }}
+          </button>
 
-          <div class="flex items-center gap-1">
-            <template v-for="page in pagination.totalPages" :key="page">
-              <button
-                v-if="
-                  page === 1 ||
-                  page === pagination.totalPages ||
-                  Math.abs(page - pagination.currentPage) <= 1
-                "
-                type="button"
-                class="min-w-[32px] h-8 px-2 text-sm rounded-md transition-colors"
-                :class="[
-                  page === pagination.currentPage
-                    ? 'bg-n-brand text-white font-medium'
-                    : 'text-n-slate-11 hover:bg-n-alpha-2',
-                ]"
-                @click="onPageChange(page)"
-              >
-                {{ page }}
-              </button>
-              <span
-                v-else-if="
-                  (page === 2 && pagination.currentPage > 3) ||
-                  (page === pagination.totalPages - 1 &&
-                    pagination.currentPage < pagination.totalPages - 2)
-                "
-                class="text-n-slate-9 px-1"
-              >
-                ...
-              </span>
-            </template>
-          </div>
+          <span class="text-sm text-n-slate-11">
+            {{ pagination.currentPage }} / {{ pagination.totalPages }}
+          </span>
 
-          <Button
-            color="slate"
-            size="sm"
+          <button
+            class="px-3 py-1.5 text-sm rounded-lg border border-n-weak hover:bg-n-alpha-2 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="pagination.currentPage === pagination.totalPages"
-            @click="onPageChange(pagination.currentPage + 1)"
+            @click="loadPage(pagination.currentPage + 1)"
           >
-            Próxima
-            <span class="i-lucide-chevron-right size-4" />
-          </Button>
+            {{ t('PAGINATION.NEXT') }}
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Painel de detalhes (sidebar direita) -->
+    <!-- Painel de Detalhes -->
     <TaskDetailPanel
       v-if="selectedTask"
       :task="selectedTask"
-      @close="closeTaskDetails"
+      @close="closeDetailPanel"
       @updated="onTaskUpdated"
       @deleted="onTaskDeleted"
     />
