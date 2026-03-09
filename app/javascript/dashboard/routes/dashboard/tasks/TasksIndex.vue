@@ -37,9 +37,9 @@ const currentView = computed(() => {
 
 // Tabs de navegação
 const viewTabs = [
-  { key: 'list', label: 'Lista', icon: 'i-lucide-list', route: 'tasks_list' },
-  { key: 'calendar', label: 'Calendário', icon: 'i-lucide-calendar', route: 'tasks_calendar' },
-  { key: 'kanban', label: 'Kanban', icon: 'i-lucide-kanban', route: 'tasks_kanban' },
+  { key: 'list', label: 'TASKS.VIEWS.LIST', icon: 'i-lucide-list', route: 'tasks_list' },
+  { key: 'calendar', label: 'TASKS.VIEWS.CALENDAR', icon: 'i-lucide-calendar', route: 'tasks_calendar' },
+  { key: 'kanban', label: 'TASKS.VIEWS.KANBAN', icon: 'i-lucide-kanban', route: 'tasks_kanban' },
 ];
 
 // Métodos
@@ -109,12 +109,11 @@ watch(
   >
     <!-- Header -->
     <header
-      class="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b bg-n-surface-1 border-n-weak"
+      class="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 py-3 border-b bg-n-surface-1 border-n-weak"
     >
-      <!-- Lado esquerdo: Título + Tabs -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-4">
         <h1 class="text-lg font-semibold text-n-slate-12">
-          Tarefas
+          {{ t('TASKS.TITLE') }}
         </h1>
 
         <!-- View Tabs -->
@@ -132,33 +131,24 @@ watch(
             @click="switchView(tab)"
           >
             <span :class="tab.icon" class="size-4" />
-            <span class="hidden sm:inline">{{ tab.label }}</span>
+            <span>{{ t(tab.label) }}</span>
           </button>
         </div>
       </div>
 
-      <!-- Lado direito: Busca + Filtros + Criar -->
-      <div class="flex items-center gap-2 h-9">
-        <!-- Busca -->
-        <div class="relative flex items-center h-9">
+      <div class="flex items-center gap-3">
+        <!-- Busca rápida - CORRIGIDO -->
+        <div class="relative flex items-center">
+          <span
+            class="absolute left-2.5 i-lucide-search size-4 text-n-slate-9 pointer-events-none"
+          />
           <input
             type="text"
-            placeholder="Buscar..."
-            class="h-9 pl-9 pr-3 w-36 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-transparent"
+            :placeholder="t('TASKS.SEARCH_PLACEHOLDER')"
+            class="pl-8 pr-3 py-1.5 w-48 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-9 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-transparent"
             :value="searchInputValue"
             @input="onSearchInput"
           />
-          <svg
-            class="absolute left-3 w-4 h-4 text-n-slate-10 pointer-events-none"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.3-4.3" stroke-linecap="round" />
-          </svg>
         </div>
 
         <!-- Botão de filtros -->
@@ -169,7 +159,7 @@ watch(
           :class="{ '!bg-n-brand !text-white': hasActiveFilters }"
           @click="toggleFilters"
         >
-          Filtros
+          {{ t('TASKS.FILTERS.TITLE') }}
         </Button>
 
         <!-- Botão de criar -->
@@ -179,7 +169,7 @@ watch(
           size="sm"
           @click="openCreateModal"
         >
-          Nova Tarefa
+          {{ t('TASKS.NEW_TASK') }}
         </Button>
       </div>
     </header>
@@ -207,7 +197,7 @@ watch(
         />
       </aside>
 
-      <!-- Conteúdo Principal -->
+      <!-- Conteúdo Principal - Renderiza componente baseado na view atual -->
       <main class="flex-1 min-w-0 overflow-hidden">
         <TaskList v-if="currentView === 'list'" />
         <TaskCalendar v-else-if="currentView === 'calendar'" />
