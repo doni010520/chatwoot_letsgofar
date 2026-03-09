@@ -30,8 +30,8 @@ const uiFlags = computed(() => store.getters['agentTasks/getUIFlags']);
 // Obter tarefas por coluna
 const getColumnTasks = status => {
   const data = kanbanData.value;
-  if (!data) return [];
-  return data[status] || [];
+  if (!data || !data.data) return [];
+  return data.data[status] || [];
 };
 
 const getColumnCount = status => {
@@ -133,7 +133,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="h-full overflow-x-auto p-4 bg-n-background">
     <!-- Loading -->
-    <div v-if="uiFlags.isLoading && !Object.keys(kanbanData).length" class="flex items-center justify-center h-full">
+    <div v-if="uiFlags.isLoading && !kanbanData.data" class="flex items-center justify-center h-full">
       <div class="flex flex-col items-center gap-3">
         <span class="i-lucide-loader-2 size-8 text-n-brand animate-spin" />
         <span class="text-sm text-n-slate-11">Carregando...</span>
