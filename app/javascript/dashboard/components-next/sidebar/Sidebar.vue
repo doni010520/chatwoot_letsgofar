@@ -384,12 +384,50 @@ const menuItems = computed(() => {
         },
       ],
     },
-     {
+    {
       name: 'Tasks',
       label: 'Tarefas',
       icon: 'i-lucide-check-square',
       to: accountScopedRoute('tasks_list'),
       activeOn: ['tasks_list', 'tasks_calendar', 'tasks_kanban', 'tasks_dashboard'],
+    },
+    {
+      name: 'Contracts',
+      label: 'Contratos',
+      icon: 'i-lucide-file-signature',
+      activeOn: ['contracts_list', 'contracts_create', 'contracts_view', 'contracts_edit', 'contracts_draft', 'contracts_pending', 'contracts_signed', 'contracts_refused'],
+      children: [
+        {
+          name: 'AllContracts',
+          label: 'Todos os Contratos',
+          to: accountScopedRoute('contracts_list'),
+          activeOn: ['contracts_list'],
+        },
+        {
+          name: 'DraftContracts',
+          label: 'Rascunhos',
+          to: accountScopedRoute('contracts_draft'),
+          activeOn: ['contracts_draft'],
+        },
+        {
+          name: 'PendingContracts',
+          label: 'Aguardando Assinatura',
+          to: accountScopedRoute('contracts_pending'),
+          activeOn: ['contracts_pending'],
+        },
+        {
+          name: 'SignedContracts',
+          label: 'Assinados',
+          to: accountScopedRoute('contracts_signed'),
+          activeOn: ['contracts_signed'],
+        },
+        {
+          name: 'RefusedContracts',
+          label: 'Recusados',
+          to: accountScopedRoute('contracts_refused'),
+          activeOn: ['contracts_refused'],
+        },
+      ],
     },
     {
       name: 'Captain',
