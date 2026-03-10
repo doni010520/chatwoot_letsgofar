@@ -27,6 +27,9 @@ class AgentTask < ApplicationRecord
   PRIORITIES = %w[low medium high urgent].freeze
   STATUSES = %w[pending in_progress completed cancelled].freeze
 
+  # Callbacks
+  before_validation :normalize_due_date
+
   # Validações
   validates :title, presence: true, length: { maximum: 255 }
   validates :priority, presence: true, inclusion: { in: PRIORITIES }
@@ -241,5 +244,17 @@ class AgentTask < ApplicationRecord
     def calendar_data(account_id, start_date, end_date)
       calendar_data_for_scope(where(account_id: account_id), start_date, end_date)
     end
+  end
+
+  private
+
+  def normalize_due_date
+    return unless due_date.is_a?(String)
+    
+    # Converte string para Date object, evitando conversão de timezone
+    self.due_date = Date.parse(due_date)
+  rescue ArgumentError
+    # Se a data for inválida, deixa o Rails validar
+    nil
   end
 end
