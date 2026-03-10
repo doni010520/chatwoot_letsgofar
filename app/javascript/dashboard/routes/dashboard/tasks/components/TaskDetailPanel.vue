@@ -163,6 +163,7 @@ const handleStatusChange = async newStatus => {
         />
         <Button icon="i-lucide-x" color="slate" size="xs" @click="handleClose" />
       </div>
+    </div>
 
     <!-- Conteúdo -->
     <div class="flex-1 overflow-y-auto">
