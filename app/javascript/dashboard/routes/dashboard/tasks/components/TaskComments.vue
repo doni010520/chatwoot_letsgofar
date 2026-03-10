@@ -10,6 +10,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  canModify: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const store = useStore();
@@ -140,8 +144,8 @@ const canDelete = comment => {
           v-model="newComment"
           :placeholder="t('TASKS.COMMENTS.PLACEHOLDER')"
           rows="2"
-          class="w-full px-3 py-2 text-sm rounded-lg border border-n-weak bg-n-background resize-none focus:outline-none focus:ring-2 focus:ring-n-brand"
-          :disabled="isSubmitting"
+          class="w-full px-3 py-2 text-sm rounded-lg border border-n-weak bg-n-background resize-none focus:outline-none focus:ring-2 focus:ring-n-brand disabled:opacity-50 disabled:cursor-not-allowed"
+          :disabled="isSubmitting || !canModify"
           @keydown.meta.enter="handleSubmit"
           @keydown.ctrl.enter="handleSubmit"
         />
@@ -151,7 +155,7 @@ const canDelete = comment => {
           </span>
           <button
             class="px-3 py-1.5 text-sm font-medium rounded-lg bg-n-brand text-white hover:bg-n-brand-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            :disabled="!newComment.trim() || isSubmitting"
+            :disabled="!newComment.trim() || isSubmitting || !canModify"
             @click="handleSubmit"
           >
             {{ t('TASKS.COMMENTS.SEND') }}
