@@ -8,8 +8,12 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  canModify: {
+    type: Boolean,
+    default: false,
+  },
 });
-
+  
 const emit = defineEmits(['updated']);
 
 const store = useStore();
@@ -96,7 +100,8 @@ const handleDelete = async item => {
         class="flex items-start gap-2 group"
       >
         <button
-          class="flex-shrink-0 mt-0.5 size-5 rounded border-2 flex items-center justify-center transition-colors"
+          :disabled="!canModify"
+          class="flex-shrink-0 mt-0.5 size-5 rounded border-2 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           :class="[
             item.completed
               ? 'border-green-9 bg-green-9 text-white'
@@ -105,7 +110,7 @@ const handleDelete = async item => {
           @click="handleToggle(item)"
         >
           <span v-if="item.completed" class="i-lucide-check size-3" />
-        </button>
+        </button>>
 
         <span
           class="flex-1 text-sm"
@@ -117,33 +122,32 @@ const handleDelete = async item => {
         </span>
 
         <button
-          class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 transition-all"
+          :disabled="!canModify"
+          class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 transition-all disabled:cursor-not-allowed"
           @click="handleDelete(item)"
         >
           <span class="i-lucide-x size-4" />
         </button>
-      </div>
-    </div>
 
-    <!-- Adicionar novo item -->
-    <div class="mt-3 flex items-center gap-2">
-      <span class="i-lucide-plus size-4 text-n-slate-9 flex-shrink-0" />
-      <input
-        v-model="newItemTitle"
-        type="text"
-        :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
-        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
-        :disabled="isAdding"
-        @keyup.enter="handleAdd"
-      />
-      <button
-        class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
-        :disabled="!newItemTitle.trim() || isAdding"
-        @click="handleAdd"
-      >
-        {{ t('TASKS.FORM.ADD') }}
-      </button>
-    </div>
+        <!-- Adicionar novo item -->
+        <div class="mt-3 flex items-center gap-2">
+          <span class="i-lucide-plus size-4 text-n-slate-9 flex-shrink-0" />
+          <input
+            v-model="newItemTitle"
+            type="text"
+            :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
+            class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isAdding || !canModify"
+            @keyup.enter="handleAdd"
+          />
+          <button
+            class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="!newItemTitle.trim() || isAdding || !canModify"
+            @click="handleAdd"
+          >
+            {{ t('TASKS.FORM.ADD') }}
+          </button>
+        </div>
 
     <!-- Empty state -->
     <div
