@@ -41,14 +41,16 @@ class AgentTaskItem < ApplicationRecord
     total_items = agent_task.items.count
     completed_items = agent_task.items.completed.count
     
-    # Se marcou pelo menos 1 item E tarefa está pendente → muda para "em andamento"
-    if completed_items > 0 && agent_task.status == 'pending'
+    return if total_items == 0 # Sem subtarefas, não mexe no status
+    
+    # Todas marcadas → Concluído
+    if completed_items == total_items && agent_task.status != 'completed'
+      agent_task.update_column(:status, 'completed')
+    # Nenhuma marcada → Pendente
+    elsif completed_items == 0 && agent_task.status == 'in_progress'
+      agent_task.update_column(:status, 'pending')
+    # Algumas marcadas (não todas) → Em andamento
+    elsif completed_items > 0 && completed_items < total_items && agent_task.status == 'pending'
       agent_task.update_column(:status, 'in_progress')
     end
-    
-    # Se TODOS os items foram desmarcados E tarefa está "em andamento" → volta para "pendente"
-    if completed_items == 0 && total_items > 0 && agent_task.status == 'in_progress'
-      agent_task.update_column(:status, 'pending')
-    end
   end
-end
