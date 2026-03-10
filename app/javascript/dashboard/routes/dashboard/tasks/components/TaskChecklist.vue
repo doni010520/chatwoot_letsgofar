@@ -8,10 +8,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  canModify: {
-    type: Boolean,
-    default: false,
-  },
 });
   
 const emit = defineEmits(['updated']);
@@ -99,9 +95,8 @@ const handleDelete = async item => {
         :key="item.id"
         class="flex items-start gap-2 group"
       >
-        <button
-          :disabled="!canModify"
-          class="flex-shrink-0 mt-0.5 size-5 rounded border-2 flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      <button
+          class="flex-shrink-0 mt-0.5 size-5 rounded border-2 flex items-center justify-center transition-colors"
           :class="[
             item.completed
               ? 'border-green-9 bg-green-9 text-white'
@@ -122,8 +117,7 @@ const handleDelete = async item => {
         </span>
 
         <button
-          :disabled="!canModify"
-          class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 transition-all disabled:cursor-not-allowed"
+          class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 transition-all"
           @click="handleDelete(item)"
         >
           <span class="i-lucide-x size-4" />
@@ -132,19 +126,19 @@ const handleDelete = async item => {
     </div>
 
     <!-- Adicionar novo item -->
-    <div class="mt-3 flex items-center gap-2">
+  <div class="mt-3 flex items-center gap-2">
       <span class="i-lucide-plus size-4 text-n-slate-9 flex-shrink-0" />
       <input
         v-model="newItemTitle"
         type="text"
         :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
-        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="isAdding || !canModify"
+        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+        :disabled="isAdding"
         @keyup.enter="handleAdd"
       />
       <button
-        class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="!newItemTitle.trim() || isAdding || !canModify"
+        class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
+        :disabled="!newItemTitle.trim() || isAdding"
         @click="handleAdd"
       >
         {{ t('TASKS.FORM.ADD') }}
