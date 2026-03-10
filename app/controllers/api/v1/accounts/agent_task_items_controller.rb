@@ -29,6 +29,8 @@ class Api::V1::Accounts::AgentTaskItemsController < Api::V1::Accounts::BaseContr
 
   def toggle
     @item.toggle!
+    
+    # Retorna a tarefa atualizada também
     render json: item_json(@item)
   end
 
