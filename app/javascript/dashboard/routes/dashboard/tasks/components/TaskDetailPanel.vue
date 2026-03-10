@@ -131,11 +131,14 @@ const handleToggleItem = async (item) => {
       taskId: props.task.id,
       itemId: item.id,
     });
+    // Recarrega a tarefa completa para atualizar status e contadores
+    await store.dispatch('agentTasks/fetchTask', props.task.id);
     emit('updated');
   } catch (error) {
     console.error('Error toggling item:', error);
   }
 };
+  
 </script>
 
 <template>
