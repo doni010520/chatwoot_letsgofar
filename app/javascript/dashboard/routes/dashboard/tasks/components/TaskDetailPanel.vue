@@ -347,14 +347,13 @@ const handleToggleItem = async (item) => {
                 <button
                   type="button"
                   class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer"
-                  :class="[
-                    item.completed
-                      ? 'border-blue-500 bg-blue-500'
-                      : 'border-white hover:border-blue-400',
-                  ]"
+                  :style="{
+                    borderColor: item.completed ? '#3b82f6' : '#ffffff',
+                    backgroundColor: item.completed ? '#3b82f6' : 'transparent'
+                  }"
                   @click="handleToggleItem(item)"
                 >
-                  <span v-if="item.completed" class="i-lucide-check w-4 h-4 text-white font-bold" />
+                  <span v-if="item.completed" class="i-lucide-check w-4 h-4" style="color: #ffffff; font-weight: bold;" />
                 </button>
 
                 <!-- TEXTO DA SUBTAREFA -->
