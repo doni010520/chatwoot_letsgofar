@@ -24,7 +24,6 @@ const { t } = useI18n();
 const showEditModal = ref(false);
 const isDeleting = ref(false);
 const activeTab = ref('checklist');
-const activeTab = ref('checklist');
 const newItemTitle = ref(''); 
 const isAdding = ref(false);
 
