@@ -54,3 +54,4 @@ class AgentTaskItem < ApplicationRecord
       agent_task.update_column(:status, 'in_progress')
     end
   end
+end
