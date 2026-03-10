@@ -77,7 +77,7 @@ const handleDelete = async item => {
     <!-- Barra de progresso -->
     <div v-if="items.length > 0" class="mb-4">
       <div class="flex items-center justify-between text-xs text-n-slate-10 mb-1">
-        <span>{{ t('TASKS.CHECKLIST_PROGRESS') }}</span>
+        <span>Progresso</span>
         <span>{{ progress }}%</span>
       </div>
       <div class="h-1.5 rounded-full bg-n-alpha-3 overflow-hidden">
@@ -88,27 +88,30 @@ const handleDelete = async item => {
       </div>
     </div>
 
-    <!-- Lista de itens -->
+    <!-- Lista de itens COM CHECKBOXES -->
     <div class="space-y-2">
       <div
         v-for="item in items"
         :key="item.id"
-        class="flex items-start gap-2 group"
+        class="flex items-start gap-3 group py-1"
       >
-      <button
-          class="flex-shrink-0 mt-0.5 size-5 rounded border-2 flex items-center justify-center transition-colors"
+        <!-- CHECKBOX INTERATIVO -->
+        <button
+          type="button"
+          class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer"
           :class="[
             item.completed
               ? 'border-green-9 bg-green-9 text-white'
-              : 'border-n-slate-7 hover:border-n-brand',
+              : 'border-n-slate-7 hover:border-n-brand hover:bg-n-alpha-3',
           ]"
           @click="handleToggle(item)"
         >
-          <span v-if="item.completed" class="i-lucide-check size-3" />
+          <span v-if="item.completed" class="i-lucide-check w-3 h-3" />
         </button>
 
+        <!-- TEXTO DA SUBTAREFA -->
         <span
-          class="flex-1 text-sm"
+          class="flex-1 text-sm select-none"
           :class="[
             item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
           ]"
@@ -116,41 +119,44 @@ const handleDelete = async item => {
           {{ item.title }}
         </span>
 
+        <!-- BOTÃO DELETAR -->
         <button
+          type="button"
           class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 transition-all"
           @click="handleDelete(item)"
         >
-          <span class="i-lucide-x size-4" />
+          <span class="i-lucide-x w-4 h-4" />
         </button>
       </div>
     </div>
 
     <!-- Adicionar novo item -->
-  <div class="mt-3 flex items-center gap-2">
-      <span class="i-lucide-plus size-4 text-n-slate-9 flex-shrink-0" />
+    <div class="mt-3 flex items-center gap-2">
+      <span class="i-lucide-plus w-4 h-4 text-n-slate-9 flex-shrink-0" />
       <input
         v-model="newItemTitle"
         type="text"
-        :placeholder="t('TASKS.FORM.ADD_SUBTASK')"
+        placeholder="Adicionar subtarefa"
         class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
         :disabled="isAdding"
         @keyup.enter="handleAdd"
       />
       <button
+        type="button"
         class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
         :disabled="!newItemTitle.trim() || isAdding"
         @click="handleAdd"
       >
-        {{ t('TASKS.FORM.ADD') }}
+        Adicionar
       </button>
     </div>
 
     <!-- Empty state -->
     <div
       v-if="items.length === 0"
-      class="text-center py-4 text-sm text-n-slate-10"
+      class="text-center py-6 text-sm text-n-slate-10"
     >
-      {{ t('TASKS.CHECKLIST_EMPTY') }}
+      Nenhuma subtarefa. Adicione uma acima.
     </div>
   </div>
 </template>
