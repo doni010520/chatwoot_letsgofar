@@ -285,10 +285,14 @@ const actions = {
     }
   },
 
-  async toggleItem({ commit }, { taskId, itemId }) {
+  async toggleItem({ commit, dispatch }, { taskId, itemId }) {
     try {
       const response = await AgentTasksAPI.toggleItem(taskId, itemId);
       commit('UPDATE_TASK_ITEM', { taskId, item: response.data });
+      
+      // Recarrega a tarefa completa para pegar o status atualizado
+      await dispatch('fetchTask', taskId);
+      
       return response.data;
     } catch (error) {
       console.error('Error toggling item:', error);
