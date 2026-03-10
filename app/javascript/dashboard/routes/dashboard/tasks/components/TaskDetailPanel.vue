@@ -8,7 +8,6 @@ import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import TaskModal from './TaskModal.vue';
 import TaskChecklist from './TaskChecklist.vue';
 import TaskComments from './TaskComments.vue';
-import TaskFiles from './TaskFiles.vue';
 
 const props = defineProps({
   task: {
@@ -128,7 +127,6 @@ const handleStatusChange = async newStatus => {
       <h3 class="font-semibold text-n-slate-12">
         {{ t('TASKS.DETAILS') }}
       </h3>
-      
       <div class="flex items-center gap-1">
         <Button icon="i-lucide-pencil" color="slate" size="xs" @click="openEditModal" />
         <Button
@@ -140,6 +138,7 @@ const handleStatusChange = async newStatus => {
         />
         <Button icon="i-lucide-x" color="slate" size="xs" @click="handleClose" />
       </div>
+    </div>
 
     <!-- Conteúdo -->
     <div class="flex-1 overflow-y-auto">
@@ -155,9 +154,9 @@ const handleStatusChange = async newStatus => {
             {{ task.title }}
           </h2>
         </div>
-        
+
         <!-- Status selector -->
-      <div>
+        <div>
           <label class="text-xs text-n-slate-10 block mb-1">Status</label>
           <select
             :value="task.status"
@@ -267,7 +266,7 @@ const handleStatusChange = async newStatus => {
           </div>
         </div>
 
-        <!-- Tabs: Checklist / Comentários / Anexos -->
+        <!-- Tabs: Checklist / Comentários -->
         <div class="border-t border-n-weak pt-4">
           <div class="flex gap-4 mb-4">
             <button
@@ -298,31 +297,16 @@ const handleStatusChange = async newStatus => {
                 ({{ task.comments_count }})
               </span>
             </button>
-            <button
-              class="text-sm font-medium pb-2 border-b-2 transition-colors"
-              :class="[
-                activeTab === 'files'
-                  ? 'border-n-brand text-n-brand'
-                  : 'border-transparent text-n-slate-10 hover:text-n-slate-12',
-              ]"
-              @click="activeTab = 'files'"
-            >
-              Anexos
-              <span v-if="task.files_count" class="ml-1 text-xs">
-                ({{ task.files_count }})
-              </span>
-            </button>
           </div>
 
           <TaskChecklist v-if="activeTab === 'checklist'" :task="task" @updated="$emit('updated')" />
           <TaskComments v-if="activeTab === 'comments'" :task="task" />
-          <TaskFiles v-if="activeTab === 'files'" :task="task" @updated="$emit('updated')" />
         </div>
       </div>
     </div>
 
     <!-- Ação principal -->
-  <div class="p-4 border-t border-n-weak">
+    <div class="p-4 border-t border-n-weak">
       <Button
         v-if="isActive"
         class="w-full"
