@@ -38,7 +38,9 @@ const priority = computed(() => priorityConfig[props.task.priority] || priorityC
 
 const formattedDueDate = computed(() => {
   if (!props.task.due_date) return null;
-  const date = new Date(props.task.due_date);
+  // Parse direto sem conversão de timezone
+  const [year, month, day] = props.task.due_date.split('-');
+  const date = new Date(year, month - 1, day); // mês é 0-indexed
   return date.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
