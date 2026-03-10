@@ -409,7 +409,7 @@ const handleAddItem = async () => {
             
             <!-- Empty state -->
             <div
-              v-else
+              v-if="!task.items || task.items.length === 0"
               class="text-center py-6 text-sm text-n-slate-10"
             >
               Nenhuma subtarefa adicionada
