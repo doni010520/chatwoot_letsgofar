@@ -220,7 +220,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     # Aplicar ordenação
     conversations = apply_sorting(conversations)
 
-    conversations.limit(100).map do |conv|
+    conversations.limit(1000).map do |conv|
       conversation_json(conv)
     end
   end
@@ -237,7 +237,7 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       )
     end
 
-    contacts.limit(100).map do |contact|
+    contacts.limit(1000).map do |contact|
       contact_json(contact)
     end
   end
@@ -380,4 +380,5 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
     }
   end
 end
+
 
