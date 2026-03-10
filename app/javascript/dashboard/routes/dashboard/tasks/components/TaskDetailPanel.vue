@@ -58,6 +58,23 @@ const formattedCreatedAt = computed(() => {
 
 const isActive = computed(() => ['pending', 'in_progress'].includes(props.task.status));
 
+const currentUser = computed(() => store.getters.getCurrentUser);
+
+const canModifyTask = computed(() => {
+  if (!currentUser.value) return false;
+  
+  // Admin pode modificar qualquer tarefa
+  if (currentUser.value.role === 'administrator') return true;
+  
+  // Criador pode modificar
+  if (props.task.created_by?.id === currentUser.value.id) return true;
+  
+  // Pessoa atribuída pode modificar
+  if (props.task.assigned_to?.id === currentUser.value.id) return true;
+  
+  return false;
+});
+
 // Handlers
 const handleClose = () => {
   emit('close');
@@ -129,17 +146,23 @@ const handleStatusChange = async newStatus => {
         {{ t('TASKS.DETAILS') }}
       </h3>
       <div class="flex items-center gap-1">
-        <Button icon="i-lucide-pencil" color="slate" size="xs" @click="openEditModal" />
+        <Button 
+          icon="i-lucide-pencil" 
+          color="slate" 
+          size="xs" 
+          :disabled="!canModifyTask"
+          @click="openEditModal" 
+        />
         <Button
           icon="i-lucide-trash-2"
           color="slate"
           size="xs"
+          :disabled="!canModifyTask"
           :loading="isDeleting"
           @click="handleDelete"
         />
         <Button icon="i-lucide-x" color="slate" size="xs" @click="handleClose" />
       </div>
-    </div>
 
     <!-- Conteúdo -->
     <div class="flex-1 overflow-y-auto">
@@ -155,13 +178,14 @@ const handleStatusChange = async newStatus => {
             {{ task.title }}
           </h2>
         </div>
-
+        
         <!-- Status selector -->
         <div>
           <label class="text-xs text-n-slate-10 block mb-1">Status</label>
           <select
             :value="task.status"
-            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+            :disabled="!canModifyTask"
+            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand disabled:opacity-50 disabled:cursor-not-allowed"
             @change="handleStatusChange($event.target.value)"
           >
             <option value="pending">{{ t('TASKS.STATUS.PENDING') }}</option>
@@ -328,6 +352,7 @@ const handleStatusChange = async newStatus => {
         class="w-full"
         color="blue"
         icon="i-lucide-check"
+        :disabled="!canModifyTask"
         @click="handleComplete"
       >
         {{ t('TASKS.ACTIONS.COMPLETE') }}
@@ -337,6 +362,7 @@ const handleStatusChange = async newStatus => {
         class="w-full"
         color="slate"
         icon="i-lucide-rotate-ccw"
+        :disabled="!canModifyTask"
         @click="handleReopen"
       >
         {{ t('TASKS.ACTIONS.REOPEN') }}
