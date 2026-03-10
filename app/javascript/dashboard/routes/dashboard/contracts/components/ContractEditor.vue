@@ -17,6 +17,9 @@ const emit = defineEmits(['update:modelValue', 'update:title']);
 // Modo de visualização
 const viewMode = ref('preview'); // 'preview' ou 'edit'
 
+// Texto de exemplo para placeholder
+const placeholderExample = '{{variavel}}';
+
 // Conteúdo local para edição
 const localContent = computed({
   get: () => props.modelValue,
@@ -124,7 +127,9 @@ const toggleMode = () => {
         <div class="mb-3 flex items-center justify-between">
           <p class="text-xs text-slate-500 dark:text-slate-400">
             <span class="i-lucide-info mr-1" />
-            Você pode editar o HTML do contrato diretamente. Use <code class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-900 text-rose-600">{{ '{{variavel}}' }}</code> para campos dinâmicos.
+            Você pode editar o HTML do contrato diretamente. Use
+            <code class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-900 text-rose-600">{{ placeholderExample }}</code>
+            para campos dinâmicos.
           </p>
         </div>
         <textarea
