@@ -96,7 +96,12 @@ const closeDetailPanel = () => {
   store.dispatch('agentTasks/clearCurrentTask');
 };
 
-const onTaskUpdated = () => {
+const onTaskUpdated = async () => {
+  // Recarrega a tarefa específica no painel de detalhes
+  if (selectedTaskId.value) {
+    await store.dispatch('agentTasks/fetchTask', selectedTaskId.value);
+  }
+  // Recarrega a lista do Kanban
   loadKanban();
 };
 
