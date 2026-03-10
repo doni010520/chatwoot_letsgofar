@@ -14,7 +14,7 @@ class AgentTaskItem < ApplicationRecord
 
   # Callbacks
   before_create :set_position
-  after_update :update_task_status_if_needed
+  after_save :update_task_status_if_needed
 
   def toggle!
     update!(completed: !completed)
@@ -35,9 +35,20 @@ class AgentTaskItem < ApplicationRecord
   end
 
   def update_task_status_if_needed
-    # Se marcou como concluído e a tarefa está pendente, muda para "em andamento"
-    if completed? && saved_change_to_completed? && agent_task.status == 'pending'
+    # Recarrega os items para ter dados atualizados
+    agent_task.items.reload
+    
+    total_items = agent_task.items.count
+    completed_items = agent_task.items.completed.count
+    
+    # Se marcou pelo menos 1 item E tarefa está pendente → muda para "em andamento"
+    if completed_items > 0 && agent_task.status == 'pending'
       agent_task.update_column(:status, 'in_progress')
+    end
+    
+    # Se TODOS os items foram desmarcados E tarefa está "em andamento" → volta para "pendente"
+    if completed_items == 0 && total_items > 0 && agent_task.status == 'in_progress'
+      agent_task.update_column(:status, 'pending')
     end
   end
 end
