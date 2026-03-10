@@ -159,4 +159,136 @@ class Api::V1::Accounts::ContractTemplatesController < Api::V1::Accounts::BaseCo
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Data de Nascimento:</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">{{
+            <td style="padding: 8px; border: 1px solid #ddd;">{{contractor_birth_date}}</td>
+          </tr>
+        </table>
+
+        <p style="text-align: justify;">
+          As partes acima identificadas têm, entre si, justo e acertado o presente Contrato de Prestação 
+          de Serviços de Assessoria Consultiva de Inglês, que se regerá pelas cláusulas seguintes e pelas 
+          condições descritas no presente.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA PRIMEIRA – DO OBJETO</h2>
+        <p style="text-align: justify;">
+          1.1. O presente contrato tem como objeto a prestação de serviços de assessoria consultiva para 
+          o aprendizado da língua inglesa, por meio de acompanhamento personalizado, sessões individuais 
+          e/ou em grupo, conforme especificado no ANEXO I deste contrato.
+        </p>
+        <p style="text-align: justify;">
+          1.2. A metodologia utilizada pela CONTRATADA é baseada em abordagem comunicativa, com foco no 
+          desenvolvimento das habilidades linguísticas necessárias para os objetivos específicos do CONTRATANTE.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA SEGUNDA – DO PRAZO</h2>
+        <p style="text-align: justify;">
+          2.1. O presente contrato terá duração de {{plan_duration}}, com início na data da assinatura 
+          deste instrumento.
+        </p>
+        <p style="text-align: justify;">
+          2.2. O contrato poderá ser renovado mediante acordo entre as partes, por meio de termo aditivo.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA TERCEIRA – DO VALOR E FORMA DE PAGAMENTO</h2>
+        <p style="text-align: justify;">
+          3.1. Pela prestação dos serviços descritos neste contrato, o CONTRATANTE pagará à CONTRATADA 
+          o valor total de R$ {{plan_value}} ({{plan_value}} reais).
+        </p>
+        <p style="text-align: justify;">
+          3.2. O pagamento será realizado em {{installments_count}} parcelas, com vencimento todo dia 
+          {{installment_due_day}} de cada mês.
+        </p>
+        <p style="text-align: justify;">
+          3.3. O atraso no pagamento de qualquer parcela implicará em multa de 2% (dois por cento) sobre 
+          o valor da parcela em atraso, além de juros de mora de 1% (um por cento) ao mês.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA QUARTA – DAS OBRIGAÇÕES DA CONTRATADA</h2>
+        <p style="text-align: justify;">
+          4.1. Prestar os serviços de assessoria consultiva de forma profissional e ética.<br>
+          4.2. Disponibilizar material didático adequado aos objetivos do CONTRATANTE.<br>
+          4.3. Respeitar os horários agendados para as sessões.<br>
+          4.4. Manter sigilo sobre as informações pessoais do CONTRATANTE.<br>
+          4.5. Fornecer relatórios de progresso quando solicitado.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA QUINTA – DAS OBRIGAÇÕES DO CONTRATANTE</h2>
+        <p style="text-align: justify;">
+          5.1. Efetuar os pagamentos nas datas acordadas.<br>
+          5.2. Comparecer às sessões agendadas ou comunicar ausência com antecedência mínima de 24 horas.<br>
+          5.3. Dedicar-se aos estudos e atividades propostas.<br>
+          5.4. Respeitar as normas e orientações da CONTRATADA.<br>
+          5.5. Informar qualquer alteração em seus dados cadastrais.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA SEXTA – DA RESCISÃO</h2>
+        <p style="text-align: justify;">
+          6.1. O presente contrato poderá ser rescindido por qualquer das partes, mediante comunicação 
+          por escrito com antecedência mínima de 30 (trinta) dias.
+        </p>
+        <p style="text-align: justify;">
+          6.2. Em caso de rescisão por iniciativa do CONTRATANTE, será devido o pagamento proporcional 
+          aos serviços já prestados, acrescido de multa de 10% (dez por cento) sobre o valor restante do contrato.
+        </p>
+        <p style="text-align: justify;">
+          6.3. A CONTRATADA poderá rescindir o contrato de pleno direito em caso de inadimplência superior 
+          a 30 (trinta) dias ou descumprimento de qualquer cláusula contratual pelo CONTRATANTE.
+        </p>
+
+        <h2 style="color: #8B0000; font-size: 14pt; margin-top: 25px;">CLÁUSULA SÉTIMA – DO FORO</h2>
+        <p style="text-align: justify;">
+          7.1. As partes elegem o foro da Comarca de Guarulhos/SP para dirimir quaisquer dúvidas ou 
+          controvérsias oriundas deste contrato, renunciando a qualquer outro, por mais privilegiado que seja.
+        </p>
+
+        <p style="text-align: justify; margin-top: 30px;">
+          E por estarem assim justas e contratadas, as partes assinam o presente instrumento em via digital, 
+          com validade jurídica conforme a Lei nº 14.620/2023 e o artigo 784, §4º do Código de Processo Civil.
+        </p>
+
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #8B0000;">
+          <h2 style="color: #8B0000; font-size: 14pt; text-align: center;">ANEXO I – ESPECIFICAÇÃO DO PLANO</h2>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold; width: 200px;">Plano:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{plan_name}}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Duração:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{plan_duration}}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Call Estratégica:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{sessions_call_estrategica}} sessão(ões)</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Sessões Individuais:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{sessions_individual}} sessão(ões)</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Sessões Consultivas em Grupo:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{sessions_group_consultive}} sessão(ões)</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Encontros em Grupo:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{sessions_group_meetings}} encontro(s)</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Valor Total:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">R$ {{plan_value}}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Parcelas:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">{{installments_count}}x</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px; border: 1px solid #ddd; background-color: #f5f5f5; font-weight: bold;">Dia de Vencimento:</td>
+              <td style="padding: 8px; border: 1px solid #ddd;">Todo dia {{installment_due_day}}</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    HTML
+  end
+end
