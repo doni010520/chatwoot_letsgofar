@@ -55,16 +55,27 @@ class AgentTaskPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      # Todos os usuários podem visualizar todas as tarefas da conta
-      scope.where(account_id: account.id)
+      if user.administrator?
+        # Admin vê todas as tarefas
+        scope.where(account_id: account.id)
+      else
+        # Usuários normais veem apenas:
+        # - Tarefas que criaram (mesmo que atribuídas a outros)
+        # - Tarefas atribuídas a eles
+        scope.where(account_id: account.id)
+             .where('created_by_id = :user_id OR assigned_to_id = :user_id', user_id: user.id)
+      end
     end
   end
 
   private
 
   def can_access_task?
-    # Todos podem visualizar/abrir qualquer tarefa da conta
-    true
+    return true if user.administrator?
+    return true if record.created_by_id == user.id
+    return true if record.assigned_to_id == user.id
+
+    false
   end
 
   def can_modify_task?
