@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assinar Contrato - <%= @contract.title %></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <%= csrf_meta_tags %>
+  <style>
+    .contract-content {
+      font-family: Arial, sans-serif;
+      font-size: 12pt;
+      line-height: 1.6;
+      color: #333;
+    }
+    .contract-content h1 { font-size: 18pt; margin-bottom: 20px; color: #8B0000; text-align: center; }
+    .contract-content h2 { font-size: 14pt; margin-top: 25px; margin-bottom: 10px; color: #333; }
+    .contract-content table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+    .contract-content td { padding: 8px; border: 1px solid #ddd; }
+    .contract-content td:first-child { background-color: #f5f5f5; font-weight: bold; width: 200px; }
+    .contract-content p { margin-bottom: 10px; text-align: justify; }
+    .contract-content .anexo { margin-top: 40px; padding-top: 20px; border-top: 2px solid #8B0000; }
+    
+    @media print {
+      .no-print { display: none !important; }
+      .contract-container { box-shadow: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div id="app" class="max-w-4xl mx-auto py-8 px-4">
+    <!-- Header -->
+    <header class="bg-white rounded-lg shadow-sm p-6 mb-6 no-print">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900"><%= @contract.title %></h1>
+          <p class="text-gray-500">Contrato nº <%= @contract.contract_number %></p>
+        </div>
+        <% if @signer.signed? %>
+          <span class="px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium">
+            ✓ Assinado
+          </span>
+        <% elsif @signer.refused? %>
+          <span class="px-4 py-2 bg-red-100 text-red-700 rounded-full font-medium">
+            ✗ Recusado
+          </span>
+        <% else %>
+          <span class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-full font-medium">
+            Aguardando assinatura
+          </span>
+        <% end %>
+      </div>
+    </header>
+
+    <!-- Informações do Signatário -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6 no-print">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Signatário</h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <span class="text-sm text-gray-500">Nome</span>
+          <p class="font-medium"><%= @signer.name %></p>
+        </div>
+        <div>
+          <span class="text-sm text-gray-500">E-mail</span>
+          <p class="font-medium"><%= @signer.email %></p>
+        </div>
+        <div>
+          <span class="text-sm text-gray-500">Papel</span>
+          <p class="font-medium">
+            <%= @signer.role == 'contractor' ? 'Contratante' : @signer.role == 'contracted' ? 'Contratada' : 'Testemunha' %>
+          </p>
+        </div>
+        <% if @contract.expires_at.present? %>
+          <div>
+            <span class="text-sm text-gray-500">Válido até</span>
+            <p class="font-medium"><%= @contract.expires_at.strftime('%d/%m/%Y às %H:%M') %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Conteúdo do Contrato -->
+    <div class="bg-white rounded-lg shadow-sm p-8 mb-6 contract-container">
+      <div class="contract-content">
+        <%= raw @contract.content_html %>
+      </div>
+    </div>
+
+    <% if @signer.can_sign? %>
+      <!-- Formulário de Assinatura -->
+      <div class="bg-white rounded-lg shadow-sm p-6 mb-6 no-print" id="signature-form">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Assinatura Digital</h2>
+        
+        <div id="error-message" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"></div>
+        <div id="success-message" class="hidden mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700"></div>
+        
+        <form id="sign-form" class="space-y-4">
+          <!-- Confirmação do nome -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Confirme seu nome completo *
+            </label>
+            <input
+              type="text"
+              id="name_confirmation"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Digite seu nome completo conforme o contrato"
+            />
+          </div>
+
+          <!-- CPF para confirmação -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Confirme seu CPF *
+            </label>
+            <input
+              type="text"
+              id="cpf_confirmation"
+              required
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="000.000.000-00"
+            />
+          </div>
+
+          <!-- Aceite dos termos -->
+          <div class="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+            <input
+              type="checkbox"
+              id="accept_terms"
+              required
+              class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label for="accept_terms" class="text-sm text-gray-700">
+              Declaro que li, compreendi e aceito todos os termos e condições deste contrato. 
+              Concordo com a assinatura eletrônica deste documento, que terá plena validade jurídica 
+              conforme a Lei nº 14.620/2023.
+            </label>
+          </div>
+
+          <!-- Botões -->
+          <div class="flex gap-4 pt-4">
+            <button
+              type="submit"
+              id="btn-sign"
+              class="flex-1 px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-green-200 transition-colors"
+            >
+              ✓ Assinar Contrato
+            </button>
+            <button
+              type="button"
+              id="btn-refuse"
+              class="px-6 py-3 bg-white text-red-600 font-medium rounded-lg border border-red-300 hover:bg-red-50 focus:ring-4 focus:ring-red-200 transition-colors"
+            >
+              ✗ Recusar
+            </button>
+          </div>
+        </form>
+      </div>
+    <% elsif @signer.signed? %>
+      <!-- Confirmação de assinatura -->
+      <div class="bg-green-50 border border-green-200 rounded-lg p-6 mb-6 no-print">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-green-800">Contrato Assinado com Sucesso!</h3>
+            <p class="text-green-700 mt-1">
+              Você assinou este contrato em <%= @signer.signed_at.strftime('%d/%m/%Y às %H:%M') %>.
+            </p>
+            <% if @signer.contract_signature.present? %>
+              <p class="text-sm text-green-600 mt-2">
+                Hash da assinatura: <%= @signer.contract_signature.signature_hash.truncate(32) %>...
+              </p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% elsif @signer.refused? %>
+      <!-- Contrato recusado -->
+      <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-6 no-print">
+        <div class="flex items-start gap-4">
+          <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-red-800">Contrato Recusado</h3>
+            <p class="text-red-700 mt-1">
+              Você recusou este contrato em <%= @signer.refused_at.strftime('%d/%m/%Y às %H:%M') %>.
+            </p>
+            <% if @signer.refusal_reason.present? %>
+              <p class="text-sm text-red-600 mt-2">
+                Motivo: <%= @signer.refusal_reason %>
+              </p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Footer -->
+    <footer class="text-center text-sm text-gray-500 no-print">
+      <p>Este documento foi gerado eletronicamente e possui validade jurídica.</p>
+      <p class="mt-1">
+        <button onclick="window.print()" class="text-blue-600 hover:underline">
+          Imprimir contrato
+        </button>
+      </p>
+    </footer>
+  </div>
+
+  <% if @signer.can_sign? %>
+  <script>
+    const token = '<%= @token %>';
+    const apiUrl = '/public/api/v1/contracts/' + token;
+    
+    // Formatar CPF
+    document.getElementById('cpf_confirmation').addEventListener('input', function(e) {
+      let value = e.target.value.replace(/\D/g, '').slice(0, 11);
+      if (value.length > 9) {
+        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      } else if (value.length > 6) {
+        value = value.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+      } else if (value.length > 3) {
+        value = value.replace(/(\d{3})(\d+)/, '$1.$2');
+      }
+      e.target.value = value;
+    });
+    
+    // Capturar geolocalização
+    let geolocation = null;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          geolocation = `${position.coords.latitude},${position.coords.longitude}`;
+        },
+        () => {
+          console.log('Geolocalização não disponível');
+        }
+      );
+    }
+    
+    // Enviar assinatura
+    document.getElementById('sign-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const btn = document.getElementById('btn-sign');
+      const errorDiv = document.getElementById('error-message');
+      const successDiv = document.getElementById('success-message');
+      
+      btn.disabled = true;
+      btn.textContent = 'Assinando...';
+      errorDiv.classList.add('hidden');
+      successDiv.classList.add('hidden');
+      
+      try {
+        const response = await fetch(apiUrl + '/sign', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify({
+            accept_terms: document.getElementById('accept_terms').checked,
+            name_confirmation: document.getElementById('name_confirmation').value,
+            cpf_confirmation: document.getElementById('cpf_confirmation').value,
+            geolocation: geolocation,
+            browser_fingerprint: navigator.userAgent
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          successDiv.textContent = 'Contrato assinado com sucesso! A página será recarregada...';
+          successDiv.classList.remove('hidden');
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          throw new Error(data.error || 'Erro ao assinar o contrato');
+        }
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = '✓ Assinar Contrato';
+      }
+    });
+    
+    // Recusar contrato
+    document.getElementById('btn-refuse').addEventListener('click', async function() {
+      const reason = prompt('Por favor, informe o motivo da recusa (opcional):');
+      
+      if (reason === null) return; // Usuário cancelou
+      
+      const btn = this;
+      const errorDiv = document.getElementById('error-message');
+      const successDiv = document.getElementById('success-message');
+      
+      btn.disabled = true;
+      btn.textContent = 'Processando...';
+      errorDiv.classList.add('hidden');
+      
+      try {
+        const response = await fetch(apiUrl + '/refuse', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify({ reason: reason })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          successDiv.textContent = 'Contrato recusado. A página será recarregada...';
+          successDiv.classList.remove('hidden');
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          throw new Error(data.error || 'Erro ao recusar o contrato');
+        }
+      } catch (error) {
+        errorDiv.textContent = error.message;
+        errorDiv.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = '✗ Recusar';
+      }
+    });
+  </script>
+  <% end %>
+</body>
+</html>
