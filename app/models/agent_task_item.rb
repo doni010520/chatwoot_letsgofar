@@ -14,6 +14,7 @@ class AgentTaskItem < ApplicationRecord
 
   # Callbacks
   before_create :set_position
+  after_update :update_task_status_if_needed
 
   def toggle!
     update!(completed: !completed)
@@ -31,5 +32,12 @@ class AgentTaskItem < ApplicationRecord
 
   def set_position
     self.position ||= agent_task.items.maximum(:position).to_i + 1
+  end
+
+  def update_task_status_if_needed
+    # Se marcou como concluído e a tarefa está pendente, muda para "em andamento"
+    if completed? && saved_change_to_completed? && agent_task.status == 'pending'
+      agent_task.update_column(:status, 'in_progress')
+    end
   end
 end
