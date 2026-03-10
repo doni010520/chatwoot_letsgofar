@@ -56,6 +56,14 @@ json.labels agent_task.labels do |label|
   json.title label.title
   json.color label.color
 end
+
+json.items agent_task.items.ordered do |item|
+  json.id item.id
+  json.title item.title
+  json.completed item.completed
+  json.position item.position
+end
+
 json.files agent_task.files.map { |file|
   {
     id: file.id,
