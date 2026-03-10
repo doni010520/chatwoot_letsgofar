@@ -11,10 +11,10 @@ import campaignsRoutes from './campaigns/campaigns.routes';
 import { routes as captainRoutes } from './captain/captain.routes';
 import kanbanRoutes from './kanban/kanban.routes'; // KANBAN
 import tasksRoutes from './tasks/tasks.routes'; // TASKS
+import contractsRoutes from './contracts/contracts.routes'; // CONTRACTS
 import AppContainer from './Dashboard.vue';
 import Suspended from './suspended/Index.vue';
 import NoAccounts from './noAccounts/Index.vue';
-
 export default {
   routes: [
     {
@@ -33,6 +33,7 @@ export default {
         ...campaignsRoutes.routes,
         ...kanbanRoutes.routes, // KANBAN
         ...tasksRoutes.routes, // TASKS
+        ...contractsRoutes.routes, // CONTRACTS
         {
           path: 'schedule-messages',
           name: 'scheduled_messages',
