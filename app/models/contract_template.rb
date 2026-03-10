@@ -40,7 +40,7 @@ class ContractTemplate < ApplicationRecord
     { key: 'contractor_email', label: 'E-mail', type: 'email', required: true },
     { key: 'contractor_phone', label: 'Telefone', type: 'phone', required: true },
     { key: 'contractor_birth_date', label: 'Data de Nascimento', type: 'date', required: false },
-    
+
     # Dados do Plano (Anexo I)
     { key: 'plan_name', label: 'Nome do Plano', type: 'text', required: true },
     { key: 'plan_duration', label: 'Duração do Plano', type: 'text', required: true },
@@ -57,12 +57,10 @@ class ContractTemplate < ApplicationRecord
   # Aplicar variáveis ao template
   def apply_variables(variables = {})
     result = content_html.dup
-
     variables.each do |key, value|
       placeholder = "{{#{key}}}"
       result.gsub!(placeholder, value.to_s)
     end
-
     result
   end
 
@@ -74,9 +72,9 @@ class ContractTemplate < ApplicationRecord
   # Verificar se todos os campos obrigatórios estão preenchidos
   def validate_variables(variables = {})
     missing = []
-    
+
     variable_fields_list = variable_fields.presence || DEFAULT_VARIABLE_FIELDS
-    
+
     variable_fields_list.each do |field|
       field_data = field.is_a?(Hash) ? field : field.to_h
       if field_data[:required] || field_data['required']
@@ -84,7 +82,6 @@ class ContractTemplate < ApplicationRecord
         missing << key if variables[key].blank? && variables[key.to_sym].blank?
       end
     end
-
     missing
   end
 
@@ -92,4 +89,8 @@ class ContractTemplate < ApplicationRecord
   def duplicate!(user = nil)
     new_template = dup
     new_template.name = "#{name} (Cópia)"
-    new_template.c
+    new_template.created_by = user if user
+    new_template.save!
+    new_template
+  end
+end
