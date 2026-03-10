@@ -24,6 +24,9 @@ const { t } = useI18n();
 const showEditModal = ref(false);
 const isDeleting = ref(false);
 const activeTab = ref('checklist');
+const activeTab = ref('checklist');
+const newItemTitle = ref(''); 
+const isAdding = ref(false);
 
 // Computed
 const priorityConfig = {
@@ -131,11 +134,27 @@ const handleToggleItem = async (item) => {
       taskId: props.task.id,
       itemId: item.id,
     });
-    // Recarrega a tarefa completa para atualizar status e contadores
-    await store.dispatch('agentTasks/fetchTask', props.task.id);
     emit('updated');
   } catch (error) {
     console.error('Error toggling item:', error);
+  }
+};
+
+const handleAddItem = async () => {
+  if (!newItemTitle.value.trim()) return;
+
+  isAdding.value = true;
+  try {
+    await store.dispatch('agentTasks/addItem', {
+      taskId: props.task.id,
+      title: newItemTitle.value.trim(),
+    });
+    newItemTitle.value = '';
+    emit('updated');
+  } catch (error) {
+    console.error('Error adding item:', error);
+  } finally {
+    isAdding.value = false;
   }
 };
   
@@ -367,7 +386,28 @@ const handleToggleItem = async (item) => {
                 </span>
               </div>
             </div>
-
+            
+            <!-- Campo para adicionar nova subtarefa -->
+            <div class="mt-4 flex items-center gap-2">
+              <span class="i-lucide-plus w-4 h-4 text-n-slate-9 flex-shrink-0" />
+              <input
+                v-model="newItemTitle"
+                type="text"
+                placeholder="Adicionar subtarefa"
+                class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                :disabled="isAdding"
+                @keyup.enter="handleAddItem"
+              />
+              <button
+                type="button"
+                class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
+                :disabled="!newItemTitle.trim() || isAdding"
+                @click="handleAddItem"
+              >
+                Adicionar
+              </button>
+            </div>
+            
             <!-- Empty state -->
             <div
               v-else
