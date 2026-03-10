@@ -249,12 +249,31 @@ class AgentTask < ApplicationRecord
   private
 
   def normalize_due_date
-    return unless due_date.is_a?(String)
+    # Se due_date já é um Date object, não faz nada
+    return if due_date.is_a?(Date) || due_date.nil?
     
-    # Converte string para Date object, evitando conversão de timezone
-    self.due_date = Date.parse(due_date)
-  rescue ArgumentError
-    # Se a data for inválida, deixa o Rails validar
+    # Se é String, parse sem conversão de timezone
+    if due_date.is_a?(String) && due_date.present?
+      # Remove timezone da string se existir e faz parse direto
+      date_string = due_date.split('T').first # Pega só YYYY-MM-DD
+      self.due_date = Date.strptime(date_string, '%Y-%m-%d')
+    end
+  rescue ArgumentError, TypeError => e
+    # Se der erro no parse, deixa nil para o Rails validar
+    Rails.logger.error("Erro ao parsear due_date: #{e.message}")
     nil
+  end
+
+  # Força timezone ao salvar
+  def due_date=(value)
+    if value.is_a?(String) && value.present?
+      # Parse direto sem conversão de timezone
+      date_string = value.split('T').first
+      super(Date.strptime(date_string, '%Y-%m-%d'))
+    else
+      super(value)
+    end
+  rescue ArgumentError
+    super(value)
   end
 end
