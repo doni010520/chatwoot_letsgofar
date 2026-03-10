@@ -219,4 +219,154 @@ onMounted(() => {
     </header>
 
     <!-- Steps Indicator -->
-    <div class="px-8 py-6 bg-white dark:bg-slate-800 border
+    <div class="px-8 py-6 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <div class="flex items-center justify-between max-w-3xl mx-auto">
+        <template v-for="(step, index) in steps" :key="step.number">
+          <button
+            class="flex items-center gap-3 group"
+            :class="{ 'cursor-pointer': step.number <= currentStep || isStepValid }"
+            @click="goToStep(step.number)"
+          >
+            <div
+              class="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300"
+              :class="[
+                currentStep === step.number
+                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/30'
+                  : currentStep > step.number
+                    ? 'bg-green-500 text-white'
+                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+              ]"
+            >
+              <span v-if="currentStep > step.number" class="i-lucide-check text-lg" />
+              <span v-else :class="step.icon" class="text-lg" />
+            </div>
+            <div class="hidden sm:block text-left">
+              <p
+                class="text-sm font-medium transition-colors"
+                :class="[
+                  currentStep === step.number
+                    ? 'text-rose-600 dark:text-rose-500'
+                    : currentStep > step.number
+                      ? 'text-green-600 dark:text-green-500'
+                      : 'text-slate-500 dark:text-slate-400'
+                ]"
+              >
+                Passo {{ step.number }}
+              </p>
+              <p
+                class="text-sm"
+                :class="[
+                  currentStep >= step.number
+                    ? 'text-slate-900 dark:text-white font-medium'
+                    : 'text-slate-400 dark:text-slate-500'
+                ]"
+              >
+                {{ step.title }}
+              </p>
+            </div>
+          </button>
+
+          <div
+            v-if="index < steps.length - 1"
+            class="flex-1 h-0.5 mx-4 rounded-full transition-colors duration-300"
+            :class="currentStep > step.number ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'"
+          />
+        </template>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 overflow-auto">
+      <div class="max-w-4xl mx-auto px-8 py-8">
+        <!-- Loading -->
+        <div v-if="isLoading" class="flex items-center justify-center h-64">
+          <div class="flex flex-col items-center gap-4">
+            <div class="relative">
+              <div class="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
+              <div class="absolute inset-0 w-12 h-12 rounded-full border-4 border-rose-600 border-t-transparent animate-spin" />
+            </div>
+            <p class="text-sm text-slate-500 dark:text-slate-400">Carregando contrato...</p>
+          </div>
+        </div>
+
+        <!-- Step 1: Dados do Contratante -->
+        <div v-else-if="currentStep === 1">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+              <span class="i-lucide-user text-rose-600" />
+              Dados do Contratante
+            </h2>
+            <ContractForm v-model="contractData" section="contractor" />
+          </div>
+        </div>
+
+        <!-- Step 2: Dados do Plano -->
+        <div v-else-if="currentStep === 2">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+              <span class="i-lucide-package text-rose-600" />
+              Dados do Plano
+            </h2>
+            <ContractForm v-model="contractData" section="plan" />
+          </div>
+        </div>
+
+        <!-- Step 3: Revisar Contrato -->
+        <div v-else-if="currentStep === 3">
+          <ContractEditor
+            v-model="contractData.content_html"
+            :title="contractData.title"
+            @update:title="contractData.title = $event"
+          />
+        </div>
+
+        <!-- Step 4: Signatários -->
+        <div v-else-if="currentStep === 4">
+          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+              <span class="i-lucide-pen-tool text-rose-600" />
+              Signatários
+            </h2>
+            <ContractSigners
+              :signers="contractData.contract_signers_attributes"
+              :contractor-name="contractData.contractor_name"
+              :contractor-email="contractData.contractor_email"
+              @update:signers="updateSigners"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Navigation -->
+    <footer class="px-8 py-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <button
+          v-if="currentStep > 1"
+          class="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          @click="prevStep"
+        >
+          <span class="i-lucide-arrow-left" />
+          Voltar
+        </button>
+        <div v-else />
+
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-slate-500 dark:text-slate-400">
+            Passo {{ currentStep }} de {{ steps.length }}
+          </span>
+
+          <button
+            v-if="currentStep < 4"
+            class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-medium rounded-lg shadow-lg shadow-rose-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="!isStepValid"
+            @click="nextStep"
+          >
+            Próximo
+            <span class="i-lucide-arrow-right" />
+          </button>
+        </div>
+      </div>
+    </footer>
+  </div>
+</template>
