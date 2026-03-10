@@ -6,7 +6,6 @@ import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import TaskModal from './TaskModal.vue';
-import TaskChecklist from './TaskChecklist.vue';
 import TaskComments from './TaskComments.vue';
 
 const props = defineProps({
@@ -58,6 +57,11 @@ const formattedCreatedAt = computed(() => {
 });
 
 const isActive = computed(() => ['pending', 'in_progress'].includes(props.task.status));
+
+const checklistProgress = computed(() => {
+  if (!props.task.items_count || props.task.items_count === 0) return 0;
+  return Math.round((props.task.items_completed_count / props.task.items_count) * 100);
+});
 
 // Handlers
 const handleClose = () => {
@@ -118,6 +122,18 @@ const handleStatusChange = async newStatus => {
     emit('updated');
   } catch (error) {
     console.error('Error updating status:', error);
+  }
+};
+
+const handleToggleItem = async (item) => {
+  try {
+    await store.dispatch('agentTasks/toggleItem', {
+      taskId: props.task.id,
+      itemId: item.id,
+    });
+    emit('updated');
+  } catch (error) {
+    console.error('Error toggling item:', error);
   }
 };
 </script>
@@ -301,7 +317,65 @@ const handleStatusChange = async newStatus => {
             </button>
           </div>
 
-          <TaskChecklist v-if="activeTab === 'checklist'" :task="task" @updated="$emit('updated')" />
+          <!-- Aba Checklist COM CHECKBOXES CLICÁVEIS -->
+          <div v-if="activeTab === 'checklist'" class="space-y-3">
+            <!-- Barra de progresso -->
+            <div v-if="task.items && task.items.length > 0" class="mb-4">
+              <div class="flex items-center justify-between text-xs text-n-slate-10 mb-1">
+                <span>Progresso</span>
+                <span>{{ checklistProgress }}%</span>
+              </div>
+              <div class="h-1.5 rounded-full bg-n-alpha-3 overflow-hidden">
+                <div
+                  class="h-full rounded-full bg-green-9 transition-all duration-300"
+                  :style="{ width: `${checklistProgress}%` }"
+                />
+              </div>
+            </div>
+
+            <!-- Lista de subtarefas com checkboxes interativos -->
+            <div v-if="task.items && task.items.length > 0" class="space-y-2">
+              <div
+                v-for="item in task.items"
+                :key="item.id"
+                class="flex items-start gap-3 group py-1"
+              >
+                <!-- CHECKBOX CLICÁVEL -->
+                <button
+                  type="button"
+                  class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer"
+                  :class="[
+                    item.completed
+                      ? 'border-green-9 bg-green-9 text-white'
+                      : 'border-n-slate-7 hover:border-n-brand hover:bg-n-alpha-3',
+                  ]"
+                  @click="handleToggleItem(item)"
+                >
+                  <span v-if="item.completed" class="i-lucide-check w-3 h-3" />
+                </button>
+
+                <!-- TEXTO DA SUBTAREFA -->
+                <span
+                  class="flex-1 text-sm select-none"
+                  :class="[
+                    item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
+                  ]"
+                >
+                  {{ item.title }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Empty state -->
+            <div
+              v-else
+              class="text-center py-6 text-sm text-n-slate-10"
+            >
+              Nenhuma subtarefa adicionada
+            </div>
+          </div>
+
+          <!-- Aba Comentários -->
           <TaskComments v-if="activeTab === 'comments'" :task="task" />
         </div>
       </div>
