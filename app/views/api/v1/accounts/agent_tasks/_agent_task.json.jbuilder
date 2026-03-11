@@ -6,6 +6,8 @@ json.status agent_task.status
 json.priority agent_task.priority
 json.due_date agent_task.due_date&.strftime('%Y-%m-%d')
 json.due_time agent_task.due_time&.strftime('%H:%M')
+json.recurrence_type agent_task.recurrence_type 
+json.recurrence_config agent_task.recurrence_config
 json.reminder_at agent_task.reminder_at
 json.completed_at agent_task.completed_at
 json.started_at agent_task.started_at
