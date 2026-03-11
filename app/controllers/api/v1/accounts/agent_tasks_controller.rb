@@ -139,16 +139,15 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       :status,
       :due_date,
       :due_time,
-      :recurrence_type,
-      recurrence_config: {},
       :reminder_at,
+      :recurrence_type,
       :assigned_to_id,
       :contact_id,
       :conversation_id,
       :kanban_pipeline_id,
       label_ids: [],
-      items_attributes: [:id, :title, :completed, :position, :_destroy],
-      files: []
+      recurrence_config: {},
+      items_attributes: [:id, :title, :completed, :position, :_destroy]
     )
   end
 
