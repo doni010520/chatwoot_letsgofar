@@ -26,11 +26,13 @@ class AgentTask < ApplicationRecord
   # Constantes
   PRIORITIES = %w[low medium high urgent].freeze
   STATUSES = %w[pending in_progress completed cancelled].freeze
+  RECURRENCE_TYPES = %w[none daily weekly monthly custom].freeze
 
   # Validações
   validates :title, presence: true, length: { maximum: 255 }
   validates :priority, presence: true, inclusion: { in: PRIORITIES }
   validates :status, presence: true, inclusion: { in: STATUSES }
+  validates :recurrence_type, inclusion: { in: RECURRENCE_TYPES }
   validates :description, length: { maximum: 50000 }, allow_nil: true
 
   # Scopes de status
@@ -38,6 +40,7 @@ class AgentTask < ApplicationRecord
   scope :in_progress, -> { where(status: 'in_progress') }
   scope :active, -> { where(status: %w[pending in_progress]) }
   scope :completed, -> { where(status: 'completed') }
+  scope :recurrent, -> { where.not(recurrence_type: 'none') }
   scope :cancelled, -> { where(status: 'cancelled') }
 
   # Scopes de data
@@ -103,6 +106,7 @@ class AgentTask < ApplicationRecord
   # Métodos de ação
   def complete!
     update!(status: 'completed', completed_at: Time.current)
+    create_next_recurrence! if recurrence_type != 'none
   end
 
   def start!
@@ -182,6 +186,59 @@ class AgentTask < ApplicationRecord
     else
       due_date.end_of_day
     end
+  end
+
+  # Cria próxima tarefa recorrente
+  def create_next_recurrence!
+    return if recurrence_type == 'none'
+    
+    next_date = calculate_next_due_date
+    return unless next_date
+    
+    AgentTask.create!(
+      account: account,
+      created_by: created_by,
+      assigned_to: assigned_to,
+      contact: contact,
+      conversation: conversation,
+      kanban_pipeline: kanban_pipeline,
+      title: title,
+      description: description,
+      priority: priority,
+      status: 'pending',
+      due_date: next_date,
+      due_time: due_time,
+      recurrence_type: recurrence_type,
+      recurrence_config: recurrence_config,
+      label_ids: label_ids
+    )
+  end
+  
+  def calculate_next_due_date
+    return nil unless due_date
+    
+    case recurrence_type
+    when 'daily'
+      due_date + 1.day
+    when 'weekly'
+      due_date + 1.week
+    when 'monthly'
+      due_date + 1.month
+    when 'custom'
+      calculate_custom_next_date
+    end
+  end
+  
+  def calculate_custom_next_date
+    days = recurrence_config['days'] || []
+    return nil if days.empty?
+    
+    current = due_date + 1.day
+    30.times do
+      return current if days.include?(current.wday)
+      current += 1.day
+    end
+    nil
   end
 
   # Classe methods para estatísticas
