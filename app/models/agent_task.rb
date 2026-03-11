@@ -106,7 +106,7 @@ class AgentTask < ApplicationRecord
   # Métodos de ação
   def complete!
     update!(status: 'completed', completed_at: Time.current)
-    create_next_recurrence! if recurrence_type != 'none
+    create_next_recurrence! if recurrence_type != 'none'
   end
 
   def start!
