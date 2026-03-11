@@ -1,6 +1,7 @@
 <script setup>
 import { useAttrs } from 'vue';
 import { useMapGetter } from 'dashboard/composables/store';
+import logoImage from 'dashboard/assets/images/letsgofar-logo.png';
 
 const attrs = useAttrs();
 const globalConfig = useMapGetter('globalConfig/get');
@@ -15,8 +16,7 @@ const globalConfig = useMapGetter('globalConfig/get');
   <img
     v-else
     v-bind="attrs"
-    src="/letsgofar-logo.png"
+    :src="logoImage"
     alt="Let's Go Far"
-    class="object-contain"
   />
 </template>
