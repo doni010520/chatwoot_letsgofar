@@ -31,7 +31,7 @@ class AgentTask < ApplicationRecord
   validates :title, presence: true, length: { maximum: 255 }
   validates :priority, presence: true, inclusion: { in: PRIORITIES }
   validates :status, presence: true, inclusion: { in: STATUSES }
-  validates :description, length: { maximum: 5000 }, allow_nil: true
+  validates :description, length: { maximum: 50000 }, allow_nil: true
 
   # Scopes de status
   scope :pending, -> { where(status: 'pending') }
