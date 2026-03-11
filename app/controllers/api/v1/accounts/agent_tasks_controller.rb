@@ -139,6 +139,8 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       :status,
       :due_date,
       :due_time,
+      :recurrence_type,
+      recurrence_config: {},
       :reminder_at,
       :assigned_to_id,
       :contact_id,
