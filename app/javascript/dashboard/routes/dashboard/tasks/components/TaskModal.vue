@@ -26,6 +26,8 @@ const formData = ref({
   status: 'pending',
   due_date: '',
   due_time: '',
+  recurrence_type: 'none',
+  recurrence_config: { days: [] }, 
   assigned_to_id: null,
   contact_id: null,
   conversation_id: null,
@@ -128,6 +130,25 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelada' },
 ];
 
+// Opções de recorrência
+const recurrenceOptions = [
+  { value: 'none', label: 'Sem recorrência' },
+  { value: 'daily', label: 'Diária' },
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'monthly', label: 'Mensal' },
+  { value: 'custom', label: 'Personalizada' },
+];
+
+const weekDays = [
+  { value: 0, label: 'Dom' },
+  { value: 1, label: 'Seg' },
+  { value: 2, label: 'Ter' },
+  { value: 3, label: 'Qua' },
+  { value: 4, label: 'Qui' },
+  { value: 5, label: 'Sex' },
+  { value: 6, label: 'Sáb' },
+];
+  
 // Handlers de subtarefas
 const addItem = () => {
   if (!newItemTitle.value.trim()) return;
@@ -339,6 +360,44 @@ onMounted(() => {
               type="time"
               class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
             />
+          </div>
+        </div>
+
+        <!-- Recorrência -->
+        <div>
+          <label class="block text-sm font-medium text-n-slate-12 mb-1">
+            Recorrência
+          </label>
+          <select
+            v-model="formData.recurrence_type"
+            class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+          >
+            <option v-for="option in recurrenceOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Dias personalizados -->
+        <div v-if="formData.recurrence_type === 'custom'" class="space-y-2">
+          <label class="block text-sm font-medium text-n-slate-12">
+            Repetir nos dias:
+          </label>
+          <div class="flex gap-2">
+            <button
+              v-for="day in weekDays"
+              :key="day.value"
+              type="button"
+              class="px-3 py-1.5 text-sm rounded-lg border transition-colors"
+              :class="
+                formData.recurrence_config.days.includes(day.value)
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'border-n-weak text-n-slate-11 hover:border-n-brand'
+              "
+              @click="toggleWeekDay(day.value)"
+            >
+              {{ day.label }}
+            </button>
           </div>
         </div>
 
