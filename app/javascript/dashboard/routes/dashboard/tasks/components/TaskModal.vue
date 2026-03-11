@@ -190,6 +190,15 @@ const validateForm = () => {
   return Object.keys(errors.value).length === 0;
 };
 
+const toggleWeekDay = (day) => {
+  const index = formData.value.recurrence_config.days.indexOf(day);
+  if (index === -1) {
+    formData.value.recurrence_config.days.push(day);
+  } else {
+    formData.value.recurrence_config.days.splice(index, 1);
+  }
+};
+  
 const handleSubmit = async () => {
   if (!validateForm()) return;
 
@@ -255,6 +264,8 @@ onMounted(() => {
       title: props.task.title || '',
       description: props.task.description || '',
       priority: props.task.priority || 'medium',
+      recurrence_type: props.task.recurrence_type || 'none',
+      recurrence_config: props.task.recurrence_config || { days: [] }, 
       status: props.task.status || 'pending',
       due_date: props.task.due_date || '',
       due_time: props.task.due_time || '',
