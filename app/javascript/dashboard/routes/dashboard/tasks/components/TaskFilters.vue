@@ -18,8 +18,6 @@ const store = useStore();
 const { t } = useI18n();
 
 // Getters
-const agents = computed(() => store.getters['agents/getAgents'] || []);
-const labels = computed(() => store.getters['labels/getLabels'] || []);
 const currentUser = computed(() => store.getters.getCurrentUser);
 const isAdmin = computed(() => currentUser.value?.role === 'administrator');
 const agents = computed(() => store.getters['agents/getAgents'] || []);
