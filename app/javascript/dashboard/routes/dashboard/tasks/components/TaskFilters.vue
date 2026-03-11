@@ -20,7 +20,11 @@ const { t } = useI18n();
 // Getters
 const agents = computed(() => store.getters['agents/getAgents'] || []);
 const labels = computed(() => store.getters['labels/getLabels'] || []);
-
+const currentUser = computed(() => store.getters.getCurrentUser);
+const isAdmin = computed(() => currentUser.value?.role === 'administrator');
+const agents = computed(() => store.getters['agents/getAgents'] || []);
+const labels = computed(() => store.getters['labels/getLabels'] || []);
+  
 // Opções de filtro
 const statusOptions = [
   { value: '', label: t('TASKS.FILTERS.ALL') },
@@ -167,6 +171,32 @@ onMounted(() => {
           <option v-for="agent in agents" :key="agent.id" :value="agent.id">
             {{ agent.name }}
           </option>
+        </select>
+      </div>
+
+      <!-- Criado por -->
+      <div>
+        <label class="text-xs font-medium text-n-slate-10 block mb-2">
+          Criado por
+        </label>
+        <select
+          :value="filters.created_by_id || ''"
+          class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm focus:outline-none focus:ring-2 focus:ring-n-brand"
+          @change="updateFilter('created_by_id', $event.target.value)"
+        >
+          <!-- Admin: todos os usuários -->
+          <template v-if="isAdmin">
+            <option value="">{{ t('TASKS.FILTERS.ALL') }}</option>
+            <option v-for="agent in agents" :key="agent.id" :value="agent.id">
+              {{ agent.name }}
+            </option>
+          </template>
+          
+          <!-- Usuário normal: apenas "Criadas por mim" -->
+          <template v-else>
+            <option value="">-</option>
+            <option :value="currentUser.id">Criadas por mim</option>
+          </template>
         </select>
       </div>
 
