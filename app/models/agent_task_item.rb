@@ -4,7 +4,7 @@ class AgentTaskItem < ApplicationRecord
   belongs_to :agent_task, touch: true
 
   # Validações
-  validates :title, presence: true, length: { maximum: 255 }
+  validates :title, presence: true, length: { maximum: 1000 }
   validates :position, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   # Scopes
