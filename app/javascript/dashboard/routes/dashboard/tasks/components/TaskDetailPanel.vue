@@ -156,6 +156,16 @@ const handleAddItem = async () => {
     isAdding.value = false;
   }
 };
+
+const getRecurrenceLabel = (type) => {
+  const labels = {
+    daily: 'Repetição diária',
+    weekly: 'Repetição semanal',
+    monthly: 'Repetição mensal',
+    custom: 'Repetição personalizada'
+  };
+  return labels[type] || '';
+};
   
 </script>
 
@@ -167,6 +177,16 @@ const handleAddItem = async () => {
         {{ t('TASKS.DETAILS') }}
       </h3>
       <div class="flex items-center gap-1">
+        <!-- Ícone de recorrência -->
+        <button
+          v-if="task.recurrence_type && task.recurrence_type !== 'none'"
+          type="button"
+          class="text-blue-500 text-lg"
+          :title="getRecurrenceLabel(task.recurrence_type)"
+        >
+          🔁
+        </button>
+        
         <Button icon="i-lucide-pencil" color="slate" size="xs" @click="openEditModal" />
         <Button
           icon="i-lucide-trash-2"
