@@ -151,5 +151,3 @@ COPY --from=pre-builder /app/.git_sha /app/.git_sha
 WORKDIR /app
 
 EXPOSE 3000
-
-# Force rebuild 2026-03-13
