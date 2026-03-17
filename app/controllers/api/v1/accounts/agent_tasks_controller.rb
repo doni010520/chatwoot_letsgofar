@@ -91,7 +91,8 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   def remove_file
     authorize @agent_task
     
-    attachment = @agent_task.files.find(params[:file_id])
+    # Com has_many_attached, precisa acessar .attachments
+    attachment = @agent_task.files.attachments.find(params[:file_id])
     attachment.purge
     
     render :show
