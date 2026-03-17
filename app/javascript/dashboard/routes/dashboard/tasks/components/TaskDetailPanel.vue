@@ -7,6 +7,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import TaskModal from './TaskModal.vue';
 import TaskComments from './TaskComments.vue';
+import TaskFiles from './TaskFiles.vue';
 
 const props = defineProps({
   task: {
@@ -438,9 +439,26 @@ const getRecurrenceLabel = (type) => {
 
           <!-- Aba Comentários -->
           <TaskComments v-if="activeTab === 'comments'" :task="task" />
+          <TaskFiles v-if="activeTab === 'files'" :task="task" @updated="emit('updated')" />
         </div>
       </div>
     </div>
+
+    <button
+      type="button"
+      class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+      :class="[
+        activeTab === 'files'
+          ? 'bg-n-brand text-white'
+          : 'text-n-slate-11 hover:bg-n-alpha-2',
+      ]"
+      @click="activeTab = 'files'"
+    >
+      Anexos
+      <span v-if="task.files_count" class="ml-1 text-xs">
+        ({{ task.files_count }})
+      </span>
+    </button>
 
     <!-- Ação principal -->
     <div class="p-4 border-t border-n-weak">
