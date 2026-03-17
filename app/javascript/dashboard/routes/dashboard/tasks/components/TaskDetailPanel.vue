@@ -175,7 +175,7 @@ const getRecurrenceLabel = (type) => {
     <!-- Header -->
     <div class="flex items-center justify-between px-4 py-3 border-b border-n-weak">
       <h3 class="font-semibold text-n-slate-12">
-        {{ t('TASKS.DETAILS') }}
+        {{ t('DETAILS') }}
       </h3>
       <div class="flex items-center gap-1">
         <!-- Ícone de recorrência -->
@@ -338,7 +338,7 @@ const getRecurrenceLabel = (type) => {
               ]"
               @click="activeTab = 'checklist'"
             >
-              {{ t('TASKS.CHECKLIST') }}
+              {{ t('Checklist') }}
               <span v-if="task.items_count" class="ml-1 text-xs">
                 ({{ task.items_completed_count }}/{{ task.items_count }})
               </span>
@@ -352,7 +352,7 @@ const getRecurrenceLabel = (type) => {
               ]"
               @click="activeTab = 'comments'"
             >
-              {{ t('TASKS.COMMENTS') }}
+              {{ t('Comments') }}
               <span v-if="task.comments_count" class="ml-1 text-xs">
                 ({{ task.comments_count }})
               </span>
