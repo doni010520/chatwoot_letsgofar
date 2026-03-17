@@ -89,6 +89,16 @@ const removeFile = async (fileId) => {
 const downloadFile = (file) => {
   window.open(file.url, '_blank');
 };
+
+const openFile = (file) => {
+  // Abrir no navegador (visualização inline)
+  const link = document.createElement('a');
+  link.href = file.url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.click();
+};
+  
 </script>
 
 <template>
@@ -152,6 +162,12 @@ const downloadFile = (file) => {
         </div>
 
         <div class="flex items-center gap-1">
+          <Button
+            icon="i-lucide-eye"
+            size="xs"
+            color="slate"
+            @click="openFile(file)"
+          />
           <Button
             icon="i-lucide-download"
             size="xs"
