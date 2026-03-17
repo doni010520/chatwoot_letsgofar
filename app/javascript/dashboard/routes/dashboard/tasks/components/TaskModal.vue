@@ -18,12 +18,16 @@ const removeAttachedFile = async (fileId) => {
   
   try {
     await store.dispatch('agentTasks/removeFile', {
-      taskId: props.task.id, 
+      taskId: props.task.id,
       fileId,
     });
+    
+    // Fechar modal após deletar
     emit('updated');
+    emit('close');
   } catch (error) {
     console.error('Error removing file:', error);
+    alert('Erro ao remover arquivo. Verifique o console.');
   }
 };
 
