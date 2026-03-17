@@ -66,13 +66,13 @@ json.items agent_task.items.ordered do |item|
   json.position item.position
 end
 
-json.files agent_task.files.map { |file|
+json.files agent_task.files.attachments.map { |attachment|
   {
-    id: file.id,
-    filename: file.filename.to_s,
-    content_type: file.content_type,
-    byte_size: file.byte_size,
-    url: Rails.application.routes.url_helpers.rails_blob_path(file, only_path: true)
+    id: attachment.id,
+    filename: attachment.blob.filename.to_s,
+    content_type: attachment.blob.content_type,
+    byte_size: attachment.blob.byte_size,
+    url: Rails.application.routes.url_helpers.rails_blob_path(attachment.blob, only_path: true)
   }
 }
 json.files_count agent_task.files.count
