@@ -147,8 +147,9 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       :kanban_pipeline_id,
       label_ids: [],
       recurrence_config: {},
-      items_attributes: [:id, :title, :completed, :position, :_destroy]
-    )
+      items_attributes: [:id, :title, :completed, :position, :_destroy],
+      files: []
+      )
   end
 
   def filtered_tasks
