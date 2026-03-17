@@ -357,6 +357,23 @@ const getRecurrenceLabel = (type) => {
                 ({{ task.comments_count }})
               </span>
             </button>
+
+            <!-- Files Tab -->
+            <button
+              type="button"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              :class="[
+                activeTab === 'files'
+                  ? 'bg-n-brand text-white'
+                  : 'text-n-slate-11 hover:bg-n-alpha-2',
+              ]"
+              @click="activeTab = 'files'"
+            >
+              Anexos
+              <span v-if="task.files_count" class="ml-1 text-xs">
+                ({{ task.files_count }})
+              </span>
+            </button>
           </div>
 
           <!-- Aba Checklist COM CHECKBOXES CLICÁVEIS -->
@@ -443,22 +460,6 @@ const getRecurrenceLabel = (type) => {
         </div>
       </div>
     </div>
-
-    <button
-      type="button"
-      class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-      :class="[
-        activeTab === 'files'
-          ? 'bg-n-brand text-white'
-          : 'text-n-slate-11 hover:bg-n-alpha-2',
-      ]"
-      @click="activeTab = 'files'"
-    >
-      Anexos
-      <span v-if="task.files_count" class="ml-1 text-xs">
-        ({{ task.files_count }})
-      </span>
-    </button>
 
     <!-- Ação principal -->
     <div class="p-4 border-t border-n-weak">
