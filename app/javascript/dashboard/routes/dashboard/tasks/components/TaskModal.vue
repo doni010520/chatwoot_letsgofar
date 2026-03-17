@@ -6,6 +6,14 @@ import { useI18n } from 'vue-i18n';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Modal from 'dashboard/components/Modal.vue';
 
+const formatFileSize = (bytes) => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
+  
 const props = defineProps({
   task: {
     type: Object,
@@ -493,6 +501,32 @@ onMounted(() => {
             </div>
           </div>
 
+          <!-- Arquivos já anexados (quando editando) -->
+          <div v-if="task && task.files && task.files.length > 0" class="mt-3">
+            <label class="text-sm font-medium text-n-slate-12 mb-2 block">
+              Arquivos anexados
+            </label>
+            <div class="space-y-2">
+              <div
+                v-for="file in task.files"
+                :key="file.id"
+                class="flex items-center gap-3 p-2 rounded-lg bg-n-alpha-1 border border-n-weak"
+              >
+                <span class="i-lucide-file size-5 text-n-slate-11 flex-shrink-0" />
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm text-n-slate-12 truncate">{{ file.filename }}</p>
+                  <p class="text-xs text-n-slate-10">{{ formatFileSize(file.byte_size) }}</p>
+                </div>
+                <Button
+                  icon="i-lucide-external-link"
+                  size="xs"
+                  color="slate"
+                  @click="window.open(file.url, '_blank')"
+                />
+              </div>
+            </div>
+          </div>
+            
           <!-- Lista de arquivos selecionados -->
           <div v-if="filesToUpload.length > 0" class="mt-3 space-y-2">
             <div
