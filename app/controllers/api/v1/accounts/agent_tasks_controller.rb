@@ -91,12 +91,16 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   def remove_file
     authorize @agent_task
     
-    # Com has_many_attached, precisa acessar .attachments
-    attachment = @agent_task.files.attachments.find(params[:file_id])
-    attachment.purge
+    # Encontrar e deletar o attachment
+    attachment = @agent_task.files.attachments.find_by(id: params[:file_id])
     
-    render :show
-  end
+    if attachment
+      attachment.purge
+      render :show
+    else
+      render json: { error: 'File not found' }, status: :not_found
+    end
+  end 
 
   # Endpoints especiais
   def calendar
