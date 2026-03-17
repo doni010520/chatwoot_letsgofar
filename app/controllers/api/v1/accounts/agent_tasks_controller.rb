@@ -27,8 +27,14 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
 
   def update
     authorize @agent_task
-
+  
+    # Extrair files dos parâmetros
+    files_to_attach = agent_task_params.delete(:files)
+    
     if @agent_task.update(agent_task_params)
+      # Anexar arquivos SEM substituir os existentes
+      @agent_task.files.attach(files_to_attach) if files_to_attach.present?
+      
       render :show
     else
       render json: { errors: @agent_task.errors.full_messages }, status: :unprocessable_entity
