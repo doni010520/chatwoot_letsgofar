@@ -18,14 +18,21 @@ const removeAttachedFile = async (fileId) => {
   
   try {
     await store.dispatch('agentTasks/removeFile', {
-      taskId: task.value.id,
+      taskId: props.task.id, 
       fileId,
     });
-    // Recarregar task para atualizar lista de arquivos
     emit('updated');
   } catch (error) {
     console.error('Error removing file:', error);
   }
+};
+
+const openFile = (url) => {
+  window.open(url, '_blank');
+};
+
+const openFile = (url) => {
+  window.open(url, '_blank');
 };
 
 const emit = defineEmits(['close', 'created', 'updated']);
@@ -529,7 +536,7 @@ onMounted(() => {
                   <button
                     type="button"
                     class="p-1.5 text-n-slate-9 hover:text-n-brand hover:bg-n-brand/10 rounded transition-colors"
-                    @click.stop="window.open(file.url, '_blank')"
+                    @click.stop="openFile(file.url)"
                   >
                     <span class="i-lucide-external-link size-4" />
                   </button>
