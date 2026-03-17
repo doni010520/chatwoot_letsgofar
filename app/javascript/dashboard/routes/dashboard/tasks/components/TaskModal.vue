@@ -31,10 +31,6 @@ const openFile = (url) => {
   window.open(url, '_blank');
 };
 
-const openFile = (url) => {
-  window.open(url, '_blank');
-};
-
 const emit = defineEmits(['close', 'created', 'updated']);
 
 const store = useStore();
