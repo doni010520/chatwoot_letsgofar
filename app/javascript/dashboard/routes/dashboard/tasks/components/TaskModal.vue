@@ -13,6 +13,21 @@ const props = defineProps({
   },
 });
 
+const removeAttachedFile = async (fileId) => {
+  if (!confirm('Deseja remover este anexo?')) return;
+  
+  try {
+    await store.dispatch('agentTasks/removeFile', {
+      taskId: task.value.id,
+      fileId,
+    });
+    // Recarregar task para atualizar lista de arquivos
+    emit('updated');
+  } catch (error) {
+    console.error('Error removing file:', error);
+  }
+};
+
 const emit = defineEmits(['close', 'created', 'updated']);
 
 const store = useStore();
@@ -492,7 +507,7 @@ onMounted(() => {
               <span class="text-xs text-n-slate-9">PDF, imagens, documentos, etc.</span>
             </div>
           </div>
-
+          
           <!-- Arquivos já anexados (quando editando) -->
           <div v-if="task && task.files && task.files.length > 0" class="mt-3">
             <label class="text-sm font-medium text-n-slate-12 mb-2 block">
@@ -509,12 +524,24 @@ onMounted(() => {
                   <p class="text-sm text-n-slate-12 truncate">{{ file.filename }}</p>
                   <p class="text-xs text-n-slate-10">{{ formatFileSize(file.byte_size) }}</p>
                 </div>
-                <Button
-                  icon="i-lucide-external-link"
-                  size="xs"
-                  color="slate"
-                  @click="window.open(file.url, '_blank')"
-                />
+                <div class="flex items-center gap-1">
+                  <!-- Botão abrir -->
+                  <button
+                    type="button"
+                    class="p-1.5 text-n-slate-9 hover:text-n-brand hover:bg-n-brand/10 rounded transition-colors"
+                    @click.stop="window.open(file.url, '_blank')"
+                  >
+                    <span class="i-lucide-external-link size-4" />
+                  </button>
+                  <!-- Botão deletar -->
+                  <button
+                    type="button"
+                    class="p-1.5 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-colors"
+                    @click.stop="removeAttachedFile(file.id)"
+                  >
+                    <span class="i-lucide-x size-4" />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
