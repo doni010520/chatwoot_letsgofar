@@ -87,19 +87,14 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
 
     render :show
   end
-
+  
   def remove_file
     authorize @agent_task
     
-    # ActiveStorage attachments precisam ser acessados via attachments
-    attachment = @agent_task.files.attachments.find_by(id: params[:file_id])
+    attachment = @agent_task.files.find(params[:file_id])
+    attachment.purge
     
-    if attachment
-      attachment.purge
-      render :show
-    else
-      render json: { error: 'Arquivo não encontrado' }, status: :not_found
-    end
+    render :show
   end
 
   # Endpoints especiais
