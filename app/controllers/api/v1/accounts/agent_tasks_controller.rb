@@ -27,12 +27,14 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
 
   def update
     authorize @agent_task
-  
-    # Extrair files ANTES de atualizar
-    files_to_attach = agent_task_params.delete(:files)
     
-    if @agent_task.update(agent_task_params)
-      # Anexar novos arquivos SEM substituir existentes
+    # Separar files dos outros parâmetros
+    params_hash = agent_task_params.to_h
+    files_to_attach = params_hash.delete('files')
+    
+    # Atualizar tarefa SEM files
+    if @agent_task.update(params_hash)
+      # Depois anexar files separadamente
       @agent_task.files.attach(files_to_attach) if files_to_attach.present?
       
       render :show
@@ -88,15 +90,15 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
 
   def remove_file
     authorize @agent_task
-  
-    # ActiveStorage attachments precisam ser encontrados assim:
-    attachment = @agent_task.files.find_by(id: params[:file_id])
+    
+    # ActiveStorage attachments precisam ser acessados via attachments
+    attachment = @agent_task.files.attachments.find_by(id: params[:file_id])
     
     if attachment
       attachment.purge
       render :show
     else
-      render json: { error: 'File not found' }, status: :not_found
+      render json: { error: 'Arquivo não encontrado' }, status: :not_found
     end
   end
 
