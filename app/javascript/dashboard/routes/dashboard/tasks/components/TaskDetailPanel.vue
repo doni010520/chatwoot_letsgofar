@@ -369,7 +369,7 @@ const getRecurrenceLabel = (type) => {
               ]"
               @click="activeTab = 'files'"
             >
-              Anexos
+              Attachments
               <span v-if="task.files_count" class="ml-1 text-xs">
                 ({{ task.files_count }})
               </span>
