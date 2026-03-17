@@ -246,7 +246,7 @@ const getRecurrenceLabel = (type) => {
           <div v-if="task.due_date" class="flex items-center gap-2">
             <span class="i-lucide-calendar size-4 text-n-slate-9" />
             <div>
-              <span class="text-xs text-n-slate-10 block">{{ t('TASKS.FORM.DUE_DATE') }}</span>
+              <span class="text-xs text-n-slate-10 block">{{ t('Due date') }}</span>
               <span class="text-sm text-n-slate-12">
                 {{ formattedDueDate }}
                 <span v-if="task.due_time" class="text-n-slate-10">
@@ -260,7 +260,7 @@ const getRecurrenceLabel = (type) => {
           <div class="flex items-center gap-2">
             <span class="i-lucide-user size-4 text-n-slate-9" />
             <div>
-              <span class="text-xs text-n-slate-10 block">{{ t('TASKS.FORM.ASSIGNED_TO') }}</span>
+              <span class="text-xs text-n-slate-10 block">{{ t('Assigned to') }}</span>
               <div v-if="task.assigned_to" class="flex items-center gap-2 mt-1">
                 <Avatar
                   :name="task.assigned_to.name"
@@ -277,7 +277,7 @@ const getRecurrenceLabel = (type) => {
           <div class="flex items-center gap-2">
             <span class="i-lucide-user-plus size-4 text-n-slate-9" />
             <div>
-              <span class="text-xs text-n-slate-10 block">{{ t('TASKS.CREATED_BY') }}</span>
+              <span class="text-xs text-n-slate-10 block">{{ t('Created by') }}</span>
               <div v-if="task.created_by" class="flex items-center gap-2 mt-1">
                 <Avatar
                   :name="task.created_by.name"
