@@ -300,13 +300,9 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     when 'due_date'
       tasks.order(Arel.sql("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date #{sort_order}"))
     when 'priority'
-      if sort_order == 'asc'
-        # Prioridade ascendente (low → urgent) + due_date ascendente (tasks sem data no final)
-        tasks.order(Arel.sql("CASE priority WHEN 'low' THEN 1 WHEN 'medium' THEN 2 WHEN 'high' THEN 3 WHEN 'urgent' THEN 4 END, CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC"))
-      else
-        # Prioridade descendente (urgent → low) + due_date ascendente (vencimentos mais próximos primeiro, tasks sem data no final)
-        tasks.order(Arel.sql("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 END, CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC"))
-      end
+      # Ordenar PRIMEIRO por data, DEPOIS por prioridade
+      # Tasks sem data no final
+      tasks.order(Arel.sql("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 END"))
     when 'title'
       tasks.order(title: sort_order)
     when 'status'
