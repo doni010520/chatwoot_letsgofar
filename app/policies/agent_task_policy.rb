@@ -40,7 +40,11 @@ class AgentTaskPolicy < ApplicationPolicy
   def assign?
     can_modify_task?
   end
-
+  
+  def remove_file?
+    can_modify_task?
+  end
+  
   def calendar?
     true
   end
