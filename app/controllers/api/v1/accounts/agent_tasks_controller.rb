@@ -292,7 +292,7 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     tasks.joins(:task_labels).where(agent_task_labels: { label_id: label_ids }).distinct
   end
 
-  def apply_sorting(tasks)
+    def apply_sorting(tasks)
     sort_by = params[:sort_by] || 'priority'
     sort_order = params[:sort_order] || 'desc'
   
@@ -300,9 +300,15 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     when 'due_date'
       tasks.order(Arel.sql("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date #{sort_order}"))
     when 'priority'
-      # Ordenar PRIMEIRO por data, DEPOIS por prioridade
-      # Tasks sem data no final
-      tasks.order(Arel.sql("CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 END"))
+      # Ordenar por: data + hora completa, depois prioridade
+      # Combina due_date com due_time para ordenação precisa
+      tasks.order(Arel.sql("
+        CASE WHEN due_date IS NULL THEN 1 ELSE 0 END,
+        due_date ASC,
+        CASE WHEN due_time IS NULL THEN 1 ELSE 0 END,
+        due_time ASC,
+        CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 END
+      "))
     when 'title'
       tasks.order(title: sort_order)
     when 'status'
