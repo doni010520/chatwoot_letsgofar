@@ -315,3 +315,4 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       tasks.order(created_at: sort_order)
     end
   end
+end
