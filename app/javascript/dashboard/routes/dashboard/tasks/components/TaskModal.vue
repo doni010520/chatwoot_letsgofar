@@ -20,8 +20,8 @@ const removeAttachedFile = async (fileId) => {
       fileId,
     });
     
-    // Apenas recarregar dados, SEM fechar modal
-    emit('updated');
+    // Recarregar task do store sem fechar modal
+    await store.dispatch('agentTasks/getTask', props.task.id);
   } catch (error) {
     console.error('Error removing file:', error);
     alert('Erro ao remover arquivo. Verifique o console.');
