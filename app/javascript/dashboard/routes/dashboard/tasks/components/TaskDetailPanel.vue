@@ -35,6 +35,18 @@ const startEditItem = (item) => {
   editingItemTitle.value = item.title;
 };
 
+const deleteItem = async (item) => {
+  try {
+    await store.dispatch('agentTasks/deleteItem', {
+      taskId: props.task.id,
+      itemId: item.id,
+    });
+    emit('updated');
+  } catch (error) {
+    console.error('Error deleting item:', error);
+  }
+};
+  
 const saveEditItem = async (item) => {
   if (!editingItemTitle.value.trim()) {
     editingItemId.value = null;
@@ -452,7 +464,7 @@ const getRecurrenceLabel = (type) => {
                   <input
                     v-model="editingItemTitle"
                     type="text"
-                    class="flex-1 px-2 py-1 text-sm rounded border border-n-brand bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                    class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
                     @keyup.enter="saveEditItem(item)"
                     @keyup.esc="cancelEditItem"
                     @blur="saveEditItem(item)"
@@ -469,20 +481,37 @@ const getRecurrenceLabel = (type) => {
                 >
                   {{ item.title }}
                 </span>
+            
+                <!-- BOTÃO DELETAR (X) -->
+                <button
+                  type="button"
+                  class="opacity-0 group-hover:opacity-100 p-1 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-all"
+                  @click="deleteItem(item)"
+                >
+                  <span class="i-lucide-x size-4" />
+                </button>
               </div>
             </div>
             
-            <!-- Campo para adicionar nova subtarefa (MENOR) -->
-            <div class="mt-3 flex items-center gap-2">
-              <span class="i-lucide-plus w-3.5 h-3.5 text-n-slate-9 flex-shrink-0" />
+            <!-- Campo para adicionar nova subtarefa -->
+            <div class="mt-4 flex items-center gap-2">
+              <span class="i-lucide-plus w-4 h-4 text-n-slate-9 flex-shrink-0" />
               <input
                 v-model="newItemTitle"
                 type="text"
                 placeholder="Adicionar subtarefa"
-                class="flex-1 px-2 py-1 text-xs rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-1 focus:ring-n-brand"
+                class="flex-1 px-2 py-0.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
                 :disabled="isAdding"
                 @keyup.enter="handleAddItem"
               />
+              <button
+                type="button"
+                class="px-2 py-0.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
+                :disabled="!newItemTitle.trim() || isAdding"
+                @click="handleAddItem"
+              >
+                Adicionar
+              </button>
             </div>
             
             <!-- Empty state -->
