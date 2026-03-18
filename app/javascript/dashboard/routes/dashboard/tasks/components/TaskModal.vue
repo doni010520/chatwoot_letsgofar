@@ -14,17 +14,14 @@ const props = defineProps({
 });
 
 const removeAttachedFile = async (fileId) => {
-  if (!confirm('Deseja remover este anexo?')) return;
-  
   try {
     await store.dispatch('agentTasks/removeFile', {
       taskId: props.task.id,
       fileId,
     });
     
-    // Fechar modal após deletar
+    // Apenas recarregar dados, SEM fechar modal
     emit('updated');
-    emit('close');
   } catch (error) {
     console.error('Error removing file:', error);
     alert('Erro ao remover arquivo. Verifique o console.');
