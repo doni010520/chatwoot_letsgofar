@@ -91,17 +91,18 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   def remove_file
     authorize @agent_task
     
-    # Buscar attachment diretamente
-    attachment = ActiveStorage::Attachment.find_by(
-      record_type: 'AgentTask',
-      record_id: @agent_task.id,
-      id: params[:file_id]
-    )
-    
-    if attachment
-      attachment.purge
-      render :show
-    else
+    begin
+      # Buscar attachment diretamente pelo ID
+      attachment = ActiveStorage::Attachment.find(params[:file_id])
+      
+      # Verificar se pertence a esta task
+      if attachment.record_id == @agent_task.id && attachment.record_type == 'AgentTask'
+        attachment.purge
+        render :show
+      else
+        render json: { error: 'File not found' }, status: :not_found
+      end
+    rescue ActiveRecord::RecordNotFound
       render json: { error: 'File not found' }, status: :not_found
     end
   end
