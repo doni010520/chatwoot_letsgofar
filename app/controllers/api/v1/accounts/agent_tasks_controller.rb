@@ -91,8 +91,12 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   def remove_file
     authorize @agent_task
     
-    # Encontrar e deletar o attachment
-    attachment = @agent_task.files.attachments.find_by(id: params[:file_id])
+    # Buscar attachment diretamente
+    attachment = ActiveStorage::Attachment.find_by(
+      record_type: 'AgentTask',
+      record_id: @agent_task.id,
+      id: params[:file_id]
+    )
     
     if attachment
       attachment.purge
@@ -100,7 +104,7 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     else
       render json: { error: 'File not found' }, status: :not_found
     end
-  end 
+  end
 
   # Endpoints especiais
   def calendar
