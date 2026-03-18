@@ -27,6 +27,37 @@ const isDeleting = ref(false);
 const activeTab = ref('checklist');
 const newItemTitle = ref(''); 
 const isAdding = ref(false);
+const editingItemId = ref(null);
+const editingItemTitle = ref('');
+
+const startEditItem = (item) => {
+  editingItemId.value = item.id;
+  editingItemTitle.value = item.title;
+};
+
+const saveEditItem = async (item) => {
+  if (!editingItemTitle.value.trim()) {
+    editingItemId.value = null;
+    return;
+  }
+
+  try {
+    await store.dispatch('agentTasks/updateItem', {
+      taskId: props.task.id,
+      itemId: item.id,
+      data: { title: editingItemTitle.value.trim() }
+    });
+    editingItemId.value = null;
+    emit('updated');
+  } catch (error) {
+    console.error('Error updating item:', error);
+  }
+};
+
+const cancelEditItem = () => {
+  editingItemId.value = null;
+  editingItemTitle.value = '';
+};
 
 // Computed
 const priorityConfig = {
@@ -415,38 +446,43 @@ const getRecurrenceLabel = (type) => {
                     class="i-lucide-check w-4 h-4 text-white"
                   />
                 </button>
-
-                <!-- TEXTO DA SUBTAREFA -->
+            
+                <!-- TEXTO DA SUBTAREFA (editável) -->
+                <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
+                  <input
+                    v-model="editingItemTitle"
+                    type="text"
+                    class="flex-1 px-2 py-1 text-sm rounded border border-n-brand bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                    @keyup.enter="saveEditItem(item)"
+                    @keyup.esc="cancelEditItem"
+                    @blur="saveEditItem(item)"
+                    autofocus
+                  />
+                </div>
                 <span
-                  class="flex-1 text-sm select-none"
+                  v-else
+                  class="flex-1 text-sm cursor-pointer hover:text-n-brand"
                   :class="[
                     item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
                   ]"
+                  @click="startEditItem(item)"
                 >
                   {{ item.title }}
                 </span>
               </div>
             </div>
             
-            <!-- Campo para adicionar nova subtarefa -->
-            <div class="mt-4 flex items-center gap-2">
-              <span class="i-lucide-plus w-4 h-4 text-n-slate-9 flex-shrink-0" />
+            <!-- Campo para adicionar nova subtarefa (MENOR) -->
+            <div class="mt-3 flex items-center gap-2">
+              <span class="i-lucide-plus w-3.5 h-3.5 text-n-slate-9 flex-shrink-0" />
               <input
                 v-model="newItemTitle"
                 type="text"
                 placeholder="Adicionar subtarefa"
-                class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+                class="flex-1 px-2 py-1 text-xs rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-1 focus:ring-n-brand"
                 :disabled="isAdding"
                 @keyup.enter="handleAddItem"
               />
-              <button
-                type="button"
-                class="px-2 py-1.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
-                :disabled="!newItemTitle.trim() || isAdding"
-                @click="handleAddItem"
-              >
-                Adicionar
-              </button>
             </div>
             
             <!-- Empty state -->
