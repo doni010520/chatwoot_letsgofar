@@ -29,7 +29,7 @@ const state = {
     linked_to: null,
     label_ids: [],
     q: '',
-    sort_by: 'created_at',
+    sort_by: 'priority',
     sort_order: 'desc',
   },
   uiFlags: {
@@ -427,7 +427,7 @@ const mutations = {
       linked_to: null,
       label_ids: [],
       q: '',
-      sort_by: 'created_at',
+      sort_by: 'priority',
       sort_order: 'desc',
     };
   },
