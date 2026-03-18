@@ -403,13 +403,17 @@ const getRecurrenceLabel = (type) => {
                 <button
                   type="button"
                   class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer"
-                  :style="{
-                    borderColor: item.completed ? '#ffffff' : '#4a5568',
-                    backgroundColor: item.completed ? '#ffffff' : '#2d3748'
-                  }"
+                  :class="[
+                    item.completed 
+                      ? 'bg-n-brand border-n-brand' 
+                      : 'bg-transparent border-n-slate-6 hover:border-n-brand'
+                  ]"
                   @click="handleToggleItem(item)"
                 >
-                  <span v-if="item.completed" class="i-lucide-check w-4 h-4" style="color: #000000; font-weight: bold;" />
+                  <span 
+                    v-if="item.completed" 
+                    class="i-lucide-check w-4 h-4 text-white"
+                  />
                 </button>
 
                 <!-- TEXTO DA SUBTAREFA -->
