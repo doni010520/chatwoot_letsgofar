@@ -31,17 +31,27 @@
         </span>
       </div>
       <div class="list-toolbar__right">
-        <select v-model="filters.status" class="list-toolbar__filter" @change="loadMessages">
-          <option value="">Todos os status</option>
-          <option value="pending">Pendentes</option>
-          <option value="sent">Enviadas</option>
-          <option value="failed">Falhadas</option>
-        </select>
-        <select v-model="filters.sortBy" class="list-toolbar__filter" @change="applySort">
-          <option value="date_asc">Mais próximas</option>
-          <option value="date_desc">Mais distantes</option>
-          <option value="contact">Contato (A-Z)</option>
-        </select>
+        <CustomSelect
+          v-model="filters.status"
+          :options="[
+            { value: '', label: 'Todos os status' },
+            { value: 'pending', label: 'Pendentes' },
+            { value: 'sent', label: 'Enviadas' },
+            { value: 'failed', label: 'Falhadas' }
+          ]"
+          custom-class="list-toolbar__filter"
+          @change="loadMessages"
+        />
+        <CustomSelect
+          v-model="filters.sortBy"
+          :options="[
+            { value: 'date_asc', label: 'Mais próximas' },
+            { value: 'date_desc', label: 'Mais distantes' },
+            { value: 'contact', label: 'Contato (A-Z)' }
+          ]"
+          custom-class="list-toolbar__filter"
+          @change="applySort"
+        />
         <button v-if="hasFilters" class="list-toolbar__clear" @click="clearFilters">
           Limpar filtros
         </button>
@@ -198,12 +208,17 @@
         Mostrando {{ startIndex + 1 }} - {{ endIndex }} de {{ filteredMessages.length }}
       </div>
       <div class="list-pagination__controls">
-        <select v-model="perPage" class="list-pagination__per-page" @change="currentPage = 1">
-          <option :value="10">10 por página</option>
-          <option :value="25">25 por página</option>
-          <option :value="50">50 por página</option>
-          <option :value="100">100 por página</option>
-        </select>
+        <CustomSelect
+          v-model="perPage"
+          :options="[
+            { value: 10, label: '10 por página' },
+            { value: 25, label: '25 por página' },
+            { value: 50, label: '50 por página' },
+            { value: 100, label: '100 por página' }
+          ]"
+          custom-class="list-pagination__per-page"
+          @change="currentPage = 1"
+        />
         <div class="list-pagination__buttons">
           <button class="pagination-btn" :disabled="currentPage === 1" @click="currentPage = 1">««</button>
           <button class="pagination-btn" :disabled="currentPage === 1" @click="currentPage--">«</button>
@@ -318,9 +333,13 @@
 import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { debounce } from '@chatwoot/utils';
+import CustomSelect from '../../components/ui/CustomSelect.vue';
 
 export default {
   name: 'ScheduledMessages',
+  components: {
+  CustomSelect 
+  },
   setup() {
     const store = useStore();
     
