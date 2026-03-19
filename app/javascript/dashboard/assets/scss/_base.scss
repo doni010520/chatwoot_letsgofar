@@ -108,11 +108,6 @@ select {
   }
 }
 
-// Force dark color scheme for select dropdowns
-.dark select {
-  color-scheme: dark;
-}
-
 // Textarea
 textarea {
   @apply field-base h-16;
