@@ -1145,6 +1145,7 @@ export default {
         color: var(--s-200) !important;
       }
     }
+  }
 
   .list-table {
     &__th {
