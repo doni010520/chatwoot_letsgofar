@@ -1520,8 +1520,8 @@ export default {
       color: var(--s-200);
 
       option {
-        background: var(--s-900);
-        color: var(--s-200);
+        background: var(--s-900) !important;
+        color: var(--s-200) !important;
       }
     }
   }
