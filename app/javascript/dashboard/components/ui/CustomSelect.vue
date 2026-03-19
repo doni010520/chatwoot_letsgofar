@@ -1,5 +1,5 @@
 <template>
-  <div class="custom-select" :class="{ 'custom-select--open': isOpen }" v-click-outside="close">
+  <div ref="selectRef" class="custom-select" :class="{ 'custom-select--open': isOpen }">
     <button
       type="button"
       class="custom-select__trigger"
@@ -33,6 +33,8 @@
 </template>
 
 <script>
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+
 export default {
   name: 'CustomSelect',
   props: {
@@ -61,56 +63,70 @@ export default {
       default: 'label'
     }
   },
-  data() {
-    return {
-      isOpen: false
+  emits: ['update:modelValue', 'change'],
+  setup(props, { emit }) {
+    const isOpen = ref(false);
+    const selectRef = ref(null);
+
+    const selectedLabel = computed(() => {
+      const selected = props.options.find(opt => getOptionValue(opt) === props.modelValue);
+      return selected ? getOptionLabel(selected) : 'Selecione...';
+    });
+
+    const toggle = () => {
+      if (!props.disabled) {
+        isOpen.value = !isOpen.value;
+      }
     };
-  },
-  computed: {
-    selectedLabel() {
-      const selected = this.options.find(opt => this.getOptionValue(opt) === this.modelValue);
-      return selected ? this.getOptionLabel(selected) : 'Selecione...';
-    }
-  },
-  methods: {
-    toggle() {
-      if (!this.disabled) {
-        this.isOpen = !this.isOpen;
+
+    const close = () => {
+      isOpen.value = false;
+    };
+
+    const selectOption = (option) => {
+      const value = getOptionValue(option);
+      emit('update:modelValue', value);
+      emit('change', value);
+      close();
+    };
+
+    const isSelected = (option) => {
+      return getOptionValue(option) === props.modelValue;
+    };
+
+    const getOptionValue = (option) => {
+      return typeof option === 'object' ? option[props.valueKey] : option;
+    };
+
+    const getOptionLabel = (option) => {
+      return typeof option === 'object' ? option[props.labelKey] : option;
+    };
+
+    const handleClickOutside = (event) => {
+      if (selectRef.value && !selectRef.value.contains(event.target)) {
+        close();
       }
-    },
-    close() {
-      this.isOpen = false;
-    },
-    selectOption(option) {
-      const value = this.getOptionValue(option);
-      this.$emit('update:modelValue', value);
-      this.$emit('change', value);
-      this.close();
-    },
-    isSelected(option) {
-      return this.getOptionValue(option) === this.modelValue;
-    },
-    getOptionValue(option) {
-      return typeof option === 'object' ? option[this.valueKey] : option;
-    },
-    getOptionLabel(option) {
-      return typeof option === 'object' ? option[this.labelKey] : option;
-    }
-  },
-  directives: {
-    'click-outside': {
-      mounted(el, binding) {
-        el.clickOutsideEvent = function(event) {
-          if (!(el === event.target || el.contains(event.target))) {
-            binding.value();
-          }
-        };
-        document.addEventListener('click', el.clickOutsideEvent);
-      },
-      unmounted(el) {
-        document.removeEventListener('click', el.clickOutsideEvent);
-      }
-    }
+    };
+
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside);
+    });
+
+    onUnmounted(() => {
+      document.removeEventListener('click', handleClickOutside);
+    });
+
+    return {
+      isOpen,
+      selectRef,
+      selectedLabel,
+      toggle,
+      close,
+      selectOption,
+      isSelected,
+      getOptionValue,
+      getOptionLabel
+    };
   }
 };
 </script>
