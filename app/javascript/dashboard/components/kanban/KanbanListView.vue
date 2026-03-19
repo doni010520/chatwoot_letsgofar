@@ -974,38 +974,39 @@ export default {
   }
 }
 
-.list-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  border-top: 1px solid var(--s-100);
-  background: var(--s-25);
-
-  &__info {
-    font-size: 13px;
-    color: var(--s-500);
-  }
-
-  &__controls {
+  .list-pagination {
     display: flex;
     align-items: center;
-    gap: 16px;
-  }
-
-  &__per-page {
-    padding: 6px 10px;
-    border: 1px solid var(--s-200);
-    border-radius: 6px;
-    font-size: 13px;
-    background: var(--white);
-    cursor: pointer;
-  }
-
-  &__buttons {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-top: 1px solid var(--s-100);
+    background: var(--s-25);
+  
+    &__info {
+      font-size: 13px;
+      color: var(--s-500);
+    }
+  
+    &__controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+  
+    &__per-page {
+      padding: 6px 10px;
+      border: 1px solid var(--s-200);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--white);
+      cursor: pointer;
+    }
+  
+    &__buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
   }
 }
 
@@ -1207,6 +1208,7 @@ export default {
         color: var(--s-200) !important;
       }
     }
+  }
   
   .pagination-btn {
     background: var(--s-900);
