@@ -1,0 +1,292 @@
+<template>
+  <div class="custom-select" :class="{ 'custom-select--open': isOpen }" v-click-outside="close">
+    <button
+      type="button"
+      class="custom-select__trigger"
+      :class="customClass"
+      @click="toggle"
+      :disabled="disabled"
+    >
+      <span class="custom-select__value">{{ selectedLabel }}</span>
+      <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+      </svg>
+    </button>
+    
+    <transition name="dropdown">
+      <div v-if="isOpen" class="custom-select__dropdown">
+        <div class="custom-select__options">
+          <button
+            v-for="option in options"
+            :key="getOptionValue(option)"
+            type="button"
+            class="custom-select__option"
+            :class="{ 'custom-select__option--selected': isSelected(option) }"
+            @click="selectOption(option)"
+          >
+            {{ getOptionLabel(option) }}
+          </button>
+        </div>
+      </div>
+    </transition>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'CustomSelect',
+  props: {
+    modelValue: {
+      type: [String, Number],
+      default: ''
+    },
+    options: {
+      type: Array,
+      required: true
+    },
+    disabled: {
+      type: Boolean,
+      default: false
+    },
+    customClass: {
+      type: String,
+      default: ''
+    },
+    valueKey: {
+      type: String,
+      default: 'value'
+    },
+    labelKey: {
+      type: String,
+      default: 'label'
+    }
+  },
+  data() {
+    return {
+      isOpen: false
+    };
+  },
+  computed: {
+    selectedLabel() {
+      const selected = this.options.find(opt => this.getOptionValue(opt) === this.modelValue);
+      return selected ? this.getOptionLabel(selected) : 'Selecione...';
+    }
+  },
+  methods: {
+    toggle() {
+      if (!this.disabled) {
+        this.isOpen = !this.isOpen;
+      }
+    },
+    close() {
+      this.isOpen = false;
+    },
+    selectOption(option) {
+      const value = this.getOptionValue(option);
+      this.$emit('update:modelValue', value);
+      this.$emit('change', value);
+      this.close();
+    },
+    isSelected(option) {
+      return this.getOptionValue(option) === this.modelValue;
+    },
+    getOptionValue(option) {
+      return typeof option === 'object' ? option[this.valueKey] : option;
+    },
+    getOptionLabel(option) {
+      return typeof option === 'object' ? option[this.labelKey] : option;
+    }
+  },
+  directives: {
+    'click-outside': {
+      mounted(el, binding) {
+        el.clickOutsideEvent = function(event) {
+          if (!(el === event.target || el.contains(event.target))) {
+            binding.value();
+          }
+        };
+        document.addEventListener('click', el.clickOutsideEvent);
+      },
+      unmounted(el) {
+        document.removeEventListener('click', el.clickOutsideEvent);
+      }
+    }
+  }
+};
+</script>
+
+<style scoped lang="scss">
+.custom-select {
+  position: relative;
+  width: 100%;
+
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--s-200);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--white);
+    color: var(--s-900);
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+
+    &:hover:not(:disabled) {
+      border-color: var(--s-300);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--w-500);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  &__value {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__arrow {
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+    color: var(--s-500);
+  }
+
+  &--open &__arrow {
+    transform: rotate(180deg);
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--white);
+    border: 1px solid var(--s-200);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-height: 240px;
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: var(--s-50);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: var(--s-300);
+      border-radius: 3px;
+
+      &:hover {
+        background: var(--s-400);
+      }
+    }
+  }
+
+  &__options {
+    padding: 4px;
+  }
+
+  &__option {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    color: var(--s-900);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+
+    &:hover {
+      background: var(--s-50);
+    }
+
+    &--selected {
+      background: var(--w-100);
+      color: var(--w-700);
+      font-weight: 500;
+
+      &:hover {
+        background: var(--w-100);
+      }
+    }
+  }
+}
+
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s ease;
+}
+
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.dark {
+  .custom-select {
+    &__trigger {
+      background: var(--s-900);
+      border-color: var(--s-700);
+      color: var(--s-200);
+
+      &:hover:not(:disabled) {
+        border-color: var(--s-600);
+      }
+
+      &:focus {
+        border-color: var(--w-500);
+      }
+    }
+
+    &__arrow {
+      color: var(--s-400);
+    }
+
+    &__dropdown {
+      background: var(--s-900);
+      border-color: var(--s-700);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    &__option {
+      color: var(--s-200);
+
+      &:hover {
+        background: var(--s-800);
+      }
+
+      &--selected {
+        background: var(--w-900);
+        color: var(--w-200);
+
+        &:hover {
+          background: var(--w-900);
+        }
+      }
+    }
+  }
+}
+</style>
