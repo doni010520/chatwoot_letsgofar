@@ -1139,8 +1139,12 @@ export default {
       background: var(--s-800);
       border-color: var(--s-700);
       color: var(--s-200);
+
+      option {
+        background: var(--s-900) !important;
+        color: var(--s-200) !important;
+      }
     }
-  }
 
   .list-table {
     &__th {
@@ -1196,9 +1200,13 @@ export default {
       background: var(--s-900);
       border-color: var(--s-700);
       color: var(--s-200);
-    }
-  }
 
+      option {
+        background: var(--s-900) !important;
+        color: var(--s-200) !important;
+      }
+    }
+  
   .pagination-btn {
     background: var(--s-900);
     border-color: var(--s-700);
