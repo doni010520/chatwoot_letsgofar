@@ -333,7 +333,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import { debounce } from '@chatwoot/utils';
-import CustomSelect from '../../components/ui/CustomSelect.vue';
+import CustomSelect from '../../../components/ui/CustomSelect.vue';
 
 export default {
   name: 'ScheduledMessages',
