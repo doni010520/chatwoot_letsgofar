@@ -1008,7 +1008,6 @@ export default {
       gap: 8px;
     }
   }
-}
 
 .pagination-btn {
   padding: 6px 10px;
