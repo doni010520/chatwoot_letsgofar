@@ -1456,7 +1456,10 @@ export default {
 
       option {
         background: var(--s-900) !important;
+        background-color: var(--s-900) !important;
         color: var(--s-200) !important;
+        -webkit-appearance: none !important;
+        appearance: none !important;
       }
     }
 
