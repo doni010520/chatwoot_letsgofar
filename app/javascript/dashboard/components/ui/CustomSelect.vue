@@ -4,7 +4,7 @@
       type="button"
       class="custom-select__trigger"
       :class="customClass"
-      @click="toggle"
+      @click.stop="toggle"
       :disabled="disabled"
     >
       <span class="custom-select__value">{{ selectedLabel }}</span>
@@ -14,7 +14,7 @@
     </button>
     
     <transition name="dropdown">
-      <div v-if="isOpen" class="custom-select__dropdown">
+      <div v-if="isOpen" class="custom-select__dropdown" @click.stop>
         <div class="custom-select__options">
           <button
             v-for="option in options"
@@ -22,7 +22,7 @@
             type="button"
             class="custom-select__option"
             :class="{ 'custom-select__option--selected': isSelected(option) }"
-            @click="selectOption(option)"
+            @click.stop="selectOption(option)"
           >
             {{ getOptionLabel(option) }}
           </button>
@@ -103,13 +103,16 @@ export default {
     };
 
     const handleClickOutside = (event) => {
-      if (selectRef.value && !selectRef.value.contains(event.target)) {
+      if (selectRef.value && !selectRef.value.contains(event.target) && isOpen.value) {
         close();
       }
     };
 
     onMounted(() => {
-      document.addEventListener('click', handleClickOutside);
+      // Adiciona listener com delay para evitar race condition
+      setTimeout(() => {
+        document.addEventListener('click', handleClickOutside);
+      }, 100);
     });
 
     onUnmounted(() => {
@@ -191,11 +194,12 @@ export default {
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    z-index: 100;
-    background: var(--white);
+    z-index: 1000;
+    background: #ffffff;
+    background-color: #ffffff;
     border: 1px solid var(--s-200);
     border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
     max-height: 240px;
     overflow-y: auto;
 
@@ -204,21 +208,25 @@ export default {
     }
 
     &::-webkit-scrollbar-track {
-      background: var(--s-50);
+      background: #f5f5f5;
+      background-color: #f5f5f5;
     }
 
     &::-webkit-scrollbar-thumb {
       background: var(--s-300);
+      background-color: var(--s-300);
       border-radius: 3px;
 
       &:hover {
         background: var(--s-400);
+        background-color: var(--s-400);
       }
     }
   }
 
   &__options {
     padding: 4px;
+    background: transparent;
   }
 
   &__option {
@@ -235,16 +243,19 @@ export default {
     transition: all 0.15s;
 
     &:hover {
-      background: var(--s-50);
+      background: #f8f8f8;
+      background-color: #f8f8f8;
     }
 
     &--selected {
-      background: var(--w-100);
-      color: var(--w-700);
+      background: #e3f2fd;
+      background-color: #e3f2fd;
+      color: #1976d2;
       font-weight: 500;
 
       &:hover {
-        background: var(--w-100);
+        background: #e3f2fd;
+        background-color: #e3f2fd;
       }
     }
   }
@@ -282,24 +293,28 @@ export default {
     }
 
     &__dropdown {
-      background: var(--s-900);
+      background: #1e1e1e;
+      background-color: #1e1e1e;
       border-color: var(--s-700);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
     &__option {
       color: var(--s-200);
 
       &:hover {
-        background: var(--s-800);
+        background: #2a2a2a;
+        background-color: #2a2a2a;
       }
 
       &--selected {
-        background: var(--w-900);
+        background: #1a4d8f;
+        background-color: #1a4d8f;
         color: var(--w-200);
 
         &:hover {
-          background: var(--w-900);
+          background: #1a4d8f;
+          background-color: #1a4d8f;
         }
       }
     }
