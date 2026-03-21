@@ -1516,9 +1516,9 @@ export default {
 
   .list-table {
     &__th {
-      background: #1c1d20;
-      background-color: #1c1d20;
-      border-bottom-color: #1c1d20;
+      background: #141517;
+      background-color: #141517;
+      border-bottom-color: #141517;
       z-index: 100;
       color: var(--s-400);
     }
