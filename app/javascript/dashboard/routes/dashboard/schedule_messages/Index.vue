@@ -790,6 +790,8 @@ export default {
 .list-table-container {
   flex: 1;
   overflow: auto;
+  width: 100%;
+  min-width: 0;
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -812,6 +814,7 @@ export default {
 
 .list-table {
   width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 14px;
 
@@ -889,7 +892,9 @@ export default {
     }
 
     &--message {
-      max-width: 300px;
+      min-width: 200px;
+      max-width: none;
+      width: auto;
     }
 
     &--user {
