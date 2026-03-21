@@ -217,6 +217,7 @@
             { value: 100, label: '100 por página' }
           ]"
           custom-class="list-pagination__per-page"
+          :open-upward="true"
           @change="currentPage = 1"
         />
         <div class="list-pagination__buttons">
