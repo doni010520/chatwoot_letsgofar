@@ -112,7 +112,7 @@
             :key="msg.id"
             class="list-table__row"
             :class="{ 'list-table__row--selected': selectedIds.includes(msg.id) }"
-            @dblclick="viewMessage(msg)"
+            @click="viewMessage(msg)"
           >
             <td class="list-table__td list-table__td--checkbox" @click.stop>
               <input
@@ -388,8 +388,16 @@ export default {
             bVal = b.contact?.name || '';
             break;
           case 'scheduled_at':
-            aVal = new Date(a.scheduled_at);
-            bVal = new Date(b.scheduled_at);
+            if (sortDirection.value === 'closest') {
+              // Ordena pela menor diferença com a data atual
+              const now = new Date();
+              const diffA = Math.abs(new Date(a.scheduled_at) - now);
+              const diffB = Math.abs(new Date(b.scheduled_at) - now);
+              return diffA - diffB;
+            } else {
+              aVal = new Date(a.scheduled_at);
+              bVal = new Date(b.scheduled_at);
+            }
             break;
           case 'created_by':
             aVal = getUserInfo(a).name;
@@ -402,8 +410,11 @@ export default {
           default:
             return 0;
         }
-
-        if (sortDirection.value === 'asc') {
+      
+        // Só aplica asc/desc se não for 'closest'
+        if (sortDirection.value === 'closest') {
+          return 0; // Já foi ordenado acima
+        } else if (sortDirection.value === 'asc') {
           return aVal > bVal ? 1 : -1;
         } else {
           return aVal < bVal ? 1 : -1;
@@ -483,12 +494,16 @@ export default {
       const [field, direction] = filters.value.sortBy.split('_');
       if (field === 'date') {
         sortField.value = 'scheduled_at';
+        // "Mais próximas" = menor diferença com data atual
+        sortDirection.value = 'closest';
       } else if (field === 'contact') {
         sortField.value = 'contact';
+        sortDirection.value = direction || 'asc';
+      } else {
+        sortDirection.value = direction || 'asc';
       }
-      sortDirection.value = direction || 'asc';
     };
-
+    
     const toggleSelect = (id) => {
       const index = selectedIds.value.indexOf(id);
       if (index > -1) {
@@ -679,6 +694,7 @@ export default {
   border-bottom: 1px solid var(--s-100);
   background: var(--s-25);
   gap: 16px;
+  flex-shrink: 0;
 
   &__left {
     display: flex;
@@ -792,6 +808,8 @@ export default {
   overflow: auto;
   width: 100%;
   min-width: 0;
+  min-height: 0;
+
 
   &::-webkit-scrollbar {
     width: 8px;
@@ -827,7 +845,8 @@ export default {
     font-size: 12px;
     text-transform: uppercase;
     color: var(--s-600);
-    background: var(--s-50);
+    background: #fafafa;
+    background-color: #fafafa;
     border-bottom: 2px solid var(--s-200);
     white-space: nowrap;
     z-index: 1;
@@ -1507,7 +1526,8 @@ export default {
 
   .list-table {
     &__th {
-      background: var(--s-800);
+      background: #1e1e1e;
+      background-color: #1e1e1e;
       border-bottom-color: var(--s-700);
       color: var(--s-400);
     }
