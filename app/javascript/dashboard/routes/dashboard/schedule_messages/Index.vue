@@ -1545,11 +1545,17 @@ export default {
     }
 
     &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-  
+          background: rgba(255, 255, 255, 0.2);
+    
+          &:hover {
+            background: rgba(255, 255, 255, 0.3);
+          }
+        }
+      }
+    
   .view-section__title {
-      color: rgba(255, 255, 255, 0.5);
-    }
+    color: rgba(255, 255, 255, 0.5);
+  }
   
   .contact-detail__name {
     color: #ffffff;
