@@ -1,5 +1,5 @@
 <template>
-  <div ref="selectRef" class="custom-select" :class="{ 'custom-select--open': isOpen }">
+  <div ref="selectRef" class="custom-select" :class="{ 'custom-select--open': isOpen, 'custom-select--upward': openUpward }">
     <button
       type="button"
       class="custom-select__trigger"
@@ -61,6 +61,10 @@ export default {
     labelKey: {
       type: String,
       default: 'label'
+    },
+    openUpward: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['update:modelValue', 'change'],
@@ -75,12 +79,22 @@ export default {
 
     const toggle = () => {
       if (!props.disabled) {
+        // Fecha outros dropdowns antes de abrir este
+        if (!isOpen.value) {
+          document.dispatchEvent(new CustomEvent('custom-select:close-others'));
+        }
         isOpen.value = !isOpen.value;
       }
     };
 
     const close = () => {
       isOpen.value = false;
+    };
+
+    const closeFromOthers = () => {
+      if (isOpen.value) {
+        close();
+      }
     };
 
     const selectOption = (option) => {
@@ -112,11 +126,13 @@ export default {
       // Adiciona listener com delay para evitar race condition
       setTimeout(() => {
         document.addEventListener('click', handleClickOutside);
+        document.addEventListener('custom-select:close-others', closeFromOthers);
       }, 100);
     });
 
     onUnmounted(() => {
       document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('custom-select:close-others', closeFromOthers);
     });
 
     return {
@@ -194,7 +210,7 @@ export default {
     top: calc(100% + 4px);
     left: 0;
     right: 0;
-    z-index: 1000;
+    z-index: 9999;
     background: #ffffff;
     background-color: #ffffff;
     border: 1px solid var(--s-200);
@@ -222,6 +238,12 @@ export default {
         background-color: var(--s-400);
       }
     }
+  }
+
+  // Quando abrir para cima
+  &--upward &__dropdown {
+    top: auto;
+    bottom: calc(100% + 4px);
   }
 
   &__options {
