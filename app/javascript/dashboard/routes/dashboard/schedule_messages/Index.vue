@@ -339,7 +339,7 @@ import CustomSelect from '../../../components/ui/CustomSelect.vue';
 export default {
   name: 'ScheduledMessages',
   components: {
-  CustomSelect 
+    CustomSelect 
   },
   setup() {
     const store = useStore();
@@ -814,7 +814,7 @@ export default {
 
 .list-table {
   width: 100%;
-  table-layout: auto;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 14px;
 
@@ -856,6 +856,12 @@ export default {
     }
   }
 
+  // Coluna de status com largura fixa
+  &__th:nth-child(4),
+  &__td:nth-child(4) {
+    width: 120px;
+  }
+
   &__row {
     transition: background 0.15s;
     cursor: pointer;
@@ -884,25 +890,24 @@ export default {
     }
 
     &--name {
-      min-width: 200px;
+      width: 220px;
     }
 
     &--date {
-      min-width: 180px;
+      width: 180px;
     }
 
     &--message {
-      min-width: 200px;
-      max-width: none;
       width: auto;
+      min-width: 0;
     }
 
     &--user {
-      min-width: 160px;
+      width: 180px;
     }
 
     &--date-small {
-      min-width: 160px;
+      width: 160px;
       font-size: 13px;
       color: var(--s-600);
     }
@@ -1016,6 +1021,7 @@ export default {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  word-break: break-word;
 }
 
 .user-info {
@@ -1453,7 +1459,7 @@ export default {
   }
 }
   
-/* Dark Mode (já está dark por padrão no modal, mas mantendo para compatibilidade) */
+/* Dark Mode */
 .dark {
   .scheduled-messages-view,
   .page-header {
