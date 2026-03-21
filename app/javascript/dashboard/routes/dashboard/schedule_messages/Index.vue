@@ -1223,14 +1223,14 @@ export default {
 }
 
 .modal-content {
-  background: #1a1d21;
+  background: #ffffff;
   border-radius: 12px;
   width: 600px;
   max-width: 100%;
   max-height: 85vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   position: relative;
 
   &--view {
@@ -1243,16 +1243,16 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
-  background: #1a1d21;
+  background: #ffffff;
   border-radius: 12px 12px 0 0;
 
   h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #ffffff;
+    color: #1f2d3d;
   }
 }
 
@@ -1260,7 +1260,7 @@ export default {
   background: none;
   border: none;
   font-size: 24px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(0, 0, 0, 0.5);
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -1272,8 +1272,8 @@ export default {
   transition: all 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
+    background: rgba(0, 0, 0, 0.1);
+    color: #1f2d3d;
   }
 }
 
@@ -1281,7 +1281,7 @@ export default {
   padding: 24px;
   overflow-y: auto;
   flex: 1;
-  background: #1a1d21;
+  background: #ffffff;
   border-radius: 0 0 12px 12px;
 
   &::-webkit-scrollbar {
@@ -1289,15 +1289,15 @@ export default {
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.05);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 3px;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(0, 0, 0, 0.3);
     }
   }
 }
@@ -1513,7 +1513,47 @@ export default {
       }
     }
   }
+  
+  .modal-content {
+    background: #1a1d21;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
 
+  .modal-header {
+    background: #1a1d21;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+
+    h3 {
+      color: #ffffff;
+    }
+  }
+
+  .modal-close {
+    color: rgba(255, 255, 255, 0.5);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+  }
+
+  .modal-body {
+    background: #1a1d21;
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+  
   .list-table {
     &__th {
       background: #141517;
