@@ -838,7 +838,7 @@ export default {
     background-color: #ffffff;
     border-bottom: 2px solid var(--s-200);
     white-space: nowrap;
-    z-index: 10;
+    z-index: 100;
 
     &--sortable {
       cursor: pointer;
@@ -1517,8 +1517,9 @@ export default {
   .list-table {
     &__th {
       background: var(--s-900);
-      background-color: var(--s-900);
-      border-bottom-color: var(--s-700);
+      background-color: #1a1d21;
+      border-bottom-color: #1a1d21;
+      z-index: 100;
       color: var(--s-400);
     }
 
