@@ -388,16 +388,8 @@ export default {
             bVal = b.contact?.name || '';
             break;
           case 'scheduled_at':
-            if (sortDirection.value === 'closest') {
-              // Ordena pela menor diferença com a data atual
-              const now = new Date();
-              const diffA = Math.abs(new Date(a.scheduled_at) - now);
-              const diffB = Math.abs(new Date(b.scheduled_at) - now);
-              return diffA - diffB;
-            } else {
-              aVal = new Date(a.scheduled_at);
-              bVal = new Date(b.scheduled_at);
-            }
+            aVal = new Date(a.scheduled_at);
+            bVal = new Date(b.scheduled_at);
             break;
           case 'created_by':
             aVal = getUserInfo(a).name;
@@ -410,11 +402,8 @@ export default {
           default:
             return 0;
         }
-      
-        // Só aplica asc/desc se não for 'closest'
-        if (sortDirection.value === 'closest') {
-          return 0; // Já foi ordenado acima
-        } else if (sortDirection.value === 'asc') {
+
+        if (sortDirection.value === 'asc') {
           return aVal > bVal ? 1 : -1;
         } else {
           return aVal < bVal ? 1 : -1;
@@ -494,16 +483,12 @@ export default {
       const [field, direction] = filters.value.sortBy.split('_');
       if (field === 'date') {
         sortField.value = 'scheduled_at';
-        // "Mais próximas" = menor diferença com data atual
-        sortDirection.value = 'closest';
       } else if (field === 'contact') {
         sortField.value = 'contact';
-        sortDirection.value = direction || 'asc';
-      } else {
-        sortDirection.value = direction || 'asc';
       }
+      sortDirection.value = direction || 'asc';
     };
-    
+
     const toggleSelect = (id) => {
       const index = selectedIds.value.indexOf(id);
       if (index > -1) {
@@ -695,6 +680,7 @@ export default {
   background: var(--s-25);
   gap: 16px;
   flex-shrink: 0;
+  min-height: 72px;
 
   &__left {
     display: flex;
@@ -710,6 +696,7 @@ export default {
 
     input {
       width: 100%;
+      height: 40px;
       padding: 10px 16px;
       border: 1px solid var(--s-200);
       border-radius: 6px;
@@ -738,10 +725,12 @@ export default {
     display: flex;
     gap: 12px;
     flex-shrink: 0;
+    align-items: center;
   }
 
   &__filter {
     min-width: 160px;
+    height: 40px;
     padding: 10px 14px;
     border: 1px solid var(--s-200);
     border-radius: 6px;
@@ -763,6 +752,7 @@ export default {
   }
 
   &__clear {
+    height: 40px;
     padding: 10px 16px;
     background: var(--s-100);
     border: none;
@@ -810,7 +800,6 @@ export default {
   min-width: 0;
   min-height: 0;
 
-
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -845,11 +834,11 @@ export default {
     font-size: 12px;
     text-transform: uppercase;
     color: var(--s-600);
-    background: #fafafa;
-    background-color: #fafafa;
+    background: #ffffff;
+    background-color: #ffffff;
     border-bottom: 2px solid var(--s-200);
     white-space: nowrap;
-    z-index: 1;
+    z-index: 10;
 
     &--sortable {
       cursor: pointer;
@@ -1150,6 +1139,7 @@ export default {
   padding: 14px 24px;
   border-top: 1px solid var(--s-100);
   background: var(--s-25);
+  flex-shrink: 0;
 
   &__info {
     font-size: 13px;
@@ -1526,8 +1516,8 @@ export default {
 
   .list-table {
     &__th {
-      background: #1e1e1e;
-      background-color: #1e1e1e;
+      background: #1f2937;
+      background-color: #1f2937;
       border-bottom-color: var(--s-700);
       color: var(--s-400);
     }
