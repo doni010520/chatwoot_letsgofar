@@ -156,7 +156,7 @@
               </span>
             </td>
             <td class="list-table__td list-table__td--message">
-              <span class="message-preview" :title="msg.content">{{ truncateMessage(msg.content) }}</span>
+              <span class="message-preview">{{ truncateMessage(msg.content) }}</span>
             </td>
             <td class="list-table__td list-table__td--user">
               <div class="user-info">
