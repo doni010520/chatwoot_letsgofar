@@ -1313,7 +1313,7 @@ export default {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--s-500);
     margin: 0 0 10px 0;
     letter-spacing: 0.8px;
   }
@@ -1356,13 +1356,13 @@ export default {
   &__name {
     font-size: 17px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--s-900);
     margin-bottom: 4px;
   }
 
   &__phone {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--s-500);
   }
 }
 
@@ -1371,23 +1371,23 @@ export default {
   align-items: center;
   gap: 10px;
   font-size: 14px;
-  color: #ffffff;
+  color: var(--s-800);
   font-weight: 500;
 
   svg {
     width: 16px;
     height: 16px;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--s-400);
     flex-shrink: 0;
   }
 }
 
 .message-full {
   padding: 14px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--s-50);
+  border: 1px solid var(--s-200);
   border-radius: 8px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--s-800);
   line-height: 1.6;
   font-size: 14px;
   white-space: pre-wrap;
@@ -1400,16 +1400,16 @@ export default {
   }
 
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--s-100);
     border-radius: 3px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--s-300);
     border-radius: 3px;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: var(--s-400);
     }
   }
 }
@@ -1438,7 +1438,7 @@ export default {
 
   &__name {
     font-size: 13px;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--s-800);
     font-weight: 500;
   }
 }
@@ -1449,7 +1449,7 @@ export default {
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--s-200);
 }
 
 .btn-close {
@@ -1546,13 +1546,53 @@ export default {
 
     &::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.2);
+  
+  .view-section__title {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  
+  .contact-detail__name {
+    color: #ffffff;
+  }
+
+  .contact-detail__phone {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .view-info {
+    color: #ffffff;
+
+    svg {
+      color: rgba(255, 255, 255, 0.5);
+    }
+  }
+
+  .message-full {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+
+    &::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
 
       &:hover {
         background: rgba(255, 255, 255, 0.3);
       }
     }
   }
-  
+
+  .user-detail__name {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .modal-actions {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
   .list-table {
     &__th {
       background: #141517;
