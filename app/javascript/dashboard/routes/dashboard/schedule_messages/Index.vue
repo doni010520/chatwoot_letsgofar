@@ -858,7 +858,8 @@ export default {
     cursor: pointer;
 
     &:hover {
-      background: var(--s-25);
+      background: #f8f8f8;
+      background-color: #f8f8f8;
     }
 
     &--selected {
@@ -1501,7 +1502,8 @@ export default {
     }
 
     &__row:hover {
-      background: var(--s-800);
+      background: #2a2a2a;
+      background-color: #2a2a2a;
     }
 
     &__td {
