@@ -177,6 +177,18 @@
             </td>
             <td class="list-table__td list-table__td--actions" @click.stop>
               <div class="actions-menu">
+                <button 
+                  class="action-btn action-btn--edit" 
+                  :class="{ 'action-btn--disabled': !canEditMessage(msg) }"
+                  :disabled="!canEditMessage(msg)"
+                  title="Editar"
+                  @click="canEditMessage(msg) && openEditMode(msg)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
                 <button class="action-btn action-btn--danger" title="Excluir" @click="deleteMessage(msg)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polyline points="3 6 5 6 21 6"/>
@@ -230,15 +242,15 @@
       </div>
     </div>
 
-    <!-- Modal de Visualização -->
+    <!-- Modal de Visualização/Edição -->
     <div v-if="showViewModal" class="modal-overlay" @click.self="closeViewModal">
       <div class="modal-content modal-content--view">
         <div class="modal-header">
-          <h3>Detalhes do Agendamento</h3>
+          <h3>{{ isEditMode ? 'Editar Agendamento' : 'Detalhes do Agendamento' }}</h3>
           <button class="modal-close" @click="closeViewModal">✕</button>
         </div>
         <div class="modal-body">
-          <!-- Contato -->
+          <!-- Contato (sempre somente leitura) -->
           <div class="view-section">
             <h4 class="view-section__title">Contato</h4>
             <div class="contact-detail">
@@ -258,11 +270,18 @@
               </div>
             </div>
           </div>
-
+    
           <!-- Agendamento -->
           <div class="view-section">
             <h4 class="view-section__title">Envio Agendado Para</h4>
-            <div class="view-info">
+            <div v-if="isEditMode" class="edit-field">
+              <input 
+                type="datetime-local" 
+                v-model="editingScheduledAt"
+                class="edit-input edit-input--datetime"
+              />
+            </div>
+            <div v-else class="view-info">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
@@ -270,8 +289,8 @@
               <span>{{ formatDateTime(viewingMessage.scheduled_at) }}</span>
             </div>
           </div>
-
-          <!-- Status -->
+    
+          <!-- Status (sempre somente leitura) -->
           <div class="view-section">
             <h4 class="view-section__title">Status</h4>
             <span
@@ -281,14 +300,21 @@
               {{ statusLabel(viewingMessage.status) }}
             </span>
           </div>
-
+    
           <!-- Mensagem -->
           <div class="view-section">
             <h4 class="view-section__title">Mensagem</h4>
-            <div class="message-full">{{ viewingMessage.content || '-' }}</div>
+            <textarea 
+              v-if="isEditMode"
+              v-model="editingContent"
+              class="edit-input edit-input--textarea"
+              rows="4"
+              placeholder="Digite a mensagem..."
+            ></textarea>
+            <div v-else class="message-full">{{ viewingMessage.content || '-' }}</div>
           </div>
-
-          <!-- Informações de Criação -->
+    
+          <!-- Informações de Criação (sempre somente leitura) -->
           <div class="view-section-grid">
             <div class="view-section">
               <h4 class="view-section__title">Agendado Por</h4>
@@ -306,7 +332,7 @@
                 <span class="user-detail__name">{{ getUserInfo(viewingMessage).name }}</span>
               </div>
             </div>
-
+    
             <div class="view-section">
               <h4 class="view-section__title">Criado Em</h4>
               <div class="view-info">
@@ -320,8 +346,24 @@
               </div>
             </div>
           </div>
-
+    
           <div class="modal-actions">
+            <button 
+              v-if="isEditMode" 
+              class="btn-save" 
+              :disabled="savingEdit"
+              @click="saveEdit"
+            >
+              {{ savingEdit ? 'Salvando...' : 'Salvar' }}
+            </button>
+            <button 
+              v-if="isEditMode" 
+              class="btn-cancel" 
+              :disabled="savingEdit"
+              @click="cancelEdit"
+            >
+              Cancelar
+            </button>
             <button class="btn-close" @click="closeViewModal">Fechar</button>
           </div>
         </div>
@@ -355,6 +397,10 @@ export default {
     const sortDirection = ref('asc');
     const showViewModal = ref(false);
     const viewingMessage = ref({});
+    const isEditMode = ref(false);
+    const editingContent = ref('');
+    const editingScheduledAt = ref('');
+    const savingEdit = ref(false);
     
     const filters = ref({
       search: '',
@@ -434,6 +480,14 @@ export default {
     const hasFilters = computed(() => {
       return searchQuery.value || filters.value.status;
     });
+    
+    const currentUser = computed(() => store.getters.getCurrentUser);
+    
+    const canEditMessage = (msg) => {
+      if (!msg || msg.status !== 'pending') return false;
+      const messageCreatorId = msg.created_by?.id || msg.user?.id || msg.sender?.id || msg.agent?.id;
+      return messageCreatorId === currentUser.value?.id;
+    };
 
     // Methods
     const getUserInfo = (msg) => {
@@ -571,6 +625,9 @@ export default {
     const closeViewModal = () => {
       showViewModal.value = false;
       viewingMessage.value = {};
+      isEditMode.value = false;
+      editingContent.value = '';
+      editingScheduledAt.value = '';
     };
 
     const deleteMessage = async (msg) => {
@@ -583,6 +640,65 @@ export default {
         console.error('Erro ao deletar:', error);
         alert('Erro ao excluir a mensagem. Tente novamente.');
       }
+    };
+
+    const openEditMode = (msg) => {
+      viewingMessage.value = { ...msg };
+      editingContent.value = msg.content || '';
+      editingScheduledAt.value = formatDateTimeForInput(msg.scheduled_at);
+      isEditMode.value = true;
+      showViewModal.value = true;
+    };
+    
+    const formatDateTimeForInput = (date) => {
+      if (!date) return '';
+      const d = new Date(date);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+    
+    const saveEdit = async () => {
+      if (!editingContent.value.trim()) {
+        alert('A mensagem não pode estar vazia.');
+        return;
+      }
+      
+      if (!editingScheduledAt.value) {
+        alert('Selecione uma data e hora para o envio.');
+        return;
+      }
+    
+      const scheduledDate = new Date(editingScheduledAt.value);
+      if (scheduledDate <= new Date()) {
+        alert('A data de envio deve ser no futuro.');
+        return;
+      }
+    
+      savingEdit.value = true;
+      try {
+        await store.dispatch('scheduledMessages/update', {
+          id: viewingMessage.value.id,
+          content: editingContent.value,
+          scheduled_at: scheduledDate.toISOString()
+        });
+        await loadMessages();
+        closeViewModal();
+      } catch (error) {
+        console.error('Erro ao salvar:', error);
+        alert('Erro ao salvar as alterações. Tente novamente.');
+      } finally {
+        savingEdit.value = false;
+      }
+    };
+    
+    const cancelEdit = () => {
+      isEditMode.value = false;
+      editingContent.value = '';
+      editingScheduledAt.value = '';
     };
 
     // Lifecycle
@@ -625,7 +741,16 @@ export default {
       getAvatarColor,
       viewMessage,
       closeViewModal,
-      deleteMessage
+      deleteMessage,
+      isEditMode,
+      editingContent,
+      editingScheduledAt,
+      savingEdit,
+      currentUser,
+      canEditMessage,
+      openEditMode,
+      saveEdit,
+      cancelEdit
     };
   }
 };
@@ -1467,6 +1592,108 @@ export default {
     background: var(--w-600);
   }
 }
+
+/* Edit Button */
+.action-btn--edit {
+  &:hover:not(:disabled) {
+    background: #dbeafe;
+    border-color: #93c5fd;
+
+    svg {
+      color: #1d4ed8;
+    }
+  }
+
+  &--disabled,
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    
+    &:hover {
+      background: var(--white);
+      border-color: var(--s-200);
+      
+      svg {
+        color: var(--s-600);
+      }
+    }
+  }
+}
+
+/* Edit Fields */
+.edit-field {
+  width: 100%;
+}
+
+.edit-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--s-300);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--white);
+  color: var(--s-900);
+  transition: border-color 0.2s, box-shadow 0.2s;
+
+  &:focus {
+    outline: none;
+    border-color: var(--w-500);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &--datetime {
+    font-family: inherit;
+  }
+
+  &--textarea {
+    resize: vertical;
+    min-height: 100px;
+    line-height: 1.6;
+  }
+}
+
+/* Modal Action Buttons */
+.btn-save {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #10b981;
+  border: none;
+  color: var(--white);
+
+  &:hover:not(:disabled) {
+    background: #059669;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-cancel {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--s-200);
+  border: none;
+  color: var(--s-700);
+
+  &:hover:not(:disabled) {
+    background: var(--s-300);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
   
 /* Dark Mode */
 .dark {
@@ -1476,6 +1703,41 @@ export default {
     border-bottom-color: var(--s-700);
   }
 
+.action-btn--edit {
+    &:hover:not(:disabled) {
+      background: rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.4);
+
+      svg {
+        color: #60a5fa;
+      }
+    }
+  }
+
+  .edit-input {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+
+    &:focus {
+      border-color: var(--w-500);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  .btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+  
   .page-header__title {
     color: var(--s-100);
   }
