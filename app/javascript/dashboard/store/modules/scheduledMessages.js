@@ -4,6 +4,8 @@ const state = {
   records: [],
   uiFlags: {
     isFetching: false,
+    isCreating: false,
+    isUpdating: false,
   },
 };
 
@@ -35,10 +37,10 @@ const actions = {
     }
   },
 
-  async update({ commit }, { id, data }) {
+  async update({ commit }, { id, content, scheduled_at }) {
     commit('setUIFlag', { isUpdating: true });
     try {
-      const response = await ScheduledMessagesAPI.update(id, data);
+      const response = await ScheduledMessagesAPI.update(id, { content, scheduled_at });
       commit('updateMessage', response.data);
       return response;
     } finally {
