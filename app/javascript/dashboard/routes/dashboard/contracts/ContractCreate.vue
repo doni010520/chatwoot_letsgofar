@@ -8,23 +8,20 @@ import ContractsAPI, { ContractTemplates } from 'dashboard/api/contracts';
 import ContractForm from './components/ContractForm.vue';
 import ContractEditor from './components/ContractEditor.vue';
 import ContractSigners from './components/ContractSigners.vue';
+import Button from 'dashboard/components-next/button/Button.vue';
+import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 const router = useRouter();
 const { accountScopedRoute } = useAccount();
-const { showAlert } = useAlert();
+const showAlert = useAlert;
 
-// Estado do wizard
 const currentStep = ref(1);
 const isLoading = ref(false);
 const isSaving = ref(false);
-
-// Template carregado
 const template = ref(null);
 
-// Dados do contrato
 const contractData = reactive({
   title: 'Contrato de Prestação de Serviços - Assessoria de Inglês',
-  // Dados do contratante
   contractor_name: '',
   contractor_cpf: '',
   contractor_rg: '',
@@ -36,7 +33,6 @@ const contractData = reactive({
   contractor_email: '',
   contractor_phone: '',
   contractor_birth_date: '',
-  // Dados do plano
   plan_name: '',
   plan_duration: '',
   sessions_call_estrategica: 0,
@@ -47,21 +43,17 @@ const contractData = reactive({
   installments_count: 1,
   first_installment_value: '',
   installment_due_day: 10,
-  // Conteúdo
   content_html: '',
-  // Signatários
   contract_signers_attributes: [],
 });
 
-// Steps do wizard
 const steps = [
-  { number: 1, title: 'Dados do Contratante', icon: 'i-lucide-user' },
-  { number: 2, title: 'Dados do Plano', icon: 'i-lucide-package' },
-  { number: 3, title: 'Revisar Contrato', icon: 'i-lucide-file-text' },
+  { number: 1, title: 'Contratante', icon: 'i-lucide-user' },
+  { number: 2, title: 'Plano', icon: 'i-lucide-package' },
+  { number: 3, title: 'Contrato', icon: 'i-lucide-file-text' },
   { number: 4, title: 'Signatários', icon: 'i-lucide-pen-tool' },
 ];
 
-// Validação por step
 const isStepValid = computed(() => {
   switch (currentStep.value) {
     case 1:
@@ -90,7 +82,6 @@ const isStepValid = computed(() => {
   }
 });
 
-// Carregar template padrão
 const loadTemplate = async () => {
   isLoading.value = true;
   try {
@@ -98,19 +89,15 @@ const loadTemplate = async () => {
     template.value = response.data.data;
   } catch (error) {
     console.error('Erro ao carregar template:', error);
-    showAlert('Erro ao carregar template do contrato');
   } finally {
     isLoading.value = false;
   }
 };
 
-// Aplicar variáveis ao template
 const applyVariables = () => {
   if (!template.value?.content_html) return;
 
   let html = template.value.content_html;
-
-  // Substituir placeholders
   const variables = {
     contractor_name: contractData.contractor_name,
     contractor_cpf: contractData.contractor_cpf,
@@ -122,7 +109,7 @@ const applyVariables = () => {
     contractor_cep: contractData.contractor_cep,
     contractor_email: contractData.contractor_email,
     contractor_phone: contractData.contractor_phone,
-    contractor_birth_date: contractData.contractor_birth_date 
+    contractor_birth_date: contractData.contractor_birth_date
       ? new Date(contractData.contractor_birth_date).toLocaleDateString('pt-BR')
       : '-',
     plan_name: contractData.plan_name,
@@ -131,7 +118,7 @@ const applyVariables = () => {
     sessions_individual: contractData.sessions_individual || 0,
     sessions_group_consultive: contractData.sessions_group_consultive || 0,
     sessions_group_meetings: contractData.sessions_group_meetings || 0,
-    plan_value: contractData.plan_value 
+    plan_value: contractData.plan_value
       ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
       : '0,00',
     installments_count: contractData.installments_count || 1,
@@ -147,43 +134,31 @@ const applyVariables = () => {
   contractData.content_html = html;
 };
 
-// Navegação
 const nextStep = () => {
-  if (currentStep.value === 2) {
-    applyVariables();
-  }
-  if (currentStep.value < 4) {
-    currentStep.value++;
-  }
+  if (currentStep.value === 2) applyVariables();
+  if (currentStep.value < 4) currentStep.value++;
 };
 
 const prevStep = () => {
-  if (currentStep.value > 1) {
-    currentStep.value--;
-  }
+  if (currentStep.value > 1) currentStep.value--;
 };
 
-const goToStep = (step) => {
+const goToStep = step => {
   if (step < currentStep.value || isStepValid.value) {
-    if (step === 3 && currentStep.value === 2) {
-      applyVariables();
-    }
+    if (step === 3 && currentStep.value === 2) applyVariables();
     currentStep.value = step;
   }
 };
 
-// Salvar contrato
-const saveContract = async (asDraft = true) => {
+const saveContract = async () => {
   isSaving.value = true;
   try {
     const response = await ContractsAPI.create({
       ...contractData,
       title: contractData.title || `Contrato - ${contractData.contractor_name}`,
     });
-
     const contract = response.data.data;
-
-    showAlert(asDraft ? 'Rascunho salvo com sucesso!' : 'Contrato criado com sucesso!');
+    showAlert('Contrato criado com sucesso!');
     router.push(accountScopedRoute('contracts_view', { contractId: contract.id }));
   } catch (error) {
     console.error('Erro ao salvar contrato:', error);
@@ -193,166 +168,121 @@ const saveContract = async (asDraft = true) => {
   }
 };
 
-// Cancelar
 const cancel = () => {
   router.push(accountScopedRoute('contracts_list'));
 };
 
-// Atualizar signatários
-const updateSigners = (signers) => {
+const updateSigners = signers => {
   contractData.contract_signers_attributes = signers;
 };
 
-// Carregar ao montar
 onMounted(() => {
   loadTemplate();
 });
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-slate-50 dark:bg-slate-900">
+  <div class="flex flex-col flex-1 h-full overflow-auto bg-n-surface-1">
     <!-- Header -->
-    <header class="px-8 py-5 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
-          <button
-            class="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            @click="cancel"
-          >
-            <span class="i-lucide-arrow-left text-xl" />
-          </button>
-          <div>
-            <h1 class="text-xl font-bold text-slate-900 dark:text-white">
-              Novo Contrato
-            </h1>
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-              Preencha os dados para gerar o contrato
-            </p>
-          </div>
+    <header class="flex items-center justify-between px-6 py-4 border-b border-n-weak">
+      <div class="flex items-center gap-3">
+        <button
+          class="p-1.5 rounded-lg text-n-slate-11 hover:bg-n-alpha-3 transition-colors"
+          @click="cancel"
+        >
+          <span class="i-lucide-arrow-left text-lg" />
+        </button>
+        <div>
+          <h1 class="text-lg font-medium text-n-slate-12">Novo Contrato</h1>
+          <p class="text-sm text-n-slate-11">Preencha os dados para gerar o contrato</p>
         </div>
-
-        <div class="flex items-center gap-3">
-          <button
-            class="px-4 py-2 text-slate-600 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-            @click="cancel"
-          >
-            Cancelar
-          </button>
-          <button
-            v-if="currentStep === 4"
-            class="px-5 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-medium rounded-lg shadow-lg shadow-rose-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="!isStepValid || isSaving"
-            @click="saveContract(false)"
-          >
-            <span v-if="isSaving" class="i-lucide-loader-2 animate-spin mr-2" />
-            {{ isSaving ? 'Salvando...' : 'Criar Contrato' }}
-          </button>
-        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <Button
+          label="Cancelar"
+          variant="faded"
+          color="slate"
+          size="sm"
+          @click="cancel"
+        />
+        <Button
+          v-if="currentStep === 4"
+          label="Criar Contrato"
+          color="blue"
+          size="sm"
+          :is-loading="isSaving"
+          :disabled="!isStepValid || isSaving"
+          @click="saveContract"
+        />
       </div>
     </header>
 
     <!-- Steps Indicator -->
-    <div class="px-8 py-6 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-      <div class="flex items-center justify-between max-w-3xl mx-auto">
-        <template v-for="(step, index) in steps" :key="step.number">
-          <!-- Step -->
-          <button
-            class="flex items-center gap-3 group"
-            :class="{ 'cursor-pointer': step.number <= currentStep || isStepValid }"
-            @click="goToStep(step.number)"
-          >
-            <div
-              class="flex items-center justify-center w-10 h-10 rounded-full transition-all duration-300"
-              :class="[
-                currentStep === step.number
-                  ? 'bg-rose-600 text-white shadow-lg shadow-rose-500/30'
-                  : currentStep > step.number
-                    ? 'bg-green-500 text-white'
-                    : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-              ]"
-            >
-              <span v-if="currentStep > step.number" class="i-lucide-check text-lg" />
-              <span v-else :class="step.icon" class="text-lg" />
-            </div>
-            <div class="hidden sm:block text-left">
-              <p
-                class="text-sm font-medium transition-colors"
-                :class="[
-                  currentStep === step.number
-                    ? 'text-rose-600 dark:text-rose-500'
-                    : currentStep > step.number
-                      ? 'text-green-600 dark:text-green-500'
-                      : 'text-slate-500 dark:text-slate-400'
-                ]"
-              >
-                Passo {{ step.number }}
-              </p>
-              <p
-                class="text-sm"
-                :class="[
-                  currentStep >= step.number
-                    ? 'text-slate-900 dark:text-white font-medium'
-                    : 'text-slate-400 dark:text-slate-500'
-                ]"
-              >
-                {{ step.title }}
-              </p>
-            </div>
-          </button>
-
-          <!-- Connector -->
+    <div class="flex items-center justify-center gap-2 px-6 py-4 border-b border-n-weak">
+      <template v-for="(step, index) in steps" :key="step.number">
+        <button
+          class="flex items-center gap-2"
+          @click="goToStep(step.number)"
+        >
           <div
-            v-if="index < steps.length - 1"
-            class="flex-1 h-0.5 mx-4 rounded-full transition-colors duration-300"
-            :class="currentStep > step.number ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700'"
-          />
-        </template>
-      </div>
+            class="flex items-center justify-center w-8 h-8 rounded-full text-sm transition-colors"
+            :class="[
+              currentStep === step.number
+                ? 'bg-n-brand text-white'
+                : currentStep > step.number
+                  ? 'bg-n-teal-9 text-white'
+                  : 'bg-n-alpha-3 text-n-slate-11'
+            ]"
+          >
+            <span v-if="currentStep > step.number" class="i-lucide-check text-sm" />
+            <span v-else>{{ step.number }}</span>
+          </div>
+          <span
+            class="text-sm hidden sm:inline"
+            :class="currentStep >= step.number ? 'text-n-slate-12 font-medium' : 'text-n-slate-11'"
+          >
+            {{ step.title }}
+          </span>
+        </button>
+        <div
+          v-if="index < steps.length - 1"
+          class="w-8 h-px mx-1"
+          :class="currentStep > step.number ? 'bg-n-teal-9' : 'bg-n-weak'"
+        />
+      </template>
     </div>
 
     <!-- Content -->
     <div class="flex-1 overflow-auto">
-      <div class="max-w-4xl mx-auto px-8 py-8">
+      <div class="max-w-3xl mx-auto px-6 py-6">
         <!-- Loading -->
-        <div v-if="isLoading" class="flex items-center justify-center h-64">
-          <div class="flex flex-col items-center gap-4">
-            <div class="relative">
-              <div class="w-12 h-12 rounded-full border-4 border-slate-200 dark:border-slate-700" />
-              <div class="absolute inset-0 w-12 h-12 rounded-full border-4 border-rose-600 border-t-transparent animate-spin" />
-            </div>
-            <p class="text-sm text-slate-500 dark:text-slate-400">Carregando template...</p>
-          </div>
+        <div v-if="isLoading" class="flex items-center justify-center py-16">
+          <Spinner />
         </div>
 
-        <!-- Step 1: Dados do Contratante -->
+        <!-- Step 1: Contratante -->
         <div v-else-if="currentStep === 1">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-              <span class="i-lucide-user text-rose-600" />
+          <div class="p-6 rounded-xl bg-n-solid-2 border border-n-weak">
+            <h2 class="text-base font-medium text-n-slate-12 mb-4 flex items-center gap-2">
+              <span class="i-lucide-user text-n-slate-11" />
               Dados do Contratante
             </h2>
-            <ContractForm
-              v-model="contractData"
-              section="contractor"
-            />
+            <ContractForm v-model="contractData" section="contractor" />
           </div>
         </div>
 
-        <!-- Step 2: Dados do Plano -->
+        <!-- Step 2: Plano -->
         <div v-else-if="currentStep === 2">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-              <span class="i-lucide-package text-rose-600" />
+          <div class="p-6 rounded-xl bg-n-solid-2 border border-n-weak">
+            <h2 class="text-base font-medium text-n-slate-12 mb-4 flex items-center gap-2">
+              <span class="i-lucide-package text-n-slate-11" />
               Dados do Plano
             </h2>
-            <ContractForm
-              v-model="contractData"
-              section="plan"
-            />
+            <ContractForm v-model="contractData" section="plan" />
           </div>
         </div>
 
-        <!-- Step 3: Revisar Contrato -->
+        <!-- Step 3: Contrato -->
         <div v-else-if="currentStep === 3">
           <ContractEditor
             v-model="contractData.content_html"
@@ -363,9 +293,9 @@ onMounted(() => {
 
         <!-- Step 4: Signatários -->
         <div v-else-if="currentStep === 4">
-          <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
-            <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-              <span class="i-lucide-pen-tool text-rose-600" />
+          <div class="p-6 rounded-xl bg-n-solid-2 border border-n-weak">
+            <h2 class="text-base font-medium text-n-slate-12 mb-4 flex items-center gap-2">
+              <span class="i-lucide-pen-tool text-n-slate-11" />
               Signatários
             </h2>
             <ContractSigners
@@ -379,34 +309,33 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Footer Navigation -->
-    <footer class="px-8 py-4 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700">
-      <div class="max-w-4xl mx-auto flex items-center justify-between">
-        <button
-          v-if="currentStep > 1"
-          class="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-300 font-medium rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-          @click="prevStep"
-        >
-          <span class="i-lucide-arrow-left" />
-          Voltar
-        </button>
-        <div v-else />
+    <!-- Footer -->
+    <footer class="flex items-center justify-between px-6 py-3 border-t border-n-weak">
+      <Button
+        v-if="currentStep > 1"
+        label="Voltar"
+        icon="i-lucide-arrow-left"
+        variant="faded"
+        color="slate"
+        size="sm"
+        @click="prevStep"
+      />
+      <div v-else />
 
-        <div class="flex items-center gap-3">
-          <span class="text-sm text-slate-500 dark:text-slate-400">
-            Passo {{ currentStep }} de {{ steps.length }}
-          </span>
-          
-          <button
-            v-if="currentStep < 4"
-            class="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-700 hover:to-rose-800 text-white font-medium rounded-lg shadow-lg shadow-rose-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            :disabled="!isStepValid"
-            @click="nextStep"
-          >
-            Próximo
-            <span class="i-lucide-arrow-right" />
-          </button>
-        </div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-n-slate-11">
+          Passo {{ currentStep }} de {{ steps.length }}
+        </span>
+        <Button
+          v-if="currentStep < 4"
+          label="Próximo"
+          trailing-icon
+          icon="i-lucide-arrow-right"
+          color="blue"
+          size="sm"
+          :disabled="!isStepValid"
+          @click="nextStep"
+        />
       </div>
     </footer>
   </div>
