@@ -35,6 +35,8 @@ const contractData = reactive({
   contractor_birth_date: '',
   plan_name: '',
   plan_duration: '',
+  plan_start_date: '',
+  plan_end_date: '',
   sessions_call_estrategica: 0,
   sessions_individual: 0,
   sessions_group_consultive: 0,

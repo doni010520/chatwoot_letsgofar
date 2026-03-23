@@ -154,6 +154,19 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
         </div>
       </div>
 
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label :class="labelClass">Data de Início do Plano</label>
+          <input type="date" :class="inputClass" :value="modelValue.plan_start_date"
+            @input="updateField('plan_start_date', $event.target.value)" />
+        </div>
+        <div>
+          <label :class="labelClass">Data de Término do Plano</label>
+          <input type="date" :class="inputClass" :value="modelValue.plan_end_date"
+            @input="updateField('plan_end_date', $event.target.value)" />
+        </div>
+      </div>
+
       <div class="p-4 rounded-lg bg-n-alpha-2 border border-n-weak">
         <p class="text-sm font-medium text-n-slate-12 mb-3">Sessões Incluídas</p>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
