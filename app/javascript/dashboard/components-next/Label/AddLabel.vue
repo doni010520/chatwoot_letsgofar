@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
-
+   
 defineProps({
   labelMenuItems: {
     type: Array,
