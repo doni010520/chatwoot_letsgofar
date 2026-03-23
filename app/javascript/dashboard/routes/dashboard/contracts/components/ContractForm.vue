@@ -13,7 +13,8 @@ const states = [
 ];
 
 const updateField = (field, value) => {
-  emit('update:modelValue', { ...props.modelValue, [field]: value });
+  // Atualiza diretamente no objeto reactive (mutação direta funciona com reactive)
+  props.modelValue[field] = value;
 };
 
 const formatCPF = v => {
