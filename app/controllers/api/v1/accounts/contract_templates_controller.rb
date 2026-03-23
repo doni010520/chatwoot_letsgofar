@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Accounts::ContractTemplatesController < Api::V1::Accounts::BaseController
+  before_action :check_authorization
   before_action :set_template, only: [:show, :update, :destroy, :preview]
 
   def index

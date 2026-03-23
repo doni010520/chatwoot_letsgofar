@@ -99,8 +99,11 @@ class Public::Api::V1::ContractsController < PublicController
   # GET /public/api/v1/contracts/:token/download
   # Download do contrato em PDF
   def download
-    # TODO: Implementar geração de PDF
-    render json: { error: 'Funcionalidade em desenvolvimento' }, status: :not_implemented
+    pdf_data = @contract.generate_signed_pdf
+    send_data pdf_data,
+              filename: "#{@contract.contract_number}.pdf",
+              type: 'application/pdf',
+              disposition: 'attachment'
   end
 
   private

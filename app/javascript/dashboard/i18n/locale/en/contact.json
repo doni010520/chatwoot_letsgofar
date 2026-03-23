@@ -502,6 +502,7 @@
     "SIDEBAR": {
       "TABS": {
         "ATTRIBUTES": "Attributes",
+        "CONTRACTS": "Contracts",
         "HISTORY": "History",
         "NOTES": "Notes",
         "MERGE": "Merge"

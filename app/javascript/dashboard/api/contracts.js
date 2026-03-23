@@ -55,6 +55,11 @@ class ContractsAPI extends ApiClient {
     return axios.get(`${this.url}/${id}/download_pdf`, { responseType: 'blob' });
   }
 
+  // Contratos vencendo em 30 dias
+  expiring() {
+    return axios.get(`${this.url}/expiring`);
+  }
+
   // Estatísticas
   stats() {
     return axios.get(`${this.url}/stats`);
