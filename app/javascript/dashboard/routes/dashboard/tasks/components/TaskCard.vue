@@ -56,8 +56,8 @@ const formattedDueDate = computed(() => {
     return { text: t('TASKS.DUE_DATE.TOMORROW'), class: 'text-n-slate-11' };
   }
   if (diffDays < 0) {
-    return { text: t('TASKS.DUE_DATE.OVERDUE'), class: 'text-ruby-11 font-medium' };
-  }
+     return { text: t('TASKS.DUE_DATE.OVERDUE'), class: 'text-red-500 font-bold' };
+   }
   if (diffDays <= 7) {
     return {
       text: dueDate.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' }),
