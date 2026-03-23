@@ -12,7 +12,7 @@ import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 const route = useRoute();
 const router = useRouter();
 const { accountScopedRoute } = useAccount();
-const { showAlert } = useAlert();
+const showAlert = useAlert;
 
 const contract = ref(null);
 const isLoading = ref(true);
