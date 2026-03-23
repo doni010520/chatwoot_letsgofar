@@ -11,7 +11,7 @@ import ContractSigners from './components/ContractSigners.vue';
 
 const router = useRouter();
 const { accountScopedRoute } = useAccount();
-const { showAlert } = useAlert();
+const showAlert = useAlert;
 
 // Estado do wizard
 const currentStep = ref(1);

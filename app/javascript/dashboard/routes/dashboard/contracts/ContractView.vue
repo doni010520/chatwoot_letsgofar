@@ -10,7 +10,7 @@ import ContractTimeline from './components/ContractTimeline.vue';
 const route = useRoute();
 const router = useRouter();
 const { accountScopedRoute } = useAccount();
-const { showAlert } = useAlert();
+const showAlert = useAlert;
 
 // Estado
 const contract = ref(null);
