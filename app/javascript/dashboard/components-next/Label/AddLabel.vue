@@ -11,11 +11,21 @@ defineProps({
   },
 });
 
-const emit = defineEmits(['updateLabel']);
+const emit = defineEmits(['updateLabel', 'createLabel', 'editLabel']);
 
 const { t } = useI18n();
 
 const showDropdown = ref(false);
+
+const handleCreate = (title) => {
+  emit('createLabel', title);
+  showDropdown.value = false;
+};
+
+const handleEdit = (item) => {
+  emit('editLabel', item);
+  showDropdown.value = false;
+};
 </script>
 
 <template>
@@ -35,8 +45,10 @@ const showDropdown = ref(false);
       v-on-clickaway="() => (showDropdown = false)"
       :menu-items="labelMenuItems"
       show-search
-      class="z-[100] w-48 mt-2 overflow-y-auto ltr:left-0 rtl:right-0 top-full max-h-52"
+      class="z-[100] w-56 mt-2 overflow-y-auto ltr:left-0 rtl:right-0 top-full max-h-52"
       @action="emit('updateLabel', $event)"
+      @create="handleCreate"
+      @edit="handleEdit"
     >
       <template #thumbnail="{ item }">
         <div
