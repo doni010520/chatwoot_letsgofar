@@ -22,11 +22,17 @@ const editingLabel = ref(null);
 const editTitle = ref('');
 const editColor = ref('#1f93ff');
 const isSaving = ref(false);
+const isDeleting = ref(false);
 
 const hoveredLabel = ref(null);
 
 const allLabels = useMapGetter('labels/getLabels');
 const contactLabels = useMapGetter('contactLabels/getContactLabels');
+
+const predefinedColors = [
+  '#1f93ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
+];
 
 const savedLabels = computed(() => {
   const availableContactLabels = contactLabels.value(props.contactId);
@@ -50,13 +56,10 @@ const labelMenuItems = computed(() => {
     .toSorted((a, b) => Number(a.isSelected) - Number(b.isSelected));
 });
 
-const predefinedColors = [
-  '#1f93ff', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1'
-];
-
 const fetchLabels = async contactId => {
-  if (!contactId) return;
+  if (!contactId) {
+    return;
+  }
   store.dispatch('contactLabels/get', contactId);
 };
 
@@ -92,25 +95,44 @@ const handleRemoveLabel = label => {
 };
 
 const handleCreateLabel = async (title) => {
-  if (!title.trim()) return;
+  if (!title || !title.trim()) return;
   
+  const trimmedTitle = title.trim();
+  
+  // Verificar se já existe uma etiqueta com esse nome
+  const existingLabel = allLabels.value.find(
+    l => l.title.toLowerCase() === trimmedTitle.toLowerCase()
+  );
+  
+  if (existingLabel) {
+    // Se já existe, apenas adiciona ao contato
+    const currentLabels = savedLabels.value.map(label => label.title);
+    if (!currentLabels.includes(existingLabel.title)) {
+      await store.dispatch('contactLabels/update', {
+        contactId: props.contactId,
+        labels: [...currentLabels, existingLabel.title],
+      });
+    }
+    return;
+  }
+
   isSaving.value = true;
   try {
     // Criar a nova etiqueta
     await store.dispatch('labels/create', {
-      title: title.trim(),
+      title: trimmedTitle,
       color: predefinedColors[Math.floor(Math.random() * predefinedColors.length)],
       show_on_sidebar: true,
     });
 
-    // Recarregar etiquetas
+    // Recarregar etiquetas para obter a nova
     await store.dispatch('labels/get');
 
-    // Adicionar ao contato automaticamente
+    // Adicionar ao contato
     const currentLabels = savedLabels.value.map(label => label.title);
     await store.dispatch('contactLabels/update', {
       contactId: props.contactId,
-      labels: [...currentLabels, title.trim()],
+      labels: [...currentLabels, trimmedTitle],
     });
   } catch (error) {
     console.error('Erro ao criar etiqueta:', error);
@@ -120,9 +142,10 @@ const handleCreateLabel = async (title) => {
 };
 
 const handleEditLabel = (item) => {
-  editingLabel.value = item.originalLabel;
-  editTitle.value = item.originalLabel.title;
-  editColor.value = item.originalLabel.color;
+  const label = item.originalLabel || item;
+  editingLabel.value = label;
+  editTitle.value = label.title;
+  editColor.value = label.color;
   showEditModal.value = true;
 };
 
@@ -138,17 +161,58 @@ const saveEditLabel = async () => {
 
   isSaving.value = true;
   try {
+    const oldTitle = editingLabel.value.title;
+    const newTitle = editTitle.value.trim();
+
     await store.dispatch('labels/update', {
       id: editingLabel.value.id,
-      title: editTitle.value.trim(),
+      title: newTitle,
       color: editColor.value,
     });
+
+    // Se o título mudou e a etiqueta estava associada ao contato, atualizar
+    const currentLabels = savedLabels.value.map(label => label.title);
+    if (currentLabels.includes(oldTitle) && oldTitle !== newTitle) {
+      const updatedLabels = currentLabels.map(t => t === oldTitle ? newTitle : t);
+      await store.dispatch('contactLabels/update', {
+        contactId: props.contactId,
+        labels: updatedLabels,
+      });
+    }
+
     await store.dispatch('labels/get');
     closeEditModal();
   } catch (error) {
     console.error('Erro ao editar etiqueta:', error);
   } finally {
     isSaving.value = false;
+  }
+};
+
+const deleteLabel = async () => {
+  if (!editingLabel.value) return;
+
+  const confirmDelete = window.confirm(
+    `Tem certeza que deseja excluir a etiqueta "${editingLabel.value.title}"? Esta ação não pode ser desfeita.`
+  );
+
+  if (!confirmDelete) return;
+
+  isDeleting.value = true;
+  try {
+    await store.dispatch('labels/delete', editingLabel.value.id);
+    await store.dispatch('labels/get');
+    
+    // Recarregar etiquetas do contato
+    if (props.contactId) {
+      await store.dispatch('contactLabels/get', props.contactId);
+    }
+    
+    closeEditModal();
+  } catch (error) {
+    console.error('Erro ao excluir etiqueta:', error);
+  } finally {
+    isDeleting.value = false;
   }
 };
 
@@ -239,7 +303,21 @@ const handleLabelHover = labelId => {
             </div>
           </div>
 
-          <div class="flex gap-2 mt-6 justify-end">
+          <div class="flex gap-2 mt-6">
+            <!-- Botão Excluir (à esquerda) -->
+            <button
+              type="button"
+              class="px-3 py-2 text-sm rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 disabled:opacity-50 flex items-center gap-1"
+              :disabled="isDeleting"
+              @click="deleteLabel"
+            >
+              <span class="i-lucide-trash-2 size-4" />
+              {{ isDeleting ? 'Excluindo...' : 'Excluir' }}
+            </button>
+
+            <div class="flex-1" />
+
+            <!-- Botões Cancelar e Salvar (à direita) -->
             <button
               type="button"
               class="px-4 py-2 text-sm rounded-lg bg-n-alpha-2 text-n-slate-11 hover:bg-n-alpha-3"
