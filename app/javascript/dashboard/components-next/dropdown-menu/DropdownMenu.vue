@@ -44,7 +44,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['action', 'search']);
+const emit = defineEmits(['action', 'search', 'create', 'edit']);
 
 const { t } = useI18n();
 
@@ -101,9 +101,30 @@ const handleSearchInput = event => {
   }
 };
 
+const handleKeyDown = (event) => {
+  if (event.key === 'Enter' && searchQuery.value.trim()) {
+    if (filteredMenuItems.value.length === 0) {
+      emit('create', searchQuery.value.trim());
+      searchQuery.value = '';
+    }
+  }
+};
+
 const handleAction = item => {
   const { action, value, ...rest } = item;
   emit('action', { action, value, ...rest });
+};
+
+const handleEdit = (item, event) => {
+  event.stopPropagation();
+  emit('edit', item);
+};
+
+const handleCreate = () => {
+  if (searchQuery.value.trim()) {
+    emit('create', searchQuery.value.trim());
+    searchQuery.value = '';
+  }
 };
 
 const shouldShowEmptyState = computed(() => {
@@ -143,6 +164,7 @@ onMounted(() => {
           "
           class="reset-base w-full h-8 py-2 pl-10 pr-2 text-sm focus:outline-none border-none rounded-lg bg-n-alpha-black2 dark:bg-n-solid-1 text-n-slate-12"
           @input="handleSearchInput"
+          @keydown="handleKeyDown"
         />
       </div>
     </div>
@@ -175,7 +197,7 @@ onMounted(() => {
           v-for="(item, itemIndex) in section.items"
           :key="item.value || itemIndex"
           type="button"
-          class="inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+          class="group inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
           :class="{
             'bg-n-alpha-1 dark:bg-n-solid-active': item.isSelected,
             'text-n-ruby-11': item.action === 'delete',
@@ -201,11 +223,15 @@ onMounted(() => {
           <span v-if="item.emoji" class="flex-shrink-0">{{ item.emoji }}</span>
           <span
             v-if="item.label"
-            class="min-w-0 text-sm truncate"
+            class="min-w-0 text-sm truncate flex-1"
             :class="labelClass"
           >
             {{ item.label }}
           </span>
+          <span
+            class="i-lucide-pencil size-3 opacity-0 group-hover:opacity-100 transition-opacity text-n-slate-10 hover:text-n-slate-12"
+            @click="handleEdit(item, $event)"
+          />
         </button>
         <div
           v-if="sectionIndex < filteredMenuSections.length - 1"
@@ -218,7 +244,7 @@ onMounted(() => {
         v-for="(item, index) in filteredMenuItems"
         :key="index"
         type="button"
-        class="inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
+        class="group inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-2 disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50"
         :class="{
           'bg-n-alpha-1 dark:bg-n-solid-active': item.isSelected,
           'text-n-ruby-11': item.action === 'delete',
@@ -244,22 +270,37 @@ onMounted(() => {
         <span v-if="item.emoji" class="flex-shrink-0">{{ item.emoji }}</span>
         <span
           v-if="item.label"
-          class="min-w-0 text-sm truncate"
+          class="min-w-0 text-sm truncate flex-1"
           :class="labelClass"
         >
           {{ item.label }}
         </span>
+        <span
+          class="i-lucide-pencil size-3 opacity-0 group-hover:opacity-100 transition-opacity text-n-slate-10 hover:text-n-slate-12"
+          @click="handleEdit(item, $event)"
+        />
       </button>
     </template>
     <div
       v-if="shouldShowEmptyState"
       class="text-sm text-n-slate-11 px-2 py-1.5"
     >
-      {{
-        isSearching
-          ? t('DROPDOWN_MENU.SEARCHING')
-          : t('DROPDOWN_MENU.EMPTY_STATE')
-      }}
+      <template v-if="isSearching">
+        {{ t('DROPDOWN_MENU.SEARCHING') }}
+      </template>
+      <template v-else-if="searchQuery.trim()">
+        <button
+          type="button"
+          class="w-full text-left hover:bg-n-alpha-1 rounded-lg px-2 py-1.5 flex items-center gap-2"
+          @click="handleCreate"
+        >
+          <span class="i-lucide-plus size-3.5" />
+          <span>Criar "{{ searchQuery }}"</span>
+        </button>
+      </template>
+      <template v-else>
+        {{ t('DROPDOWN_MENU.EMPTY_STATE') }}
+      </template>
     </div>
     <slot name="footer" />
   </div>
