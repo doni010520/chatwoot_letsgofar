@@ -49,7 +49,7 @@ const handleMouseEnter = () => {
         :class="{ 'opacity-0': !isHovered, 'opacity-100': isHovered }"
         type="button"
         slate
-        xs
+        xs   
         faded
         icon="i-lucide-pencil"
         @click="handleEditLabel"
