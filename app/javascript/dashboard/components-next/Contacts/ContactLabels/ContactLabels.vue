@@ -65,18 +65,19 @@ const fetchLabels = async contactId => {
 
 const handleLabelAction = async ({ value }) => {
   try {
-    const currentLabels = savedLabels.value.map(label => label.title);
+    // Pegar diretamente do store, não do computed
+    const currentContactLabels = contactLabels.value(props.contactId) || [];
     const selectedLabel = allLabels.value.find(label => label.id === value);
     if (!selectedLabel) return;
 
     let updatedLabels;
 
-    if (currentLabels.includes(selectedLabel.title)) {
-      updatedLabels = currentLabels.filter(
+    if (currentContactLabels.includes(selectedLabel.title)) {
+      updatedLabels = currentContactLabels.filter(
         labelTitle => labelTitle !== selectedLabel.title
       );
     } else {
-      updatedLabels = [...currentLabels, selectedLabel.title];
+      updatedLabels = [...currentContactLabels, selectedLabel.title];
     }
 
     await store.dispatch('contactLabels/update', {
@@ -86,7 +87,7 @@ const handleLabelAction = async ({ value }) => {
 
     showDropdown.value = false;
   } catch (error) {
-    // error
+    console.error('Erro ao atualizar labels:', error);
   }
 };
 
@@ -104,13 +105,15 @@ const handleCreateLabel = async (title) => {
     l => l.title.toLowerCase() === trimmedTitle.toLowerCase()
   );
   
+  // Pegar as labels atuais do contato ANTES de qualquer operação
+  const currentContactLabels = contactLabels.value(props.contactId) || [];
+  
   if (existingLabel) {
-    // Se já existe, apenas adiciona ao contato
-    const currentLabels = savedLabels.value.map(label => label.title);
-    if (!currentLabels.includes(existingLabel.title)) {
+    // Se já existe, apenas adiciona ao contato se ainda não estiver
+    if (!currentContactLabels.includes(existingLabel.title)) {
       await store.dispatch('contactLabels/update', {
         contactId: props.contactId,
-        labels: [...currentLabels, existingLabel.title],
+        labels: [...currentContactLabels, existingLabel.title],
       });
     }
     return;
@@ -125,15 +128,15 @@ const handleCreateLabel = async (title) => {
       show_on_sidebar: true,
     });
 
-    // Recarregar etiquetas para obter a nova
-    await store.dispatch('labels/get');
-
-    // Adicionar ao contato
-    const currentLabels = savedLabels.value.map(label => label.title);
+    // Associar a nova etiqueta ao contato
+    // Usar as labels que pegamos ANTES de criar, mais a nova
     await store.dispatch('contactLabels/update', {
       contactId: props.contactId,
-      labels: [...currentLabels, trimmedTitle],
+      labels: [...currentContactLabels, trimmedTitle],
     });
+
+    // Recarregar para garantir sincronização
+    await store.dispatch('labels/get');
   } catch (error) {
     console.error('Erro ao criar etiqueta:', error);
   } finally {
@@ -171,9 +174,9 @@ const saveEditLabel = async () => {
     });
 
     // Se o título mudou e a etiqueta estava associada ao contato, atualizar
-    const currentLabels = savedLabels.value.map(label => label.title);
-    if (currentLabels.includes(oldTitle) && oldTitle !== newTitle) {
-      const updatedLabels = currentLabels.map(t => t === oldTitle ? newTitle : t);
+    const currentContactLabels = contactLabels.value(props.contactId) || [];
+    if (currentContactLabels.includes(oldTitle) && oldTitle !== newTitle) {
+      const updatedLabels = currentContactLabels.map(t => t === oldTitle ? newTitle : t);
       await store.dispatch('contactLabels/update', {
         contactId: props.contactId,
         labels: updatedLabels,
@@ -191,13 +194,7 @@ const saveEditLabel = async () => {
 
 const deleteLabel = async () => {
   if (!editingLabel.value) return;
-
-  const confirmDelete = window.confirm(
-    `Tem certeza que deseja excluir a etiqueta "${editingLabel.value.title}"? Esta ação não pode ser desfeita.`
-  );
-
-  if (!confirmDelete) return;
-
+  
   isDeleting.value = true;
   try {
     await store.dispatch('labels/delete', editingLabel.value.id);
