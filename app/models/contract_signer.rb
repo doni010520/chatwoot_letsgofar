@@ -8,9 +8,12 @@
 #  contract_id     :bigint           not null
 #  name            :string           not null
 #  email           :string           not null
+#  cpf             :string
 #  role            :string           default("contractor")
 #  sign_token      :string           not null
 #  status          :string           default("pending")
+#  sign_order      :integer          default(1)
+#  auto_sign       :boolean          default(false)
 #  viewed_at       :datetime
 #  signed_at       :datetime
 #  refused_at      :datetime
@@ -21,9 +24,10 @@
 class ContractSigner < ApplicationRecord
   belongs_to :contract
   has_one :contract_signature, dependent: :destroy
+  has_many :contract_activities, class_name: 'ContractActivity', dependent: :nullify
 
   # Roles possíveis
-  ROLES = %w[contractor contracted witness].freeze
+  ROLES = %w[contractor contracted witness company].freeze
 
   # Status possíveis
   STATUSES = %w[pending viewed signed refused].freeze
@@ -31,31 +35,22 @@ class ContractSigner < ApplicationRecord
   # Validações
   validates :name, presence: true
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :role, inclusion: { in: ROLES }
-  validates :status, inclusion: { in: STATUSES }
+  validates :email, uniqueness: { scope: :contract_id, message: 'já adicionado neste contrato' }
   validates :sign_token, presence: true, uniqueness: true
 
   # Scopes
   scope :pending, -> { where(status: %w[pending viewed]) }
   scope :signed, -> { where(status: 'signed') }
   scope :refused, -> { where(status: 'refused') }
+  scope :by_order, -> { order(:sign_order) }
 
   # Callbacks
   before_validation :generate_sign_token, on: :create
 
-  # Gerar token de assinatura
-  def generate_sign_token
-    self.sign_token ||= SecureRandom.uuid
-  end
+  # === Status helpers ===
 
-  # Regenerar token
-  def regenerate_token!
-    update!(sign_token: SecureRandom.uuid)
-  end
-
-  # Status helpers
   def pending?
-    status == 'pending'
+    %w[pending viewed].include?(status)
   end
 
   def viewed?
@@ -70,102 +65,131 @@ class ContractSigner < ApplicationRecord
     status == 'refused'
   end
 
-  # Verificar se pode assinar
+  def auto_sign?
+    auto_sign == true
+  end
+
   def can_sign?
     %w[pending viewed].include?(status)
   end
 
-  # Marcar como visualizado
-  def mark_as_viewed!
-    return unless pending?
+  # === Ações ===
 
-    update!(
-      status: 'viewed',
-      viewed_at: Time.current
-    )
+  def mark_as_viewed!(ip_address = nil)
+    return if viewed_at.present?
 
-    contract.contract_activities.create!(
-      activity_type: 'viewed',
-      contract_signer: self,
-      description: "#{name} visualizou o contrato"
+    update!(viewed_at: Time.current)
+
+    contract.log_activity!(
+      'viewed',
+      signer: self,
+      ip_address: ip_address,
+      metadata: { signer_name: name }
     )
   end
 
-  # Assinar contrato
   def sign!(signature_data = {})
     return false unless can_sign?
 
     transaction do
-      update!(
-        status: 'signed',
-        signed_at: Time.current
-      )
-
-      # Criar registro de assinatura com evidências
       create_contract_signature!(
         ip_address: signature_data[:ip_address],
         user_agent: signature_data[:user_agent],
-        geolocation: signature_data[:geolocation],
+        geolocation: signature_data[:geolocation] || {},
         signed_at: Time.current,
         signature_hash: generate_signature_hash(signature_data),
         browser_fingerprint: signature_data[:browser_fingerprint],
-        metadata: signature_data[:metadata] || {}
+        confirmation_name: signature_data[:confirmation_name],
+        confirmation_cpf: signature_data[:confirmation_cpf]
       )
 
-      contract.contract_activities.create!(
-        activity_type: 'signed',
-        contract_signer: self,
-        description: "#{name} assinou o contrato"
+      update!(status: 'signed', signed_at: Time.current)
+
+      contract.log_activity!(
+        'signed',
+        signer: self,
+        ip_address: signature_data[:ip_address],
+        metadata: { signer_name: name, signer_email: email }
       )
 
-      # Atualizar status do contrato
       contract.update_signature_status!
+
+      # Enviar confirmação (exceto para assinaturas automáticas)
+      unless auto_sign?
+        ContractMailer.signature_confirmation(self).deliver_later
+      end
     end
 
     true
+  rescue StandardError => e
+    Rails.logger.error "Erro ao assinar contrato: #{e.message}"
+    false
   end
 
-  # Recusar contrato
-  def refuse!(reason = nil)
+  def refuse!(reason = nil, ip_address = nil)
     return false unless can_sign?
 
-    transaction do
-      update!(
-        status: 'refused',
-        refused_at: Time.current,
-        refusal_reason: reason
-      )
+    update!(
+      status: 'refused',
+      refused_at: Time.current,
+      refusal_reason: reason
+    )
 
-      contract.contract_activities.create!(
-        activity_type: 'refused',
-        contract_signer: self,
-        description: "#{name} recusou o contrato#{reason.present? ? ": #{reason}" : ''}"
-      )
+    contract.log_activity!(
+      'refused',
+      signer: self,
+      ip_address: ip_address,
+      metadata: { signer_name: name, reason: reason }
+    )
 
-      # Atualizar status do contrato
-      contract.update_signature_status!
-    end
+    contract.update_signature_status!
+
+    # Notificar criador do contrato
+    ContractMailer.signature_refused(self).deliver_later
 
     true
   end
 
   # URL pública para assinatura
+  def sign_url
+    host = ENV.fetch('FRONTEND_URL', 'http://localhost:3000')
+    "#{host}/contracts/sign/#{sign_token}"
+  end
+
   def signature_url
-    # Rota da página de assinatura
-    "/contracts/sign/#{sign_token}"
+    sign_url
+  end
+
+  # Regenerar token
+  def regenerate_token!
+    generate_sign_token
+    save!
   end
 
   # Label do role em português
   def role_label
-    case role
-    when 'contractor' then 'Contratante'
-    when 'contracted' then 'Contratada'
-    when 'witness' then 'Testemunha'
-    else role
-    end
+    {
+      'contractor' => 'Contratante',
+      'contracted' => 'Contratada',
+      'witness' => 'Testemunha',
+      'company' => 'Empresa'
+    }[role] || role
+  end
+
+  def status_label
+    {
+      'pending' => 'Pendente',
+      'viewed' => 'Visualizado',
+      'signed' => 'Assinado',
+      'refused' => 'Recusado'
+    }[status] || status
   end
 
   private
+
+  def generate_sign_token
+    self.sign_token = SecureRandom.urlsafe_base64(32)
+  end
 
   def generate_signature_hash(data)
     content = [

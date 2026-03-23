@@ -1,0 +1,24 @@
+<h2>Ol&aacute;, <%= @signer.name %>!</h2>
+
+<p>Voc&ecirc; recebeu um contrato para assinatura eletr&ocirc;nica:</p>
+
+<div style="background-color: #f0f4f8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <p><strong>Contrato:</strong> <%= @contract.title %></p>
+  <p><strong>N&uacute;mero:</strong> <%= @contract.contract_number %></p>
+  <% if @contract.expires_at %>
+    <p><strong>V&aacute;lido at&eacute;:</strong> <%= @contract.expires_at.strftime('%d/%m/%Y') %></p>
+  <% end %>
+</div>
+
+<p>Para visualizar e assinar o contrato, clique no bot&atilde;o abaixo:</p>
+
+<p style="text-align: center; margin: 30px 0;">
+  <a href="<%= @sign_url %>" class="button" style="color: white;">
+    Visualizar e Assinar Contrato
+  </a>
+</p>
+
+<p style="font-size: 14px; color: #666;">
+  Se o bot&atilde;o n&atilde;o funcionar, copie e cole este link no seu navegador:<br>
+  <a href="<%= @sign_url %>"><%= @sign_url %></a>
+</p>

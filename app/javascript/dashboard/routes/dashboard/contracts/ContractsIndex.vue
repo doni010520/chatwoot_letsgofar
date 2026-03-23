@@ -18,6 +18,7 @@ const { accountScopedRoute } = useAccount();
 
 // Estado
 const contracts = ref([]);
+const expiringContracts = ref([]);
 const stats = ref(null);
 const isLoading = ref(true);
 const currentPage = ref(1);
@@ -119,10 +120,32 @@ watch(() => route.path, () => {
   loadContracts();
 });
 
+// Carregar contratos vencendo
+const loadExpiring = async () => {
+  try {
+    const response = await ContractsAPI.expiring();
+    expiringContracts.value = response.data.data || [];
+  } catch (error) {
+    console.error('Erro ao carregar vencimentos:', error);
+  }
+};
+
+const formatDate = dateStr => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('pt-BR');
+};
+
+const daysUntilExpiry = dateStr => {
+  if (!dateStr) return null;
+  const diff = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
+  return Math.ceil(diff);
+};
+
 // Carregar dados ao montar
 onMounted(() => {
   loadContracts();
   loadStats();
+  loadExpiring();
 });
 </script>
 
@@ -194,6 +217,38 @@ onMounted(() => {
       class="px-8 py-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700"
       @update:filters="applyFilters"
     />
+
+    <!-- Banner de Contratos Vencendo -->
+    <div
+      v-if="expiringContracts.length > 0"
+      class="mx-8 mt-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl"
+    >
+      <div class="flex items-center gap-2 mb-3">
+        <span class="i-lucide-alert-triangle text-amber-600 text-lg" />
+        <h3 class="text-sm font-semibold text-amber-800 dark:text-amber-300">
+          {{ expiringContracts.length }} contrato(s) vencendo nos pr&oacute;ximos 30 dias
+        </h3>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          v-for="ec in expiringContracts.slice(0, 5)"
+          :key="ec.id"
+          class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-lg text-xs hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
+          @click="viewContract(ec)"
+        >
+          <span class="font-medium text-slate-700 dark:text-slate-200">{{ ec.contractor_name || ec.title }}</span>
+          <span class="text-amber-600 dark:text-amber-400">
+            {{ daysUntilExpiry(ec.plan_end_date) }}d
+          </span>
+        </button>
+        <span
+          v-if="expiringContracts.length > 5"
+          class="px-3 py-1.5 text-xs text-amber-600 dark:text-amber-400"
+        >
+          +{{ expiringContracts.length - 5 }} mais
+        </span>
+      </div>
+    </div>
 
     <!-- Conteúdo Principal -->
     <div class="flex-1 overflow-auto px-8 py-6">

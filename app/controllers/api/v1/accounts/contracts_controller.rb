@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
+  before_action :check_authorization
   before_action :set_contract, only: [:show, :update, :destroy, :send_for_signature, :cancel, :duplicate, :download_pdf, :resend_to_signer]
 
   def index
@@ -128,8 +129,7 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       return
     end
 
-    # TODO: Implementar envio de email
-    # ContractMailer.signature_request(signer).deliver_later
+    ContractMailer.signature_request(signer).deliver_later
 
     @contract.contract_activities.create!(
       activity_type: 'reminder_sent',
@@ -142,8 +142,23 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
   end
 
   def download_pdf
-    # TODO: Implementar geração de PDF
-    render json: { error: 'Funcionalidade em desenvolvimento' }, status: :not_implemented
+    pdf_data = @contract.generate_signed_pdf
+    send_data pdf_data,
+              filename: "#{@contract.contract_number}.pdf",
+              type: 'application/pdf',
+              disposition: 'attachment'
+  end
+
+  def expiring
+    contracts = Current.account.contracts
+                       .signed
+                       .where('plan_end_date BETWEEN ? AND ?', Date.current, 30.days.from_now)
+                       .order(:plan_end_date)
+                       .includes(:contract_signers, :contact)
+
+    render json: {
+      data: contracts.map { |c| contract_json(c) }
+    }
   end
 
   def stats
@@ -158,7 +173,9 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       expired: contracts.expired.count,
       cancelled: contracts.cancelled.count,
       this_month: contracts.where('created_at >= ?', Time.current.beginning_of_month).count,
-      signed_this_month: contracts.signed.where('signed_at >= ?', Time.current.beginning_of_month).count
+      signed_this_month: contracts.signed.where('signed_at >= ?', Time.current.beginning_of_month).count,
+      expiring_30_days: contracts.signed.where('plan_end_date BETWEEN ? AND ?', Date.current, 30.days.from_now).count,
+      expired_plans: contracts.signed.where('plan_end_date < ?', Date.current).count
     }
   end
 
@@ -173,7 +190,10 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       :title,
       :content_html,
       :contact_id,
+      :contract_template_id,
       :expires_at,
+      :plan_start_date,
+      :plan_end_date,
       # Dados do contratante
       :contractor_name,
       :contractor_cpf,
@@ -197,10 +217,11 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       :installments_count,
       :first_installment_value,
       :installment_due_day,
-      # Metadados
+      # Metadados e variáveis
       metadata: {},
+      variables: {},
       # Signatários aninhados
-      contract_signers_attributes: [:id, :name, :email, :role, :_destroy]
+      contract_signers_attributes: [:id, :name, :email, :cpf, :role, :sign_order, :_destroy]
     )
   end
 
@@ -218,6 +239,8 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       contractor_email: contract.contractor_email,
       plan_name: contract.plan_name,
       plan_value: contract.plan_value,
+      plan_start_date: contract.plan_start_date,
+      plan_end_date: contract.plan_end_date,
       signature_progress: contract.signature_progress,
       created_by: contract.created_by ? {
         id: contract.created_by.id,
@@ -229,7 +252,9 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       data.merge!(
         content_html: contract.content_html,
         document_hash: contract.document_hash,
+        variables: contract.variables,
         contact_id: contract.contact_id,
+        contract_template_id: contract.contract_template_id,
         cancelled_at: contract.cancelled_at,
         # Todos os dados do contratante
         contractor_cpf: contract.contractor_cpf,

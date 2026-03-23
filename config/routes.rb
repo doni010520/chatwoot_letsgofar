@@ -407,6 +407,7 @@ Rails.application.routes.draw do
           resources :contracts do
             collection do
               get :stats
+              get :expiring
             end
 
             member do

@@ -1,0 +1,19 @@
+<h2>Contrato Recusado</h2>
+
+<p>Ol&aacute;, <%= @owner.name %>.</p>
+
+<p>Informamos que o signat&aacute;rio <strong><%= @signer.name %></strong> (<%= @signer.email %>) recusou assinar o contrato:</p>
+
+<div style="background-color: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <p><strong>Contrato:</strong> <%= @contract.title %></p>
+  <p><strong>N&uacute;mero:</strong> <%= @contract.contract_number %></p>
+  <p><strong>Recusado em:</strong> <%= @signer.refused_at.strftime('%d/%m/%Y &agrave;s %H:%M') %></p>
+  <% if @signer.refusal_reason.present? %>
+    <p><strong>Motivo:</strong> <%= @signer.refusal_reason %></p>
+  <% end %>
+</div>
+
+<p>
+  Voc&ecirc; pode entrar em contato com o signat&aacute;rio para esclarecer d&uacute;vidas
+  ou criar um novo contrato com os termos revisados.
+</p>

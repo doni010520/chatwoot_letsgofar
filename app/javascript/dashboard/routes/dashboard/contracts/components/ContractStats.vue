@@ -38,6 +38,15 @@ const statCards = computed(() => [
     valueColor: 'text-green-700 dark:text-green-400',
   },
   {
+    key: 'expiring',
+    label: 'Vencendo',
+    value: props.stats.expiring_30_days || 0,
+    icon: 'i-lucide-alert-triangle',
+    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+    iconColor: 'text-orange-600 dark:text-orange-500',
+    valueColor: 'text-orange-700 dark:text-orange-400',
+  },
+  {
     key: 'this_month',
     label: 'Este Mês',
     value: props.stats.this_month || 0,
@@ -50,7 +59,7 @@ const statCards = computed(() => [
 </script>
 
 <template>
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
     <div
       v-for="stat in statCards"
       :key="stat.key"
@@ -96,6 +105,17 @@ const statCards = computed(() => [
             class="h-full bg-green-500 rounded-full transition-all duration-1000"
             :style="{ width: `${(stats.signed / stats.total) * 100}%` }"
           />
+        </div>
+      </div>
+
+      <!-- Info extra para "expiring" -->
+      <div
+        v-if="stat.key === 'expiring' && stats.expired_plans"
+        class="mt-3 pt-3 border-t border-orange-200 dark:border-orange-800"
+      >
+        <div class="flex items-center gap-1.5 text-xs text-orange-600 dark:text-orange-400">
+          <span class="i-lucide-clock" />
+          <span>{{ stats.expired_plans }} com plano expirado</span>
         </div>
       </div>
 
