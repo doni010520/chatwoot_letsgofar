@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu.vue';
    
 defineProps({
@@ -10,26 +9,24 @@ defineProps({
     default: () => [],
   },
 });
-
 const emit = defineEmits(['updateLabel', 'createLabel', 'editLabel']);
-
 const { t } = useI18n();
-
 const showDropdown = ref(false);
-
+const handleAction = (event) => {
+  emit('updateLabel', event);
+  showDropdown.value = false;
+};
 const handleCreate = (title) => {
   emit('createLabel', title);
   showDropdown.value = false;
 };
-
 const handleEdit = (item) => {
   emit('editLabel', item);
   showDropdown.value = false;
 };
 </script>
-
 <template>
-  <div class="relative">
+  <div v-on-clickaway="() => (showDropdown = false)" class="relative">
     <button
       class="flex items-center gap-1 px-2 py-1 rounded-md outline-dashed h-6 outline-1 outline-n-slate-6 hover:bg-n-alpha-2"
       :class="{ 'bg-n-alpha-2': showDropdown }"
@@ -42,11 +39,10 @@ const handleEdit = (item) => {
     </button>
     <DropdownMenu
       v-if="showDropdown"
-      v-on-clickaway="() => (showDropdown = false)"
       :menu-items="labelMenuItems"
       show-search
       class="z-[100] w-56 mt-2 overflow-y-auto ltr:left-0 rtl:right-0 top-full max-h-52"
-      @action="emit('updateLabel', $event)"
+      @action="handleAction"
       @create="handleCreate"
       @edit="handleEdit"
     >
