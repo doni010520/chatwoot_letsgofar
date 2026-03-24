@@ -177,7 +177,9 @@ onMounted(() => loadContract());
               <h2 class="text-sm font-medium text-n-slate-12">Conteúdo do Contrato</h2>
               <button class="text-xs text-n-brand hover:underline" onclick="window.print()">Imprimir</button>
             </div>
-            <div class="p-6 prose prose-sm max-w-none text-n-slate-12" v-html="contract.content_html" />
+            <div class="p-6">
+              <div class="contract-preview-content rounded-lg p-8" v-html="contract.content_html" />
+            </div>
           </div>
         </div>
 
@@ -242,3 +244,50 @@ onMounted(() => loadContract());
     </div>
   </div>
 </template>
+
+<style scoped>
+.contract-preview-content {
+  background: #ffffff;
+  color: #333333;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.contract-preview-content :deep(h1),
+.contract-preview-content :deep(h2),
+.contract-preview-content :deep(h3),
+.contract-preview-content :deep(h4) {
+  color: #8B0000;
+}
+
+.contract-preview-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.contract-preview-content :deep(td),
+.contract-preview-content :deep(th) {
+  border: 1px solid #cccccc;
+  padding: 8px 12px;
+  color: #333333;
+}
+
+.contract-preview-content :deep(a) {
+  color: #8B0000;
+}
+
+.contract-preview-content :deep(p) {
+  color: #333333;
+  margin-bottom: 0.5em;
+}
+
+.contract-preview-content :deep(strong) {
+  color: #333333;
+}
+
+.contract-preview-content :deep(ul),
+.contract-preview-content :deep(li) {
+  color: #333333;
+}
+</style>
