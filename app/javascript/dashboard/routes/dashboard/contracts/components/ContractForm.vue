@@ -136,13 +136,14 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
         <!-- Search input -->
         <div v-else class="relative mt-2">
           <div class="relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-n-slate-10 z-10 pointer-events-none">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-n-slate-10 z-10 pointer-events-none flex items-center">
               <span class="i-lucide-search block w-4 h-4" />
             </span>
             <input
               v-model="searchQuery"
               type="text"
-              :class="inputClass + ' !pl-10'"
+              :class="inputClass"
+              style="padding-left: 2.5rem;"
               placeholder="Buscar contato por nome, email ou telefone..."
             />
             <span
@@ -306,7 +307,7 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
           <label :class="labelClass">Valor Total *</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-n-slate-10 z-10 pointer-events-none">R$</span>
-            <input type="text" :class="inputClass + ' !pl-10'"
+            <input type="text" :class="inputClass" style="padding-left: 2.5rem;"
               :value="modelValue.plan_value ? formatCurrency(modelValue.plan_value * 100) : ''"
               placeholder="0,00" @input="handleCurrencyInput('plan_value', $event)" />
           </div>
@@ -328,7 +329,7 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
           <label :class="labelClass">Valor 1ª Parcela (se diferente)</label>
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-n-slate-10 z-10 pointer-events-none">R$</span>
-            <input type="text" :class="inputClass + ' !pl-10'"
+            <input type="text" :class="inputClass" style="padding-left: 2.5rem;"
               :value="modelValue.first_installment_value ? formatCurrency(modelValue.first_installment_value * 100) : ''"
               placeholder="0,00" @input="handleCurrencyInput('first_installment_value', $event)" />
           </div>
