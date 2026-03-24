@@ -90,7 +90,7 @@ const inputClass = 'w-full h-10 px-3 py-2.5 text-sm rounded-lg bg-n-alpha-black2
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <input v-model="newSigner.name" type="text" :class="inputClass" placeholder="Nome" />
         <input v-model="newSigner.email" type="email" :class="inputClass" placeholder="E-mail" />
-        <select v-model="newSigner.role" :class="inputClass">
+        <select v-model="newSigner.role" :class="inputClass" class="select-dark">
           <option value="contractor">Contratante</option>
           <option value="contracted">Contratada</option>
           <option value="witness">Testemunha</option>
@@ -110,3 +110,10 @@ const inputClass = 'w-full h-10 px-3 py-2.5 text-sm rounded-lg bg-n-alpha-black2
     </div>
   </div>
 </template>
+
+<style scoped>
+.select-dark option {
+  background-color: #1e1e2e;
+  color: #e2e8f0;
+}
+</style>

@@ -234,7 +234,7 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
         </div>
         <div>
           <label :class="labelClass">Estado *</label>
-          <select :class="inputClass" :value="modelValue.contractor_state"
+          <select :class="inputClass" class="select-dark" :value="modelValue.contractor_state"
             @change="updateField('contractor_state', $event.target.value)">
             <option value="">UF</option>
             <option v-for="s in states" :key="s" :value="s">{{ s }}</option>
@@ -339,3 +339,10 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
     </template>
   </div>
 </template>
+
+<style scoped>
+.select-dark option {
+  background-color: #1e1e2e;
+  color: #e2e8f0;
+}
+</style>
