@@ -1,10 +1,55 @@
 <script setup>
+import { ref, watch } from 'vue';
+import ContactAPI from 'dashboard/api/contacts';
+
 const props = defineProps({
   modelValue: { type: Object, required: true },
   section: { type: String, default: 'contractor' },
+  selectedContact: { type: Object, default: null },
 });
 
-const emit = defineEmits(['update:modelValue']);
+const emit = defineEmits(['update:modelValue', 'contact-selected', 'contact-cleared']);
+
+// Contact search state
+const searchQuery = ref('');
+const searchResults = ref([]);
+const isSearching = ref(false);
+const showDropdown = ref(false);
+
+let searchTimeout = null;
+
+watch(searchQuery, newVal => {
+  if (searchTimeout) clearTimeout(searchTimeout);
+  if (!newVal || newVal.length < 2) {
+    searchResults.value = [];
+    showDropdown.value = false;
+    return;
+  }
+  searchTimeout = setTimeout(async () => {
+    isSearching.value = true;
+    try {
+      const response = await ContactAPI.search(newVal);
+      searchResults.value = response.data.payload || [];
+      showDropdown.value = searchResults.value.length > 0;
+    } catch (error) {
+      console.error('Erro ao buscar contatos:', error);
+      searchResults.value = [];
+    } finally {
+      isSearching.value = false;
+    }
+  }, 300);
+});
+
+const selectContact = contact => {
+  emit('contact-selected', contact);
+  searchQuery.value = '';
+  searchResults.value = [];
+  showDropdown.value = false;
+};
+
+const clearContact = () => {
+  emit('contact-cleared');
+};
 
 const states = [
   'AC','AL','AP','AM','BA','CE','DF','ES','GO','MA',
@@ -67,6 +112,69 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
   <div class="flex flex-col gap-4">
     <!-- Seção: Dados do Contratante -->
     <template v-if="section === 'contractor'">
+      <!-- Contact Search / Selector -->
+      <div class="mb-4 p-4 rounded-lg bg-n-alpha-2 border border-n-weak">
+        <label :class="labelClass">Vincular a Contato do CRM</label>
+
+        <!-- Selected contact badge -->
+        <div v-if="selectedContact" class="flex items-center gap-2 mt-2">
+          <span
+            class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-n-teal-3 text-n-teal-11 text-sm font-medium"
+          >
+            <span class="i-lucide-user-check text-sm" />
+            Vinculado: {{ selectedContact.name }}
+            <button
+              class="ml-1 hover:text-n-teal-12 transition-colors"
+              type="button"
+              @click="clearContact"
+            >
+              <span class="i-lucide-x text-sm" />
+            </button>
+          </span>
+        </div>
+
+        <!-- Search input -->
+        <div v-else class="relative mt-2">
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-n-slate-10">
+              <span class="i-lucide-search text-sm" />
+            </span>
+            <input
+              v-model="searchQuery"
+              type="text"
+              :class="inputClass + ' pl-9'"
+              placeholder="Buscar contato por nome, email ou telefone..."
+            />
+            <span
+              v-if="isSearching"
+              class="absolute right-3 top-1/2 -translate-y-1/2"
+            >
+              <span class="i-lucide-loader-2 text-sm text-n-slate-10 animate-spin" />
+            </span>
+          </div>
+
+          <!-- Dropdown results -->
+          <div
+            v-if="showDropdown"
+            class="absolute z-50 mt-1 w-full rounded-lg bg-n-solid-2 border border-n-weak shadow-lg max-h-60 overflow-auto"
+          >
+            <button
+              v-for="contact in searchResults"
+              :key="contact.id"
+              type="button"
+              class="w-full px-4 py-3 text-left hover:bg-n-alpha-3 transition-colors border-b border-n-weak last:border-b-0"
+              @click="selectContact(contact)"
+            >
+              <div class="text-sm font-medium text-n-slate-12">{{ contact.name }}</div>
+              <div class="flex items-center gap-3 mt-0.5">
+                <span v-if="contact.email" class="text-xs text-n-slate-11">{{ contact.email }}</span>
+                <span v-if="contact.phone_number" class="text-xs text-n-slate-11">{{ contact.phone_number }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label :class="labelClass">Nome Completo *</label>

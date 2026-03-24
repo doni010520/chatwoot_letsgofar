@@ -142,11 +142,18 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
   end
 
   def download_pdf
-    pdf_data = @contract.generate_signed_pdf
-    send_data pdf_data,
-              filename: "#{@contract.contract_number}.pdf",
-              type: 'application/pdf',
-              disposition: 'attachment'
+    if @contract.signed? && @contract.signed_pdf.attached?
+      send_data @contract.signed_pdf.download,
+                filename: "#{@contract.contract_number}_assinado.pdf",
+                type: 'application/pdf',
+                disposition: 'attachment'
+    else
+      pdf_data = @contract.generate_signed_pdf
+      send_data pdf_data,
+                filename: "#{@contract.contract_number}.pdf",
+                type: 'application/pdf',
+                disposition: 'attachment'
+    end
   end
 
   def expiring
@@ -245,7 +252,9 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
       created_by: contract.created_by ? {
         id: contract.created_by.id,
         name: contract.created_by.display_name || contract.created_by.name
-      } : nil
+      } : nil,
+      contact: contract.contact ? { id: contract.contact.id, name: contract.contact.name } : nil,
+      has_signed_pdf: contract.signed_pdf.attached?
     }
 
     if full

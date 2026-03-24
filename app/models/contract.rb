@@ -36,6 +36,8 @@ class Contract < ApplicationRecord
   has_many :contract_signers, dependent: :destroy
   has_many :contract_activities, dependent: :destroy
 
+  has_one_attached :signed_pdf
+
   # Aceita atributos aninhados para signatários
   accepts_nested_attributes_for :contract_signers, allow_destroy: true
 
@@ -190,6 +192,7 @@ class Contract < ApplicationRecord
     elsif signers.all?(&:signed?)
       update!(status: 'signed', signed_at: Time.current)
       log_activity!('completed')
+      generate_and_attach_pdf!
       begin
         ContractMailer.contract_completed(self).deliver_later
       rescue StandardError => e
@@ -276,6 +279,17 @@ class Contract < ApplicationRecord
     variables&.dig('contractor_name') || contract_signers.where.not(role: 'company').first&.name
   end
 
+  def push_event_data
+    {
+      id: id,
+      title: title,
+      contract_number: contract_number,
+      status: status,
+      plan_end_date: plan_end_date,
+      contractor_name: contractor_name
+    }
+  end
+
   # Log de atividade
   def log_activity!(activity_type, user: nil, signer: nil, metadata: {}, ip_address: nil)
     contract_activities.create!(
@@ -350,6 +364,17 @@ class Contract < ApplicationRecord
     end
   rescue Date::Error, ArgumentError
     nil
+  end
+
+  def generate_and_attach_pdf!
+    pdf_data = generate_signed_pdf
+    signed_pdf.attach(
+      io: StringIO.new(pdf_data),
+      filename: "#{contract_number}_assinado.pdf",
+      content_type: 'application/pdf'
+    )
+  rescue StandardError => e
+    Rails.logger.error "Erro ao gerar PDF assinado para contrato #{contract_number}: #{e.message}"
   end
 
   def log_creation

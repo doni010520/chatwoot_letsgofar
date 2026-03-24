@@ -61,6 +61,22 @@ const goToContract = contractId => {
   );
 };
 
+const downloadPdf = async (contract) => {
+  try {
+    const response = await ContractsAPI.downloadPdf(contract.id);
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${contract.contract_number}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Erro ao baixar PDF:', error);
+  }
+};
+
 const goToCreateContract = () => {
   router.push(
     `/app/accounts/${accountId.value}/contracts/create?contact_id=${props.contactId}`
@@ -122,12 +138,22 @@ onMounted(fetchContracts);
               {{ contract.contract_number }}
             </p>
           </div>
-          <span
-            class="px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap"
-            :class="statusBadge(contract.status).class"
-          >
-            {{ statusBadge(contract.status).label }}
-          </span>
+          <div class="flex items-center gap-1">
+            <button
+              v-if="contract.status === 'signed'"
+              class="p-1 rounded hover:bg-n-alpha-3 text-n-slate-11 hover:text-n-slate-12 transition-colors"
+              title="Baixar PDF"
+              @click.stop="downloadPdf(contract)"
+            >
+              <span class="i-lucide-download text-sm" />
+            </button>
+            <span
+              class="px-2 py-0.5 text-xs font-medium rounded-full whitespace-nowrap"
+              :class="statusBadge(contract.status).class"
+            >
+              {{ statusBadge(contract.status).label }}
+            </span>
+          </div>
         </div>
 
         <div class="flex items-center gap-4 mt-2 text-xs text-n-slate-10">
