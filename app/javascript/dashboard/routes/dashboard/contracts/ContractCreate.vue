@@ -150,8 +150,19 @@ const applyVariables = () => {
       ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
       : '0,00',
     installments_count: contractData.installments_count || 1,
-    first_installment_value: contractData.first_installment_value || contractData.plan_value,
+    first_installment_value: contractData.first_installment_value
+      ? parseFloat(contractData.first_installment_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+      : contractData.plan_value
+        ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+        : '0,00',
     installment_due_day: contractData.installment_due_day || 10,
+    plan_start_date: contractData.plan_start_date
+      ? new Date(contractData.plan_start_date).toLocaleDateString('pt-BR')
+      : '-',
+    plan_end_date: contractData.plan_end_date
+      ? new Date(contractData.plan_end_date).toLocaleDateString('pt-BR')
+      : '-',
+    contract_date: new Date().toLocaleDateString('pt-BR'),
   };
 
   Object.entries(variables).forEach(([key, value]) => {

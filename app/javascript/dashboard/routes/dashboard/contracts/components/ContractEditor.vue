@@ -60,7 +60,7 @@ const inputClass = 'w-full h-10 px-3 py-2.5 text-sm rounded-lg bg-n-alpha-black2
       />
       <div
         v-else-if="modelValue"
-        class="prose prose-sm max-w-none text-n-slate-12"
+        class="contract-preview-content rounded-lg p-8 max-w-none"
         v-html="modelValue"
       />
       <p v-else class="text-sm text-n-slate-11 text-center py-8">
@@ -69,3 +69,41 @@ const inputClass = 'w-full h-10 px-3 py-2.5 text-sm rounded-lg bg-n-alpha-black2
     </div>
   </div>
 </template>
+
+<style scoped>
+.contract-preview-content {
+  background: #ffffff;
+  color: #333333;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.contract-preview-content :deep(h1),
+.contract-preview-content :deep(h2),
+.contract-preview-content :deep(h3),
+.contract-preview-content :deep(h4) {
+  color: #8B0000;
+}
+
+.contract-preview-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.contract-preview-content :deep(td),
+.contract-preview-content :deep(th) {
+  border: 1px solid #cccccc;
+  padding: 8px 12px;
+  color: #333333;
+}
+
+.contract-preview-content :deep(a) {
+  color: #8B0000;
+}
+
+.contract-preview-content :deep(p) {
+  color: #333333;
+  margin-bottom: 0.5em;
+}
+</style>
