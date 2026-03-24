@@ -55,6 +55,7 @@ class Contract < ApplicationRecord
   validates :title, presence: true
   validates :contract_number, presence: true, uniqueness: true
   validates :status, inclusion: { in: STATUSES }
+  validates :content_html, length: { maximum: 150_000 }
 
   # Scopes de status
   scope :draft, -> { where(status: 'draft') }
