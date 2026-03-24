@@ -82,18 +82,40 @@ export default {
               class="overflow-hidden flex-view notification-contant--wrap whitespace-nowrap text-ellipsis"
             >
               <h5 class="notification--title">
-                {{
-                  `#${
+                <template
+                  v-if="
+                    notificationItem.notification_type === 'contract_expiring'
+                  "
+                >
+                  {{
                     notificationItem.primary_actor
-                      ? notificationItem.primary_actor.id
+                      ? notificationItem.primary_actor.contract_number
                       : $t(`NOTIFICATIONS_PAGE.DELETE_TITLE`)
-                  }`
-                }}
+                  }}
+                </template>
+                <template v-else>
+                  {{
+                    `#${
+                      notificationItem.primary_actor
+                        ? notificationItem.primary_actor.id
+                        : $t(`NOTIFICATIONS_PAGE.DELETE_TITLE`)
+                    }`
+                  }}
+                </template>
               </h5>
               <span
                 class="overflow-hidden notification--message-title whitespace-nowrap text-ellipsis"
               >
-                {{ notificationItem.push_message_title }}
+                <template
+                  v-if="
+                    notificationItem.notification_type === 'contract_expiring'
+                  "
+                >
+                  {{ notificationItem.meta && notificationItem.meta.message }}
+                </template>
+                <template v-else>
+                  {{ notificationItem.push_message_title }}
+                </template>
               </span>
             </div>
           </td>
@@ -108,7 +130,11 @@ export default {
           </td>
           <td class="thumbnail--column">
             <Avatar
-              v-if="notificationItem.primary_actor.meta.assignee"
+              v-if="
+                notificationItem.primary_actor &&
+                notificationItem.primary_actor.meta &&
+                notificationItem.primary_actor.meta.assignee
+              "
               :src="notificationItem.primary_actor.meta.assignee.thumbnail"
               :size="28"
               :name="notificationItem.primary_actor.meta.assignee.name"

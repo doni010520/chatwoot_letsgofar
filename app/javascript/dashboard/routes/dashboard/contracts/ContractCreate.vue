@@ -1,10 +1,11 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 
 import ContractsAPI, { ContractTemplates } from 'dashboard/api/contracts';
+import ContactAPI from 'dashboard/api/contacts';
 import ContractForm from './components/ContractForm.vue';
 import ContractEditor from './components/ContractEditor.vue';
 import ContractSigners from './components/ContractSigners.vue';
@@ -12,6 +13,7 @@ import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
 const router = useRouter();
+const route = useRoute();
 const { accountScopedRoute } = useAccount();
 const showAlert = useAlert;
 
@@ -19,9 +21,11 @@ const currentStep = ref(1);
 const isLoading = ref(false);
 const isSaving = ref(false);
 const template = ref(null);
+const selectedContact = ref(null);
 
 const contractData = reactive({
   title: 'Contrato de Prestação de Serviços - Assessoria de Inglês',
+  contact_id: null,
   contractor_name: '',
   contractor_cpf: '',
   contractor_rg: '',
@@ -83,6 +87,28 @@ const isStepValid = computed(() => {
       return false;
   }
 });
+
+const onContactSelected = contact => {
+  selectedContact.value = contact;
+  contractData.contact_id = contact.id;
+  contractData.contractor_name = contact.name || '';
+  contractData.contractor_email = contact.email || '';
+  contractData.contractor_phone = contact.phone_number || '';
+  if (contact.custom_attributes) {
+    const attrs = contact.custom_attributes;
+    if (attrs.cpf) contractData.contractor_cpf = attrs.cpf;
+    if (attrs.address) contractData.contractor_address = attrs.address;
+    if (attrs.city) contractData.contractor_city = attrs.city;
+    if (attrs.state) contractData.contractor_state = attrs.state;
+    if (attrs.cep) contractData.contractor_cep = attrs.cep;
+    if (attrs.neighborhood) contractData.contractor_neighborhood = attrs.neighborhood;
+  }
+};
+
+const onContactCleared = () => {
+  selectedContact.value = null;
+  contractData.contact_id = null;
+};
 
 const loadTemplate = async () => {
   isLoading.value = true;
@@ -178,8 +204,18 @@ const updateSigners = signers => {
   contractData.contract_signers_attributes = signers;
 };
 
-onMounted(() => {
+onMounted(async () => {
   loadTemplate();
+  const contactId = route.query.contact_id;
+  if (contactId) {
+    try {
+      const response = await ContactAPI.show(contactId);
+      const contact = response.data;
+      onContactSelected(contact);
+    } catch (error) {
+      console.error('Erro ao carregar contato:', error);
+    }
+  }
 });
 </script>
 
@@ -269,7 +305,13 @@ onMounted(() => {
               <span class="i-lucide-user text-n-slate-11" />
               Dados do Contratante
             </h2>
-            <ContractForm v-model="contractData" section="contractor" />
+            <ContractForm
+              v-model="contractData"
+              section="contractor"
+              :selected-contact="selectedContact"
+              @contact-selected="onContactSelected"
+              @contact-cleared="onContactCleared"
+            />
           </div>
         </div>
 

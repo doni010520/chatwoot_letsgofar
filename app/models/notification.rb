@@ -43,7 +43,8 @@ class Notification < ApplicationRecord
     participating_conversation_new_message: 5,
     sla_missed_first_response: 6,
     sla_missed_next_response: 7,
-    sla_missed_resolution: 8
+    sla_missed_resolution: 8,
+    contract_expiring: 9
   }.freeze
 
   enum notification_type: NOTIFICATION_TYPES
@@ -53,7 +54,7 @@ class Notification < ApplicationRecord
   after_destroy_commit :dispatch_destroy_event
   after_update_commit :dispatch_update_event
 
-  PRIMARY_ACTORS = ['Conversation'].freeze
+  PRIMARY_ACTORS = ['Conversation', 'Contract'].freeze
 
   def push_event_data
     # Secondary actor could be nil for cases like system assigning conversation
@@ -95,7 +96,8 @@ class Notification < ApplicationRecord
       'conversation_mention' => 'notifications.notification_title.conversation_mention',
       'sla_missed_first_response' => 'notifications.notification_title.sla_missed_first_response',
       'sla_missed_next_response' => 'notifications.notification_title.sla_missed_next_response',
-      'sla_missed_resolution' => 'notifications.notification_title.sla_missed_resolution'
+      'sla_missed_resolution' => 'notifications.notification_title.sla_missed_resolution',
+      'contract_expiring' => 'notifications.notification_title.contract_expiring'
     }
 
     i18n_key = notification_title_map[notification_type]
@@ -103,6 +105,8 @@ class Notification < ApplicationRecord
 
     if notification_type == 'conversation_creation'
       I18n.t(i18n_key, display_id: conversation.display_id, inbox_name: primary_actor.inbox.name)
+    elsif notification_type == 'contract_expiring'
+      I18n.t(i18n_key, contract_number: primary_actor.contract_number)
     elsif %w[conversation_assignment assigned_conversation_new_message participating_conversation_new_message
              conversation_mention].include?(notification_type)
       I18n.t(i18n_key, display_id: conversation.display_id)
@@ -120,6 +124,8 @@ class Notification < ApplicationRecord
       message_body(secondary_actor)
     when 'conversation_assignment', 'sla_missed_next_response', 'sla_missed_resolution'
       message_body((conversation.messages.incoming.last || conversation.messages.outgoing.last))
+    when 'contract_expiring'
+      meta&.dig('message') || ''
     else
       ''
     end
