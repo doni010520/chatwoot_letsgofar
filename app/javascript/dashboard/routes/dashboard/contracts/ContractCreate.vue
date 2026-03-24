@@ -201,7 +201,13 @@ const saveContract = async () => {
     router.push(accountScopedRoute('contracts_view', { contractId: contract.id }));
   } catch (error) {
     console.error('Erro ao salvar contrato:', error);
-    showAlert('Erro ao salvar contrato. Verifique os dados e tente novamente.');
+    const serverErrors = error?.response?.data?.errors;
+    if (serverErrors) {
+      console.error('Erros do servidor:', serverErrors);
+      showAlert(`Erro: ${Array.isArray(serverErrors) ? serverErrors.join(', ') : serverErrors}`);
+    } else {
+      showAlert('Erro ao salvar contrato. Verifique os dados e tente novamente.');
+    }
   } finally {
     isSaving.value = false;
   }
