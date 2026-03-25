@@ -8,6 +8,7 @@ import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import TaskModal from './TaskModal.vue';
 import TaskComments from './TaskComments.vue';
 import TaskFiles from './TaskFiles.vue';
+import draggable from 'vuedraggable';
 
 const props = defineProps({
   task: {
@@ -16,6 +17,7 @@ const props = defineProps({
   },
 });
 
+const isDragging = ref(false);
 const emit = defineEmits(['close', 'updated', 'deleted']);
 
 const store = useStore();
@@ -198,6 +200,21 @@ const handleAddItem = async () => {
     console.error('Error adding item:', error);
   } finally {
     isAdding.value = false;
+  }
+};
+
+const handleReorderItems = async () => {
+  if (!props.task.items || props.task.items.length === 0) return;
+  
+  const itemIds = props.task.items.map(item => item.id);
+  try {
+    await store.dispatch('agentTasks/reorderItems', {
+      taskId: props.task.id,
+      itemIds,
+    });
+    emit('updated');
+  } catch (error) {
+    console.error('Error reordering items:', error);
   }
 };
 
@@ -435,63 +452,84 @@ const getRecurrenceLabel = (type) => {
               </div>
             </div>
 
-            <!-- Lista de subtarefas com checkboxes interativos -->
-            <div v-if="task.items && task.items.length > 0" class="space-y-2">
-              <div
-                v-for="item in task.items"
-                :key="item.id"
-                class="flex items-start gap-3 group py-1"
-              >
-                <!-- CHECKBOX CLICÁVEL -->
-                <button
-                  type="button"
-                  class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-all cursor-pointer"
-                  :class="[
-                    item.completed 
-                      ? 'bg-n-brand border-n-brand' 
-                      : 'bg-transparent border-n-slate-6 hover:border-n-brand'
-                  ]"
-                  @click="handleToggleItem(item)"
+            <!-- Lista de subtarefas com checkboxes interativos e drag-and-drop -->
+            <draggable
+              v-if="task.items && task.items.length > 0"
+              v-model="task.items"
+              item-key="id"
+              handle=".drag-handle"
+              ghost-class="opacity-50"
+              chosen-class="bg-n-alpha-2"
+              drag-class="shadow-lg"
+              class="space-y-2"
+              @start="isDragging = true"
+              @end="isDragging = false; handleReorderItems()"
+            >
+              <template #item="{ element: item }">
+                <div
+                  class="flex items-start gap-3 group py-1 rounded-md transition-colors"
+                  :class="{ 'hover:bg-n-alpha-1': !isDragging }"
                 >
-                  <span 
-                    v-if="item.completed" 
-                    class="i-lucide-check w-4 h-4 text-white"
-                  />
-                </button>
+                  <!-- HANDLE PARA ARRASTAR -->
+                  <button
+                    type="button"
+                    class="drag-handle flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing text-n-slate-8 hover:text-n-slate-11 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Arraste para reordenar"
+                  >
+                    <span class="i-lucide-grip-vertical size-4" />
+                  </button>
             
-                <!-- TEXTO DA SUBTAREFA (editável) -->
-                <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
-                  <input
-                    v-model="editingItemTitle"
-                    type="text"
-                    class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
-                    @keyup.enter="saveEditItem(item)"
-                    @keyup.esc="cancelEditItem"
-                    @blur="saveEditItem(item)"
-                    autofocus
-                  />
+                  <!-- CHECKBOX CLICÁVEL COM CORES VISÍVEIS -->
+                  <button
+                    type="button"
+                    class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer"
+                    :class="[
+                      item.completed 
+                        ? 'bg-n-brand border-2 border-n-brand' 
+                        : 'bg-transparent border-2 border-n-slate-8 dark:border-n-slate-6 hover:border-n-brand'
+                    ]"
+                    @click="handleToggleItem(item)"
+                  >
+                    <span 
+                      v-if="item.completed" 
+                      class="i-lucide-check w-4 h-4 text-white"
+                    />
+                  </button>
+              
+                  <!-- TEXTO DA SUBTAREFA (editável) -->
+                  <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
+                    <input
+                      v-model="editingItemTitle"
+                      type="text"
+                      class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+                      @keyup.enter="saveEditItem(item)"
+                      @keyup.esc="cancelEditItem"
+                      @blur="saveEditItem(item)"
+                      autofocus
+                    />
+                  </div>
+                  <span
+                    v-else
+                    class="flex-1 text-sm cursor-pointer hover:text-n-brand"
+                    :class="[
+                      item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
+                    ]"
+                    @click="startEditItem(item)"
+                  >
+                    {{ item.title }}
+                  </span>
+              
+                  <!-- BOTÃO DELETAR (X) -->
+                  <button
+                    type="button"
+                    class="opacity-0 group-hover:opacity-100 p-1 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-all"
+                    @click="deleteItem(item)"
+                  >
+                    <span class="i-lucide-x size-4" />
+                  </button>
                 </div>
-                <span
-                  v-else
-                  class="flex-1 text-sm cursor-pointer hover:text-n-brand"
-                  :class="[
-                    item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
-                  ]"
-                  @click="startEditItem(item)"
-                >
-                  {{ item.title }}
-                </span>
-            
-                <!-- BOTÃO DELETAR (X) -->
-                <button
-                  type="button"
-                  class="opacity-0 group-hover:opacity-100 p-1 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-all"
-                  @click="deleteItem(item)"
-                >
-                  <span class="i-lucide-x size-4" />
-                </button>
-              </div>
-            </div>
+              </template>
+            </draggable>
             
             <!-- Campo para adicionar nova subtarefa -->
             <div class="mt-4 flex items-center gap-2">
