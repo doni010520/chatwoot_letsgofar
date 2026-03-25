@@ -468,7 +468,7 @@ const getRecurrenceLabel = (type) => {
             </button>
           </div>
 
-          <!-- Aba Checklist COM CHECKBOXES CLICÁVEIS -->
+          <!-- Aba Checklist COM CHECKBOXES CLICÁVEIS E DRAG-AND-DROP -->
           <div v-if="activeTab === 'checklist'" class="space-y-3">
             <!-- Barra de progresso -->
             <div v-if="localItems && localItems.length > 0" class="mb-4">
@@ -484,7 +484,7 @@ const getRecurrenceLabel = (type) => {
               </div>
             </div>
 
-            <!-- Lista de subtarefas com checkboxes interativos e drag-and-drop -->
+            <!-- Lista de subtarefas com drag-and-drop -->
             <draggable
               v-if="localItems && localItems.length > 0"
               v-model="localItems"
@@ -511,7 +511,7 @@ const getRecurrenceLabel = (type) => {
                     <span class="i-lucide-grip-vertical size-4" />
                   </button>
             
-                  <!-- CHECKBOX COM CORES VISÍVEIS (usando style inline para garantir) -->
+                  <!-- CHECKBOX COM CORES VISÍVEIS -->
                   <button
                     type="button"
                     class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer"
