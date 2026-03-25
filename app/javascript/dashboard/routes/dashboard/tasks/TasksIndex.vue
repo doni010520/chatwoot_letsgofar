@@ -139,13 +139,10 @@ watch(
       <div class="flex items-center gap-3">
         <!-- Busca rápida - CORRIGIDO -->
         <div class="relative flex items-center">
-          <span
-            class="absolute left-2.5 i-lucide-search size-4 text-n-slate-9 pointer-events-none"
-          />
           <input
             type="text"
             :placeholder="t('TASKS.SEARCH_PLACEHOLDER')"
-            class="pl-8 pr-3 py-1.5 w-48 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-9 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-transparent"
+            class="pl-3 pr-3 py-1.5 w-48 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-9 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-transparent"
             :value="searchInputValue"
             @input="onSearchInput"
           />
