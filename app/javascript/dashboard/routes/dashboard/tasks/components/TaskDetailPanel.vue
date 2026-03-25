@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 
@@ -17,11 +17,27 @@ const props = defineProps({
   },
 });
 
-const isDragging = ref(false);
 const emit = defineEmits(['close', 'updated', 'deleted']);
 
 const store = useStore();
 const { t } = useI18n();
+
+// Estado para drag-and-drop
+const isDragging = ref(false);
+
+// Cópia local dos items para drag-and-drop
+const localItems = ref([]);
+
+// Watch para sincronizar items da prop com o estado local
+watch(
+  () => props.task.items,
+  (newItems) => {
+    if (newItems) {
+      localItems.value = [...newItems];
+    }
+  },
+  { immediate: true, deep: true }
+);
 
 // Estado local
 const showEditModal = ref(false);
@@ -85,9 +101,8 @@ const priority = computed(() => priorityConfig[props.task.priority] || priorityC
 
 const formattedDueDate = computed(() => {
   if (!props.task.due_date) return null;
-  // Parse direto sem conversão de timezone
   const [year, month, day] = props.task.due_date.split('-');
-  const date = new Date(year, month - 1, day); // mês é 0-indexed
+  const date = new Date(year, month - 1, day);
   return date.toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: 'numeric',
@@ -204,17 +219,21 @@ const handleAddItem = async () => {
 };
 
 const handleReorderItems = async () => {
-  if (!props.task.items || props.task.items.length === 0) return;
+  if (!localItems.value || localItems.value.length === 0) return;
   
-  const itemIds = props.task.items.map(item => item.id);
+  const itemIds = localItems.value.map(item => item.id);
   try {
     await store.dispatch('agentTasks/reorderItems', {
       taskId: props.task.id,
       itemIds,
     });
+    // Força recarregar a tarefa do servidor
+    await store.dispatch('agentTasks/fetchTask', props.task.id);
     emit('updated');
   } catch (error) {
     console.error('Error reordering items:', error);
+    // Reverte para a ordem original em caso de erro
+    localItems.value = [...props.task.items];
   }
 };
 
@@ -439,7 +458,7 @@ const getRecurrenceLabel = (type) => {
           <!-- Aba Checklist COM CHECKBOXES CLICÁVEIS -->
           <div v-if="activeTab === 'checklist'" class="space-y-3">
             <!-- Barra de progresso -->
-            <div v-if="task.items && task.items.length > 0" class="mb-4">
+            <div v-if="localItems && localItems.length > 0" class="mb-4">
               <div class="flex items-center justify-between text-xs text-n-slate-10 mb-1">
                 <span>Progresso</span>
                 <span>{{ checklistProgress }}%</span>
@@ -454,8 +473,8 @@ const getRecurrenceLabel = (type) => {
 
             <!-- Lista de subtarefas com checkboxes interativos e drag-and-drop -->
             <draggable
-              v-if="task.items && task.items.length > 0"
-              v-model="task.items"
+              v-if="localItems && localItems.length > 0"
+              v-model="localItems"
               item-key="id"
               handle=".drag-handle"
               ghost-class="opacity-50"
@@ -473,20 +492,20 @@ const getRecurrenceLabel = (type) => {
                   <!-- HANDLE PARA ARRASTAR -->
                   <button
                     type="button"
-                    class="drag-handle flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing text-n-slate-8 hover:text-n-slate-11 opacity-0 group-hover:opacity-100 transition-opacity"
+                    class="drag-handle flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing text-n-slate-9 hover:text-n-slate-11 opacity-0 group-hover:opacity-100 transition-opacity"
                     title="Arraste para reordenar"
                   >
                     <span class="i-lucide-grip-vertical size-4" />
                   </button>
             
-                  <!-- CHECKBOX CLICÁVEL COM CORES VISÍVEIS -->
+                  <!-- CHECKBOX COM CORES VISÍVEIS -->
                   <button
                     type="button"
-                    class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer"
+                    class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer border-2"
                     :class="[
                       item.completed 
-                        ? 'bg-n-brand border-2 border-n-brand' 
-                        : 'bg-transparent border-2 border-n-slate-8 dark:border-n-slate-6 hover:border-n-brand'
+                        ? 'bg-n-brand border-n-brand' 
+                        : 'bg-transparent border-slate-400 dark:border-slate-500 hover:border-n-brand'
                     ]"
                     @click="handleToggleItem(item)"
                   >
@@ -554,7 +573,7 @@ const getRecurrenceLabel = (type) => {
             
             <!-- Empty state -->
             <div
-              v-if="!task.items || task.items.length === 0"
+              v-if="!localItems || localItems.length === 0"
               class="text-center py-6 text-sm text-n-slate-10"
             >
               Nenhuma subtarefa adicionada
