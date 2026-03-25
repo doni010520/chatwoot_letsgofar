@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 
@@ -8,7 +8,7 @@ import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
 import TaskModal from './TaskModal.vue';
 import TaskComments from './TaskComments.vue';
 import TaskFiles from './TaskFiles.vue';
-import draggable from 'vuedraggable';
+import TaskChecklist from './TaskChecklist.vue';
 
 const props = defineProps({
   task: {
@@ -22,74 +22,10 @@ const emit = defineEmits(['close', 'updated', 'deleted']);
 const store = useStore();
 const { t } = useI18n();
 
-// Estado para drag-and-drop
-const isDragging = ref(false);
-const isReordering = ref(false);
-
-// Cópia local dos items para drag-and-drop
-const localItems = ref([]);
-
-// Watch para sincronizar items da prop com o estado local
-// Só sincroniza se NÃO estiver reordenando
-watch(
-  () => props.task.items,
-  (newItems) => {
-    if (newItems && !isReordering.value) {
-      localItems.value = [...newItems];
-    }
-  },
-  { immediate: true, deep: true }
-);
-
 // Estado local
 const showEditModal = ref(false);
 const isDeleting = ref(false);
 const activeTab = ref('checklist');
-const newItemTitle = ref(''); 
-const isAdding = ref(false);
-const editingItemId = ref(null);
-const editingItemTitle = ref('');
-
-const startEditItem = (item) => {
-  editingItemId.value = item.id;
-  editingItemTitle.value = item.title;
-};
-
-const deleteItem = async (item) => {
-  try {
-    await store.dispatch('agentTasks/deleteItem', {
-      taskId: props.task.id,
-      itemId: item.id,
-    });
-    emit('updated');
-  } catch (error) {
-    console.error('Error deleting item:', error);
-  }
-};
-  
-const saveEditItem = async (item) => {
-  if (!editingItemTitle.value.trim()) {
-    editingItemId.value = null;
-    return;
-  }
-
-  try {
-    await store.dispatch('agentTasks/updateItem', {
-      taskId: props.task.id,
-      itemId: item.id,
-      data: { title: editingItemTitle.value.trim() }
-    });
-    editingItemId.value = null;
-    emit('updated');
-  } catch (error) {
-    console.error('Error updating item:', error);
-  }
-};
-
-const cancelEditItem = () => {
-  editingItemId.value = null;
-  editingItemTitle.value = '';
-};
 
 // Computed
 const priorityConfig = {
@@ -122,11 +58,6 @@ const formattedCreatedAt = computed(() => {
 });
 
 const isActive = computed(() => ['pending', 'in_progress'].includes(props.task.status));
-
-const checklistProgress = computed(() => {
-  if (!props.task.items_count || props.task.items_count === 0) return 0;
-  return Math.round((props.task.items_completed_count / props.task.items_count) * 100);
-});
 
 // Handlers
 const handleClose = () => {
@@ -190,66 +121,6 @@ const handleStatusChange = async newStatus => {
   }
 };
 
-const handleToggleItem = async (item) => {
-  try {
-    await store.dispatch('agentTasks/toggleItem', {
-      taskId: props.task.id,
-      itemId: item.id,
-    });
-    emit('updated');
-  } catch (error) {
-    console.error('Error toggling item:', error);
-  }
-};
-
-const handleAddItem = async () => {
-  if (!newItemTitle.value.trim()) return;
-
-  isAdding.value = true;
-  try {
-    await store.dispatch('agentTasks/addItem', {
-      taskId: props.task.id,
-      title: newItemTitle.value.trim(),
-    });
-    newItemTitle.value = '';
-    emit('updated');
-  } catch (error) {
-    console.error('Error adding item:', error);
-  } finally {
-    isAdding.value = false;
-  }
-};
-
-const handleDragStart = () => {
-  isDragging.value = true;
-  isReordering.value = true;
-};
-
-const handleDragEnd = async () => {
-  isDragging.value = false;
-  
-  if (!localItems.value || localItems.value.length === 0) {
-    isReordering.value = false;
-    return;
-  }
-  
-  const itemIds = localItems.value.map(item => item.id);
-  try {
-    await store.dispatch('agentTasks/reorderItems', {
-      taskId: props.task.id,
-      itemIds,
-    });
-    // Após salvar com sucesso, permite o watch sincronizar novamente
-    isReordering.value = false;
-    emit('updated');
-  } catch (error) {
-    console.error('Error reordering items:', error);
-    // Reverte para a ordem original em caso de erro
-    isReordering.value = false;
-    localItems.value = [...props.task.items];
-  }
-};
-
 const getRecurrenceLabel = (type) => {
   const labels = {
     daily: 'Repetição diária',
@@ -259,7 +130,6 @@ const getRecurrenceLabel = (type) => {
   };
   return labels[type] || '';
 };
-  
 </script>
 
 <template>
@@ -418,7 +288,7 @@ const getRecurrenceLabel = (type) => {
           </div>
         </div>
 
-        <!-- Tabs: Checklist / Comentários -->
+        <!-- Tabs: Checklist / Comentários / Attachments -->
         <div class="border-t border-n-weak pt-4">
           <div class="flex gap-4 mb-4">
             <button
@@ -468,131 +338,12 @@ const getRecurrenceLabel = (type) => {
             </button>
           </div>
 
-          <!-- Aba Checklist COM CHECKBOXES CLICÁVEIS E DRAG-AND-DROP -->
-          <div v-if="activeTab === 'checklist'" class="space-y-3">
-            <!-- Barra de progresso -->
-            <div v-if="localItems && localItems.length > 0" class="mb-4">
-              <div class="flex items-center justify-between text-xs text-n-slate-10 mb-1">
-                <span>Progresso</span>
-                <span>{{ checklistProgress }}%</span>
-              </div>
-              <div class="h-1.5 rounded-full bg-n-alpha-3 overflow-hidden">
-                <div
-                  class="h-full rounded-full bg-green-9 transition-all duration-300"
-                  :style="{ width: `${checklistProgress}%` }"
-                />
-              </div>
-            </div>
-
-            <!-- Lista de subtarefas com drag-and-drop -->
-            <draggable
-              v-if="localItems && localItems.length > 0"
-              v-model="localItems"
-              item-key="id"
-              handle=".drag-handle"
-              ghost-class="opacity-50"
-              chosen-class="bg-n-alpha-2"
-              drag-class="shadow-lg"
-              class="space-y-2"
-              @start="handleDragStart"
-              @end="handleDragEnd"
-            >
-              <template #item="{ element: item }">
-                <div
-                  class="flex items-start gap-3 group py-1 rounded-md transition-colors"
-                  :class="{ 'hover:bg-n-alpha-1': !isDragging }"
-                >
-                  <!-- HANDLE PARA ARRASTAR -->
-                  <button
-                    type="button"
-                    class="drag-handle flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing text-n-slate-9 hover:text-n-slate-11 opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Arraste para reordenar"
-                  >
-                    <span class="i-lucide-grip-vertical size-4" />
-                  </button>
-            
-                  <!-- CHECKBOX COM CORES VISÍVEIS -->
-                  <button
-                    type="button"
-                    class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer"
-                    :style="{
-                      backgroundColor: item.completed ? 'rgb(var(--n-brand))' : 'transparent',
-                      border: item.completed 
-                        ? '2px solid rgb(var(--n-brand))' 
-                        : '2px solid rgb(var(--slate-11))'
-                    }"
-                    @click="handleToggleItem(item)"
-                  >
-                    <span 
-                      v-if="item.completed" 
-                      class="i-lucide-check w-4 h-4 text-white"
-                    />
-                  </button>
-              
-                  <!-- TEXTO DA SUBTAREFA (editável) -->
-                  <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
-                    <input
-                      v-model="editingItemTitle"
-                      type="text"
-                      class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
-                      @keyup.enter="saveEditItem(item)"
-                      @keyup.esc="cancelEditItem"
-                      @blur="saveEditItem(item)"
-                      autofocus
-                    />
-                  </div>
-                  <span
-                    v-else
-                    class="flex-1 text-sm cursor-pointer hover:text-n-brand"
-                    :class="[
-                      item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
-                    ]"
-                    @click="startEditItem(item)"
-                  >
-                    {{ item.title }}
-                  </span>
-              
-                  <!-- BOTÃO DELETAR (X) -->
-                  <button
-                    type="button"
-                    class="opacity-0 group-hover:opacity-100 p-1 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-all"
-                    @click="deleteItem(item)"
-                  >
-                    <span class="i-lucide-x size-4" />
-                  </button>
-                </div>
-              </template>
-            </draggable>
-            
-            <!-- Campo para adicionar nova subtarefa -->
-            <div class="mt-4 flex items-center gap-2">
-              <span class="i-lucide-plus w-4 h-4 text-n-slate-9 flex-shrink-0" />
-              <input
-                v-model="newItemTitle"
-                type="text"
-                placeholder="Adicionar subtarefa"
-                class="flex-1 px-2 py-0.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
-                :disabled="isAdding"
-                @keyup.enter="handleAddItem"
-              />
-              <button
-                type="button"
-                class="px-2 py-0.5 text-sm text-n-brand hover:text-n-brand-dark disabled:opacity-50"
-                :disabled="!newItemTitle.trim() || isAdding"
-                @click="handleAddItem"
-              >
-                Adicionar
-              </button>
-            </div>
-            
-            <!-- Empty state -->
-            <div
-              v-if="!localItems || localItems.length === 0"
-              class="text-center py-6 text-sm text-n-slate-10"
-            >
-              Nenhuma subtarefa adicionada
-            </div>
-          </div>
+          <!-- Aba Checklist usando componente existente com drag-and-drop -->
+          <TaskChecklist
+            v-if="activeTab === 'checklist'"
+            :task="task"
+            @updated="emit('updated')"
+          />
 
           <!-- Aba Comentários -->
           <TaskComments v-if="activeTab === 'comments'" :task="task" />
