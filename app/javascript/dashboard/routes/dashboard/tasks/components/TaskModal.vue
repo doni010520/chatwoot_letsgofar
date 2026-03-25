@@ -232,6 +232,7 @@ const handleSubmit = async () => {
           id: i._new ? undefined : i.id,
           title: i.title,
           completed: i.completed,
+          position: i.position ?? index,  
           _destroy: i._destroy,
         })),
     };
