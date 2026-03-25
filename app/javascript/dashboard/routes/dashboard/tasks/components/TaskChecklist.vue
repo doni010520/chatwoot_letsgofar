@@ -59,6 +59,25 @@ const handleDragEnd = async () => {
   
   try {
     const itemIds = localItems.value.map(item => item.id);
+    
+    await store.dispatch('agentTasks/reorderItems', {
+      taskId: props.task.id,
+      itemIds,
+    });
+    
+    setTimeout(() => {
+      isReordering.value = false;
+    }, 500);
+    
+  } catch (error) {
+    console.error('Error reordering items:', error);
+    isReordering.value = false;
+    syncItems();
+  }
+};
+  
+  try {
+    const itemIds = localItems.value.map(item => item.id);
     console.log('Item IDs:', itemIds);
     console.log('Task ID:', props.task.id);
     
@@ -140,29 +159,6 @@ const handleDragStart = () => {
   console.log('DRAG START'); 
   isDragging.value = true;
   isReordering.value = true;
-};
-
-const handleDragEnd = async () => {
-  console.log('DRAG END');
-  isDragging.value = false;
-  
-  try {
-    const itemIds = localItems.value.map(item => item.id);
-    
-    await store.dispatch('agentTasks/reorderItems', {
-      taskId: props.task.id,
-      itemIds,
-    });
-    
-    setTimeout(() => {
-      isReordering.value = false;
-    }, 500);
-    
-  } catch (error) {
-    console.error('Error reordering items:', error);
-    isReordering.value = false;
-    syncItems();
-  }
 };
 
 // Handlers de edição inline
