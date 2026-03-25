@@ -1,7 +1,8 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
+import Draggable from 'vuedraggable';
 
 const props = defineProps({
   task: {
@@ -18,14 +19,33 @@ const { t } = useI18n();
 // Estado local
 const newItemTitle = ref('');
 const isAdding = ref(false);
+const isDragging = ref(false);
+
+// Estado para edição inline
+const editingItemId = ref(null);
+const editingItemTitle = ref('');
 
 // Computed
-const items = computed(() => props.task.items || []);
+const items = computed({
+  get: () => props.task.items || [],
+  set: () => {},
+});
+
+const localItems = ref([]);
+
+// Sincroniza items quando mudam
+const syncItems = () => {
+  localItems.value = [...(props.task.items || [])];
+};
+syncItems();
+
+// Watch para sincronizar quando task muda
+watch(() => props.task.items, syncItems, { deep: true });
 
 const progress = computed(() => {
-  if (items.value.length === 0) return 0;
-  const completed = items.value.filter(i => i.completed).length;
-  return Math.round((completed / items.value.length) * 100);
+  if (localItems.value.length === 0) return 0;
+  const completed = localItems.value.filter(i => i.completed).length;
+  return Math.round((completed / localItems.value.length) * 100);
 });
 
 // Handlers
@@ -70,12 +90,58 @@ const handleDelete = async item => {
     console.error('Error deleting item:', error);
   }
 };
+
+const handleDragEnd = async () => {
+  isDragging.value = false;
+  try {
+    const itemIds = localItems.value.map(item => item.id);
+    await store.dispatch('agentTasks/reorderItems', {
+      taskId: props.task.id,
+      itemIds,
+    });
+    emit('updated');
+  } catch (error) {
+    console.error('Error reordering items:', error);
+    // Reverte para ordem original em caso de erro
+    syncItems();
+  }
+};
+
+// Handlers de edição inline
+const startEditItem = (item) => {
+  editingItemId.value = item.id;
+  editingItemTitle.value = item.title;
+};
+
+const saveEditItem = async (item) => {
+  if (!editingItemTitle.value.trim()) {
+    editingItemId.value = null;
+    return;
+  }
+
+  try {
+    await store.dispatch('agentTasks/updateItem', {
+      taskId: props.task.id,
+      itemId: item.id,
+      data: { title: editingItemTitle.value.trim() }
+    });
+    editingItemId.value = null;
+    emit('updated');
+  } catch (error) {
+    console.error('Error updating item:', error);
+  }
+};
+
+const cancelEditItem = () => {
+  editingItemId.value = null;
+  editingItemTitle.value = '';
+};
 </script>
 
 <template>
   <div>
     <!-- Barra de progresso -->
-    <div v-if="items.length > 0" class="mb-4">
+    <div v-if="localItems.length > 0" class="mb-4">
       <div class="flex items-center justify-between text-xs text-n-slate-10 mb-1">
         <span>Progresso</span>
         <span>{{ progress }}%</span>
@@ -88,47 +154,78 @@ const handleDelete = async item => {
       </div>
     </div>
 
-    <!-- Lista de itens COM CHECKBOXES -->
-    <div class="space-y-2">
-      <div
-        v-for="item in items"
-        :key="item.id"
-        class="flex items-start gap-3 group py-1"
-      >
-        <!-- CHECKBOX INTERATIVO -->
-        <button
-          type="button"
-          class="flex-shrink-0 mt-0.5 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer"
-          :class="[
-            item.completed
-              ? 'border-green-9 bg-green-9 text-white'
-              : 'border-n-slate-7 hover:border-n-brand hover:bg-n-alpha-3',
-          ]"
-          @click="handleToggle(item)"
+    <!-- Lista de itens COM DRAG AND DROP -->
+    <Draggable
+      v-model="localItems"
+      item-key="id"
+      handle=".drag-handle"
+      ghost-class="opacity-50"
+      animation="200"
+      class="space-y-2"
+      @start="isDragging = true"
+      @end="handleDragEnd"
+    >
+      <template #item="{ element: item }">
+        <div
+          class="flex items-start gap-2 group py-1.5 px-2 rounded-lg hover:bg-n-alpha-2 transition-colors"
         >
-          <span v-if="item.completed" class="i-lucide-check w-3 h-3" />
-        </button>
+          <!-- HANDLE DE ARRASTAR -->
+          <button
+            type="button"
+            class="drag-handle flex-shrink-0 mt-0.5 p-0.5 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity text-n-slate-9 hover:text-n-slate-11"
+          >
+            <span class="i-lucide-grip-vertical w-4 h-4" />
+          </button>
 
-        <!-- TEXTO DA SUBTAREFA -->
-        <span
-          class="flex-1 text-sm select-none"
-          :class="[
-            item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
-          ]"
-        >
-          {{ item.title }}
-        </span>
+          <!-- CHECKBOX COM BORDA VISÍVEL EM AMBOS OS MODOS -->
+          <button
+            type="button"
+            class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer"
+            :style="{
+              backgroundColor: item.completed ? 'rgb(var(--green-9))' : 'transparent',
+              border: item.completed 
+                ? '2px solid rgb(var(--green-9))' 
+                : '2px solid rgb(var(--slate-11))'
+            }"
+            @click="handleToggle(item)"
+          >
+            <span v-if="item.completed" class="i-lucide-check w-3 h-3 text-white" />
+          </button>
 
-        <!-- BOTÃO DELETAR -->
-        <button
-          type="button"
-          class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 transition-all"
-          @click="handleDelete(item)"
-        >
-          <span class="i-lucide-x w-4 h-4" />
-        </button>
-      </div>
-    </div>
+          <!-- TEXTO DA SUBTAREFA (editável) -->
+          <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
+            <input
+              v-model="editingItemTitle"
+              type="text"
+              class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+              @keyup.enter="saveEditItem(item)"
+              @keyup.esc="cancelEditItem"
+              @blur="saveEditItem(item)"
+              autofocus
+            />
+          </div>
+          <span
+            v-else
+            class="flex-1 text-sm cursor-pointer hover:text-n-brand"
+            :class="[
+              item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
+            ]"
+            @click="startEditItem(item)"
+          >
+            {{ item.title }}
+          </span>
+
+          <!-- BOTÃO DELETAR -->
+          <button
+            type="button"
+            class="flex-shrink-0 p-1 opacity-0 group-hover:opacity-100 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-all"
+            @click="handleDelete(item)"
+          >
+            <span class="i-lucide-x w-4 h-4" />
+          </button>
+        </div>
+      </template>
+    </Draggable>
 
     <!-- Adicionar novo item -->
     <div class="mt-3 flex items-center gap-2">
@@ -137,7 +234,7 @@ const handleDelete = async item => {
         v-model="newItemTitle"
         type="text"
         placeholder="Adicionar subtarefa"
-        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background focus:outline-none focus:ring-2 focus:ring-n-brand"
+        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
         :disabled="isAdding"
         @keyup.enter="handleAdd"
       />
@@ -153,7 +250,7 @@ const handleDelete = async item => {
 
     <!-- Empty state -->
     <div
-      v-if="items.length === 0"
+      v-if="localItems.length === 0"
       class="text-center py-6 text-sm text-n-slate-10"
     >
       Nenhuma subtarefa. Adicione uma acima.
