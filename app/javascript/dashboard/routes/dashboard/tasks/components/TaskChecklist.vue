@@ -258,7 +258,7 @@ const cancelEditItem = () => {
         v-model="newItemTitle"
         type="text"
         placeholder="Adicionar subtarefa"
-        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+        class="flex-shrink-0 mt-0.5 w-4 h-4 flex items-center justify-center transition-colors cursor-pointer"
         :disabled="isAdding"
         @keyup.enter="handleAdd"
       />
