@@ -20,27 +20,33 @@ const { t } = useI18n();
 const newItemTitle = ref('');
 const isAdding = ref(false);
 const isDragging = ref(false);
+const isReordering = ref(false); // Flag para bloquear watch durante reorder
 
 // Estado para edição inline
 const editingItemId = ref(null);
 const editingItemTitle = ref('');
 
-// Computed
-const items = computed({
-  get: () => props.task.items || [],
-  set: () => {},
-});
-
 const localItems = ref([]);
 
-// Sincroniza items quando mudam
+// Sincroniza items quando mudam - MAS NÃO durante reorder
 const syncItems = () => {
   localItems.value = [...(props.task.items || [])];
 };
+
+// Inicializa
 syncItems();
 
-// Watch para sincronizar quando task muda
-watch(() => props.task.items, syncItems, { deep: true });
+// Watch para sincronizar quando task muda - respeitando flag isReordering
+watch(
+  () => props.task.items,
+  (newItems, oldItems) => {
+    // Só sincroniza se NÃO estiver no meio de um reorder
+    if (!isReordering.value) {
+      syncItems();
+    }
+  },
+  { deep: true }
+);
 
 const progress = computed(() => {
   if (localItems.value.length === 0) return 0;
@@ -91,17 +97,35 @@ const handleDelete = async item => {
   }
 };
 
+const handleDragStart = () => {
+  isDragging.value = true;
+  isReordering.value = true; // Bloqueia watch ANTES de começar
+};
+
 const handleDragEnd = async () => {
   isDragging.value = false;
+  
   try {
     const itemIds = localItems.value.map(item => item.id);
+    
+    // Chama a API para salvar a nova ordem
     await store.dispatch('agentTasks/reorderItems', {
       taskId: props.task.id,
       itemIds,
     });
-    emit('updated');
+    
+    // A store já foi atualizada via mutation SET_TASK_ITEMS_ORDER
+    // NÃO chamamos emit('updated') aqui para evitar recarregar a lista
+    // e potencialmente sobrescrever a ordem
+    
+    // Aguarda um pouco antes de liberar o watch
+    setTimeout(() => {
+      isReordering.value = false;
+    }, 500);
+    
   } catch (error) {
     console.error('Error reordering items:', error);
+    isReordering.value = false;
     // Reverte para ordem original em caso de erro
     syncItems();
   }
@@ -162,7 +186,7 @@ const cancelEditItem = () => {
       ghost-class="opacity-50"
       animation="200"
       class="space-y-2"
-      @start="isDragging = true"
+      @start="handleDragStart"
       @end="handleDragEnd"
     >
       <template #item="{ element: item }">
@@ -177,10 +201,10 @@ const cancelEditItem = () => {
             <span class="i-lucide-grip-vertical w-4 h-4" />
           </button>
 
-          <!-- CHECKBOX COM BORDA VISÍVEL EM AMBOS OS MODOS -->
+          <!-- CHECKBOX MENOR (w-4 h-4) COM BORDA VISÍVEL -->
           <button
             type="button"
-            class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-colors cursor-pointer"
+            class="flex-shrink-0 mt-0.5 w-4 h-4 rounded flex items-center justify-center transition-colors cursor-pointer"
             :style="{
               backgroundColor: item.completed ? 'rgb(var(--green-9))' : 'transparent',
               border: item.completed 
@@ -189,10 +213,10 @@ const cancelEditItem = () => {
             }"
             @click="handleToggle(item)"
           >
-            <span v-if="item.completed" class="i-lucide-check w-3 h-3 text-white" />
+            <span v-if="item.completed" class="i-lucide-check w-2.5 h-2.5 text-white" />
           </button>
 
-          <!-- TEXTO DA SUBTAREFA (editável) -->
+          <!-- TEXTO DA SUBTAREFA (editável ao clicar) -->
           <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
             <input
               v-model="editingItemTitle"
