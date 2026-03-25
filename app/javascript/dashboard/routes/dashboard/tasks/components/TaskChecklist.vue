@@ -76,28 +76,6 @@ const handleDragEnd = async () => {
   }
 };
   
-  try {
-    const itemIds = localItems.value.map(item => item.id);
-    console.log('Item IDs:', itemIds);
-    console.log('Task ID:', props.task.id);
-    
-    const result = await store.dispatch('agentTasks/reorderItems', {
-      taskId: props.task.id,
-      itemIds,
-    });
-    console.log('Reorder result:', result);
-    
-    setTimeout(() => {
-      isReordering.value = false;
-    }, 500);
-    
-  } catch (error) {
-    console.error('Error reordering items:', error);
-    isReordering.value = false;
-    syncItems();
-  }
-};
-  
 // Computed para estilo do checkbox
 const getCheckboxStyle = (item) => {
   if (item.completed) {
