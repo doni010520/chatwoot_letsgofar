@@ -20,7 +20,7 @@ const { t } = useI18n();
 const newItemTitle = ref('');
 const isAdding = ref(false);
 const isDragging = ref(false);
-const isReordering = ref(false); // Flag para bloquear watch durante reorder
+const isReordering = ref(false);
 
 // Estado para edição inline
 const editingItemId = ref(null);
@@ -39,8 +39,7 @@ syncItems();
 // Watch para sincronizar quando task muda - respeitando flag isReordering
 watch(
   () => props.task.items,
-  (newItems, oldItems) => {
-    // Só sincroniza se NÃO estiver no meio de um reorder
+  () => {
     if (!isReordering.value) {
       syncItems();
     }
@@ -53,6 +52,20 @@ const progress = computed(() => {
   const completed = localItems.value.filter(i => i.completed).length;
   return Math.round((completed / localItems.value.length) * 100);
 });
+
+// Computed para estilo do checkbox
+const getCheckboxStyle = (item) => {
+  if (item.completed) {
+    return {
+      backgroundColor: 'rgb(var(--green-9))',
+      border: '2px solid rgb(var(--green-9))'
+    };
+  }
+  return {
+    backgroundColor: 'transparent',
+    border: '2px solid rgb(var(--slate-11))'
+  };
+};
 
 // Handlers
 const handleToggle = async item => {
@@ -99,7 +112,7 @@ const handleDelete = async item => {
 
 const handleDragStart = () => {
   isDragging.value = true;
-  isReordering.value = true; // Bloqueia watch ANTES de começar
+  isReordering.value = true;
 };
 
 const handleDragEnd = async () => {
@@ -108,17 +121,11 @@ const handleDragEnd = async () => {
   try {
     const itemIds = localItems.value.map(item => item.id);
     
-    // Chama a API para salvar a nova ordem
     await store.dispatch('agentTasks/reorderItems', {
       taskId: props.task.id,
       itemIds,
     });
     
-    // A store já foi atualizada via mutation SET_TASK_ITEMS_ORDER
-    // NÃO chamamos emit('updated') aqui para evitar recarregar a lista
-    // e potencialmente sobrescrever a ordem
-    
-    // Aguarda um pouco antes de liberar o watch
     setTimeout(() => {
       isReordering.value = false;
     }, 500);
@@ -126,7 +133,6 @@ const handleDragEnd = async () => {
   } catch (error) {
     console.error('Error reordering items:', error);
     isReordering.value = false;
-    // Reverte para ordem original em caso de erro
     syncItems();
   }
 };
@@ -173,7 +179,7 @@ const cancelEditItem = () => {
       <div class="h-1.5 rounded-full bg-n-alpha-3 overflow-hidden">
         <div
           class="h-full rounded-full bg-green-9 transition-all duration-300"
-          :style="{ width: `${progress}%` }"
+          :style="{ width: progress + '%' }"
         />
       </div>
     </div>
@@ -201,16 +207,11 @@ const cancelEditItem = () => {
             <span class="i-lucide-grip-vertical w-4 h-4" />
           </button>
 
-          <!-- CHECKBOX MENOR (w-4 h-4) COM BORDA VISÍVEL -->"button"
+          <!-- CHECKBOX QUADRADO COM BORDA VISÍVEL -->
           <button
-            type=
-            class="flex-shrink-0 mt-0.5 size-4 box-border rounded-sm flex items-center justify-center transition-colors cursor-pointer"
-            :style="{
-              backgroundColor: item.completed ? 'rgb(var(--green-9))' : 'transparent',
-              border: item.completed 
-                ? '2px solid rgb(var(--green-9))' 
-                : '2px solid rgb(var(--slate-11))'
-            }"
+            type="button"
+            class="flex-shrink-0 mt-0.5 w-4 h-4 rounded-none flex items-center justify-center transition-colors cursor-pointer"
+            :style="getCheckboxStyle(item)"
             @click="handleToggle(item)"
           >
             <span v-if="item.completed" class="i-lucide-check w-2.5 h-2.5 text-white" />
@@ -231,9 +232,7 @@ const cancelEditItem = () => {
           <span
             v-else
             class="flex-1 text-sm cursor-pointer hover:text-n-brand"
-            :class="[
-              item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12',
-            ]"
+            :class="item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12'"
             @click="startEditItem(item)"
           >
             {{ item.title }}
@@ -258,7 +257,7 @@ const cancelEditItem = () => {
         v-model="newItemTitle"
         type="text"
         placeholder="Adicionar subtarefa"
-        class="flex-shrink-0 mt-0.5 w-4 h-4 flex items-center justify-center transition-colors cursor-pointer"
+        class="flex-1 px-2 py-1.5 text-sm rounded-lg border border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
         :disabled="isAdding"
         @keyup.enter="handleAdd"
       />
