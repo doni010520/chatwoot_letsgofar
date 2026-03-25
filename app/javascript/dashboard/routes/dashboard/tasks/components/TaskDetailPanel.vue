@@ -24,15 +24,17 @@ const { t } = useI18n();
 
 // Estado para drag-and-drop
 const isDragging = ref(false);
+const isReordering = ref(false);
 
 // Cópia local dos items para drag-and-drop
 const localItems = ref([]);
 
 // Watch para sincronizar items da prop com o estado local
+// Só sincroniza se NÃO estiver reordenando
 watch(
   () => props.task.items,
   (newItems) => {
-    if (newItems) {
+    if (newItems && !isReordering.value) {
       localItems.value = [...newItems];
     }
   },
@@ -218,8 +220,18 @@ const handleAddItem = async () => {
   }
 };
 
-const handleReorderItems = async () => {
-  if (!localItems.value || localItems.value.length === 0) return;
+const handleDragStart = () => {
+  isDragging.value = true;
+  isReordering.value = true;
+};
+
+const handleDragEnd = async () => {
+  isDragging.value = false;
+  
+  if (!localItems.value || localItems.value.length === 0) {
+    isReordering.value = false;
+    return;
+  }
   
   const itemIds = localItems.value.map(item => item.id);
   try {
@@ -227,12 +239,13 @@ const handleReorderItems = async () => {
       taskId: props.task.id,
       itemIds,
     });
-    // Força recarregar a tarefa do servidor
-    await store.dispatch('agentTasks/fetchTask', props.task.id);
+    // Após salvar com sucesso, permite o watch sincronizar novamente
+    isReordering.value = false;
     emit('updated');
   } catch (error) {
     console.error('Error reordering items:', error);
     // Reverte para a ordem original em caso de erro
+    isReordering.value = false;
     localItems.value = [...props.task.items];
   }
 };
@@ -481,8 +494,8 @@ const getRecurrenceLabel = (type) => {
               chosen-class="bg-n-alpha-2"
               drag-class="shadow-lg"
               class="space-y-2"
-              @start="isDragging = true"
-              @end="isDragging = false; handleReorderItems()"
+              @start="handleDragStart"
+              @end="handleDragEnd"
             >
               <template #item="{ element: item }">
                 <div
@@ -498,15 +511,16 @@ const getRecurrenceLabel = (type) => {
                     <span class="i-lucide-grip-vertical size-4" />
                   </button>
             
-                  <!-- CHECKBOX COM CORES VISÍVEIS -->
+                  <!-- CHECKBOX COM CORES VISÍVEIS (usando style inline para garantir) -->
                   <button
                     type="button"
-                    class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer border-2"
-                    :class="[
-                      item.completed 
-                        ? 'bg-n-brand border-n-brand' 
-                        : 'bg-transparent border-slate-400 dark:border-slate-500 hover:border-n-brand'
-                    ]"
+                    class="flex-shrink-0 mt-0.5 w-5 h-5 rounded flex items-center justify-center transition-all cursor-pointer"
+                    :style="{
+                      backgroundColor: item.completed ? 'rgb(var(--n-brand))' : 'transparent',
+                      border: item.completed 
+                        ? '2px solid rgb(var(--n-brand))' 
+                        : '2px solid rgb(var(--slate-11))'
+                    }"
                     @click="handleToggleItem(item)"
                   >
                     <span 
