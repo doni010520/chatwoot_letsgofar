@@ -210,7 +210,7 @@ const cancelEditItem = () => {
           <!-- CHECKBOX QUADRADO COM BORDA VISÍVEL -->
           <button
             type="button"
-            class="flex-shrink-0 mt-0.5 w-4 h-4 rounded-none flex items-center justify-center transition-colors cursor-pointer"
+            class="flex-shrink-0 mt-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :style="getCheckboxStyle(item)"
             @click="handleToggle(item)"
           >
