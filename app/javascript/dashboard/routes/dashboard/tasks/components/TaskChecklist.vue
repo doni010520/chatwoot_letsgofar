@@ -111,11 +111,13 @@ const handleDelete = async item => {
 };
 
 const handleDragStart = () => {
+  console.log('DRAG START'); 
   isDragging.value = true;
   isReordering.value = true;
 };
 
 const handleDragEnd = async () => {
+  console.log('DRAG END');
   isDragging.value = false;
   
   try {
