@@ -228,7 +228,7 @@ const handleSubmit = async () => {
       ...formData.value,
       items_attributes: items.value
         .filter(i => !i._destroy || !i._new)
-        .map(i => ({
+        .map((i, index) => ({
           id: i._new ? undefined : i.id,
           title: i.title,
           completed: i.completed,
