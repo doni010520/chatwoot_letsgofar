@@ -57,13 +57,17 @@ const handleDragEnd = async () => {
   console.log('DRAG END');
   isDragging.value = false;
   
+  const itemIds = localItems.value.map(item => item.id);
+  console.log('Item IDs:', itemIds);
+  console.log('Task ID:', props.task.id);
+  
   try {
-    const itemIds = localItems.value.map(item => item.id);
-    
-    await store.dispatch('agentTasks/reorderItems', {
+    console.log('Calling reorderItems...');
+    const result = await store.dispatch('agentTasks/reorderItems', {
       taskId: props.task.id,
       itemIds,
     });
+    console.log('Reorder result:', result);
     
     setTimeout(() => {
       isReordering.value = false;
