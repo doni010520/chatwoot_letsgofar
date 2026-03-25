@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n';
 
 import Button from 'dashboard/components-next/button/Button.vue';
 import Modal from 'dashboard/components/Modal.vue';
-import draggable from 'vuedraggable';
   
 const props = defineProps({
   task: {
@@ -58,7 +57,6 @@ const formData = ref({
 // Subtarefas
 const newItemTitle = ref('');
 const items = ref([]);
-const isDraggingItem = ref(false);
 
 // ==========================================
 // ANEXOS - Upload de arquivos
@@ -177,7 +175,7 @@ const weekDays = [
 const addItem = () => {
   if (!newItemTitle.value.trim()) return;
 
-  // Calcular próxima posição
+  // Calcular próxima posição baseada nos items existentes
   const maxPosition = items.value.reduce((max, item) => 
     Math.max(max, item.position ?? 0), -1);
 
@@ -191,10 +189,8 @@ const addItem = () => {
   newItemTitle.value = '';
 };
 
-const removeItem = (item) => {
-  const index = items.value.findIndex(i => i.id === item.id);
-  if (index === -1) return;
-  
+const removeItem = index => {
+  const item = items.value[index];
   if (item._new) {
     items.value.splice(index, 1);
   } else {
@@ -229,15 +225,6 @@ const toggleWeekDay = (day) => {
     formData.value.recurrence_config.days.splice(index, 1);
   }
 };
-
-// Atualizar posições após drag
-const onDragEnd = () => {
-  isDraggingItem.value = false;
-  // Atualizar posições baseado na ordem atual
-  items.value.forEach((item, index) => {
-    item.position = index;
-  });
-};
   
 const handleSubmit = async () => {
   if (!validateForm()) return;
@@ -253,7 +240,7 @@ const handleSubmit = async () => {
           id: i._new ? undefined : i.id,
           title: i.title,
           completed: i.completed,
-          position: i.position ?? index,
+          position: i.position ?? index, // IMPORTANTE: enviar position
           _destroy: i._destroy,
         })),
     };
@@ -316,7 +303,7 @@ onMounted(() => {
       kanban_pipeline_id: props.task.kanban_pipeline?.id || null,
       label_ids: props.task.labels?.map(l => l.id) || [],
     };
-    // Copiar items com suas posições
+    // Copiar items COM suas posições
     items.value = (props.task.items || []).map((item, index) => ({
       ...item,
       position: item.position ?? index,
@@ -600,66 +587,37 @@ onMounted(() => {
         </div>
         <!-- ========================================== -->
 
-        <!-- Subtarefas com drag-and-drop -->
+        <!-- Subtarefas -->
         <div>
           <label class="block text-sm font-medium text-n-slate-12 mb-2">
             Subtarefas
           </label>
 
           <div class="space-y-2">
-            <draggable
-              v-model="items"
-              item-key="id"
-              handle=".drag-handle"
-              ghost-class="opacity-50"
-              chosen-class="bg-n-alpha-2"
-              :animation="200"
-              @start="isDraggingItem = true"
-              @end="onDragEnd"
+            <div
+              v-for="(item, index) in items.filter(i => !i._destroy)"
+              :key="item.id"
+              class="flex items-center gap-2"
             >
-              <template #item="{ element: item }">
-                <div
-                  v-if="!item._destroy"
-                  class="flex items-center gap-2 group"
-                >
-                  <!-- Handle para arrastar -->
-                  <button
-                    type="button"
-                    class="drag-handle p-1 cursor-grab active:cursor-grabbing text-n-slate-9 hover:text-n-slate-11 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <span class="i-lucide-grip-vertical size-4" />
-                  </button>
-                  
-                  <!-- Checkbox -->
-                  <input
-                    type="checkbox"
-                    :checked="item.completed"
-                    class="size-4 rounded"
-                    :style="{
-                      accentColor: 'rgb(var(--n-brand))',
-                      border: '2px solid rgb(var(--slate-11))'
-                    }"
-                    @change="item.completed = $event.target.checked"
-                  />
-                  
-                  <!-- Input de título -->
-                  <input
-                    v-model="item.title"
-                    type="text"
-                    class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
-                  />
-                  
-                  <!-- Botão remover -->
-                  <button
-                    type="button"
-                    class="p-1 text-n-slate-9 hover:text-ruby-9 opacity-0 group-hover:opacity-100 transition-opacity"
-                    @click="removeItem(item)"
-                  >
-                    <span class="i-lucide-x size-4" />
-                  </button>
-                </div>
-              </template>
-            </draggable>
+              <input
+                type="checkbox"
+                :checked="item.completed"
+                class="size-4 rounded border-n-slate-7"
+                @change="item.completed = $event.target.checked"
+              />
+              <input
+                v-model="item.title"
+                type="text"
+                class="flex-1 px-2 py-1 text-sm rounded border border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+              />
+              <button
+                type="button"
+                class="p-1 text-n-slate-9 hover:text-ruby-9"
+                @click="removeItem(index)"
+              >
+                <span class="i-lucide-x size-4" />
+              </button>
+            </div>
 
             <!-- Adicionar nova subtarefa -->
             <div class="flex items-center gap-2">
