@@ -204,7 +204,7 @@ const cancelEditItem = () => {
           <!-- CHECKBOX MENOR (w-4 h-4) COM BORDA VISÍVEL -->
           <button
             type="button"
-            class="flex-shrink-0 mt-0.5 w-4 h-4 rounded flex items-center justify-center transition-colors cursor-pointer"
+            class="flex-shrink-0 mt-0.5 w-4 h-4 rounded-sm flex items-center justify-center transition-colors cursor-pointer"
             :style="{
               backgroundColor: item.completed ? 'rgb(var(--green-9))' : 'transparent',
               border: item.completed 
