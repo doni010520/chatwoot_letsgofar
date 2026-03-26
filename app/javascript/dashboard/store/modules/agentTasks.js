@@ -403,6 +403,21 @@ const actions = {
   },
 };
 
+  onTaskCreated({ commit, dispatch }, task) {
+    commit('ADD_TASK', task);
+    dispatch('fetchStats');
+  },
+
+  onTaskAssigned({ commit, dispatch }, task) {
+    commit('UPDATE_TASK', task);
+    dispatch('fetchStats');
+  },
+
+  onTaskUpdated({ commit }, task) {
+    commit('UPDATE_TASK', task);
+  },
+};
+
 const mutations = {
   SET_TASK_ITEMS_ORDER: ($state, { taskId, items }) => {
     if ($state.currentTask?.id === taskId) {
