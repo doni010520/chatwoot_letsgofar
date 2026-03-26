@@ -299,25 +299,26 @@ class AgentTask < ApplicationRecord
       calendar_data_for_scope(where(account_id: account_id), start_date, end_date)
     end
   end
-  
-    def push_event_data
-      {
-        id: id,
-        title: title,
-        description: description,
-        priority: priority,
-        status: status,
-        due_date: due_date,
-        due_time: due_time&.strftime('%H:%M'),
-        account_id: account_id,
-        created_by: created_by&.push_event_data,
-        assigned_to: assigned_to&.push_event_data,
-        contact: contact ? { id: contact.id, name: contact.name } : nil,
-        conversation: conversation ? { id: conversation.id, display_id: conversation.display_id } : nil,
-        items_count: items.count,
-        items_completed_count: items.where(completed: true).count,
-        created_at: created_at,
-        updated_at: updated_at
-      }
-    end
+
+  # Dados para push via WebSocket
+  def push_event_data
+    {
+      id: id,
+      title: title,
+      description: description,
+      priority: priority,
+      status: status,
+      due_date: due_date,
+      due_time: due_time&.strftime('%H:%M'),
+      account_id: account_id,
+      created_by: created_by&.push_event_data,
+      assigned_to: assigned_to&.push_event_data,
+      contact: contact ? { id: contact.id, name: contact.name } : nil,
+      conversation: conversation ? { id: conversation.id, display_id: conversation.display_id } : nil,
+      items_count: items.count,
+      items_completed_count: items.where(completed: true).count,
+      created_at: created_at,
+      updated_at: updated_at
+    }
   end
+end
