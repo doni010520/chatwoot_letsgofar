@@ -11,6 +11,20 @@ import { useI18n } from 'vue-i18n';
 import camelcaseKeys from 'camelcase-keys';
 import { initializeAudioAlerts } from 'dashboard/helper/scriptHelpers';
 import { useStoreGetters } from 'dashboard/composables/store';
+import TaskAudioAlert from './TaskAudioAlert.vue';
+
+const isAdmin = computed(() => {
+  const user = currentUser.value;
+  return user?.role === 'administrator';
+});
+
+const showTaskAlerts = computed(() => true);
+const taskAlertType = ref('none');
+
+const handleTaskAlertChange = value => {
+  taskAlertType.value = value;
+  handleAudioConfigChange({ task_alert_type: value });
+};
 
 const getters = useStoreGetters();
 const currentUser = computed(() => getters.getCurrentUser.value);
@@ -108,5 +122,14 @@ const handleAudioToneChange = value => {
       :label="$t(`${i18nKeyPrefix}.CONDITIONS.TITLE`)"
       @change="handleAudioAlertConditions"
     />
+    
+    <TaskAudioAlert
+      v-if="showTaskAlerts"
+      :value="taskAlertType"
+      :is-admin="isAdmin"
+      :label="$t(`${i18nKeyPrefix}.TASK_ALERTS.TITLE`)"
+      @update="handleTaskAlertChange"
+    />
+    
   </div>
 </template>
