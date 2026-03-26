@@ -31,6 +31,7 @@ export class DashboardAudioNotificationHelper {
       playAlertOnlyWhenHidden: true,
       alertIfUnreadConversationExist: false,
       taskAlertType: ['none'],
+      taskAlertTone: DEFAULT_TONE,
     };
 
     this.recurringNotificationTimer = null;
@@ -73,13 +74,20 @@ export class DashboardAudioNotificationHelper {
     alertIfUnreadConversationExist,
     audioAlertType = DEFAULT_ALERT_TYPE,
     audioAlertTone = DEFAULT_TONE,
-    taskAlertType = ['none'],
+    taskAlertType = 'none',
+    taskAlertTone = DEFAULT_TONE,
   }) => {
+    const parsedTaskAlertType = taskAlertType === 'none' 
+      ? ['none'] 
+      : taskAlertType.split('+').filter(Boolean);
+
     this.notificationConfig = {
       ...this.notificationConfig,
       audioAlertType: audioAlertType.split('+').filter(Boolean),
       playAlertOnlyWhenHidden: !alwaysPlayAudioAlert,
       alertIfUnreadConversationExist: alertIfUnreadConversationExist,
+      taskAlertType: parsedTaskAlertType,
+      taskAlertTone: taskAlertTone,
     };
 
     this.currentUser = currentUser;
@@ -216,25 +224,43 @@ export class DashboardAudioNotificationHelper {
   };
   
   onNewTask = task => {
-    const { taskAlertType, playAlertOnlyWhenHidden } = this.notificationConfig;
+    const { taskAlertType, taskAlertTone, playAlertOnlyWhenHidden } = this.notificationConfig;
     if (!taskAlertType || taskAlertType.includes('none')) return;
     if (!taskAlertType.includes(TASK_EVENT_TYPES.TASK_CREATED)) return;
     if (task.created_by?.id === this.currentUser?.id) return;
     if (playAlertOnlyWhenHidden && WindowVisibilityHelper.isWindowVisible()) return;
     
-    this.playAudioAlert();
+    this.playTaskAudioAlert(taskAlertTone);
     showBadgeOnFavicon();
   };
 
   onTaskAssigned = task => {
-    const { taskAlertType, playAlertOnlyWhenHidden } = this.notificationConfig;
+    const { taskAlertType, taskAlertTone, playAlertOnlyWhenHidden } = this.notificationConfig;
     if (!taskAlertType || taskAlertType.includes('none')) return;
     if (!taskAlertType.includes(TASK_EVENT_TYPES.TASK_ASSIGNED)) return;
     if (task.assigned_to?.id !== this.currentUser?.id) return;
     if (playAlertOnlyWhenHidden && WindowVisibilityHelper.isWindowVisible()) return;
     
-    this.playAudioAlert();
+    this.playTaskAudioAlert(taskAlertTone);
     showBadgeOnFavicon();
+  };
+
+  playTaskAudioAlert = async (tone = DEFAULT_TONE) => {
+    try {
+      const taskAudio = new Audio(`${ALERT_PATH_PREFIX}${tone}.mp3`);
+      await taskAudio.play();
+    } catch (error) {
+      if (
+        error.name === 'NotAllowedError' &&
+        !this.hasSentSoundPermissionsRequest
+      ) {
+        this.hasSentSoundPermissionsRequest = true;
+        useAlert(
+          'PROFILE_SETTINGS.FORM.AUDIO_NOTIFICATIONS_SECTION.SOUND_PERMISSION_ERROR',
+          { usei18n: true, duration: ALERT_DURATION }
+        );
+      }
+    }
   };
 }
 
