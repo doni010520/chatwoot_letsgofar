@@ -131,6 +131,14 @@
           "CONDITION_ONE": "Send audio alerts only if the browser window is not active",
           "CONDITION_TWO": "Send alerts every 30s until all the assigned conversations are read"
         },
+        "TASK_ALERTS": {
+          "TITLE": "Task Notifications",
+          "TONE_LABEL": "Notification sound"
+        },
+        "TASK_ALERT_TYPES": {
+          "TASK_CREATED": "New task created in account",
+          "TASK_ASSIGNED": "Task assigned to me"
+        },
         "SOUND_PERMISSION_ERROR": "Autoplay is disabled in your browser. To hear alerts automatically, enable sound permission in your browser settings or interact with the page.",
         "READ_MORE": "Read more"
       },
