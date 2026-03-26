@@ -310,6 +310,17 @@ const actions = {
     }
   },
 
+  async reorderItems({ commit }, { taskId, itemIds }) {
+    try {
+      const response = await AgentTasksAPI.reorderItems(taskId, itemIds);
+      commit('SET_TASK_ITEMS_ORDER', { taskId, items: response.data.items || response.data });
+      return response.data;
+    } catch (error) {
+      console.error('Error reordering items:', error);
+      throw error;
+    }
+  },
+
   // === COMMENTS ===
   async addComment({ commit }, { taskId, content }) {
     try {
@@ -393,6 +404,12 @@ const actions = {
 };
 
 const mutations = {
+  SET_TASK_ITEMS_ORDER: ($state, { taskId, items }) => {
+    if ($state.currentTask?.id === taskId) {
+      $state.currentTask.items = items;
+    }
+  },
+  
   SET_TASKS: ($state, tasks) => {
     $state.tasks = tasks;
   },
