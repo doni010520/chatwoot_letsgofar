@@ -34,6 +34,9 @@ class ActionCableConnector extends BaseActionCableConnector {
       'conversation.updated': this.onConversationUpdated,
       'account.cache_invalidated': this.onCacheInvalidate,
       'copilot.message.created': this.onCopilotMessageCreated,
+      'agent_task.created': this.onAgentTaskCreated,
+      'agent_task.assigned': this.onAgentTaskAssigned,
+      'agent_task.updated': this.onAgentTaskUpdated,
     };
   }
 
@@ -192,6 +195,20 @@ class ActionCableConnector extends BaseActionCableConnector {
 
   onCopilotMessageCreated = data => {
     this.app.$store.dispatch('copilotMessages/upsert', data);
+  };
+
+  onAgentTaskCreated = data => {
+    this.app.$store.dispatch('agentTasks/onTaskCreated', data);
+    DashboardAudioNotificationHelper.onNewTask(data);
+  };
+
+  onAgentTaskAssigned = data => {
+    this.app.$store.dispatch('agentTasks/onTaskAssigned', data);
+    DashboardAudioNotificationHelper.onTaskAssigned(data);
+  };
+
+  onAgentTaskUpdated = data => {
+    this.app.$store.dispatch('agentTasks/onTaskUpdated', data);
   };
 
   onCacheInvalidate = data => {
