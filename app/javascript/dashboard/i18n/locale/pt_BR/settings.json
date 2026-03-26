@@ -108,7 +108,8 @@
           "NOTME": "Conversas abertas atribuídas a outras pessoas"
         },
         "TASK_ALERTS": {
-          "TITLE": "Notificações de Tarefas"
+          "TITLE": "Notificações de Tarefas",
+          "TONE_LABEL": "Som da notificação"
         },
         "TASK_ALERT_TYPES": {
           "TASK_CREATED": "Nova tarefa criada na conta",
