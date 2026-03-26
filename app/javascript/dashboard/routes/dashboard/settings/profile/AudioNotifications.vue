@@ -20,10 +20,16 @@ const isAdmin = computed(() => {
 
 const showTaskAlerts = computed(() => true);
 const taskAlertType = ref('none');
+const taskAlertTone = ref('ding');
 
 const handleTaskAlertChange = value => {
   taskAlertType.value = value;
   handleAudioConfigChange({ task_alert_type: value });
+};
+
+const handleTaskAlertToneChange = value => {
+  taskAlertTone.value = value;
+  handleAudioConfigChange({ task_alert_tone: value });
 };
 
 const getters = useStoreGetters();
@@ -61,14 +67,18 @@ const initializeNotificationUISettings = newUISettings => {
     },
   ];
   alertTone.value = updatedUISettings.notificationTone || 'ding';
+  taskAlertType.value = updatedUISettings.taskAlertType || 'none';
+  taskAlertTone.value = updatedUISettings.taskAlertTone || 'ding';
 };
 
 watch(
   uiSettings,
   value => {
-    initializeNotificationUISettings(value);
+    if (value && Object.keys(value).length > 0) {
+      initializeNotificationUISettings(value);
+    }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 );
 
 const handleAudioConfigChange = value => {
@@ -126,9 +136,11 @@ const handleAudioToneChange = value => {
     <TaskAudioAlert
       v-if="showTaskAlerts"
       :value="taskAlertType"
+      :tone="taskAlertTone"
       :is-admin="isAdmin"
       :label="$t(`${i18nKeyPrefix}.TASK_ALERTS.TITLE`)"
       @update="handleTaskAlertChange"
+      @update:tone="handleTaskAlertToneChange"
     />
     
   </div>
