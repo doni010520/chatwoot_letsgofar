@@ -21,6 +21,8 @@ export const initializeAudioAlerts = user => {
     enable_audio_alerts: audioAlertType,
     alert_if_unread_assigned_conversation_exist: alertIfUnreadConversationExist,
     notification_tone: audioAlertTone,
+    task_alert_type: taskAlertType,
+    task_alert_tone: taskAlertTone,
     // UI Settings can be undefined initially as we don't send the
     // entire payload for the user during the signup process.
   } = uiSettings || {};
@@ -31,6 +33,8 @@ export const initializeAudioAlerts = user => {
     audioAlertTone: audioAlertTone || 'ding',
     alwaysPlayAudioAlert: alwaysPlayAudioAlert || false,
     alertIfUnreadConversationExist: alertIfUnreadConversationExist || false,
+    taskAlertType: taskAlertType || 'none',
+    taskAlertTone: taskAlertTone || 'ding',
   });
 };
 
