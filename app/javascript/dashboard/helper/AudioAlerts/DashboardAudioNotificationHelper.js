@@ -2,7 +2,7 @@ import { MESSAGE_TYPE } from 'shared/constants/messages';
 import { showBadgeOnFavicon } from './faviconHelper';
 import { initFaviconSwitcher } from './faviconHelper';
 
-import { EVENT_TYPES } from 'dashboard/routes/dashboard/settings/profile/constants.js';
+import { EVENT_TYPES, TASK_EVENT_TYPES } from 'dashboard/routes/dashboard/settings/profile/constants.js';
 import GlobalStore from 'dashboard/store';
 import AudioNotificationStore from './AudioNotificationStore';
 import {
@@ -30,6 +30,7 @@ export class DashboardAudioNotificationHelper {
       audioAlertType: DEFAULT_ALERT_TYPE,
       playAlertOnlyWhenHidden: true,
       alertIfUnreadConversationExist: false,
+      taskAlertType: ['none'],
     };
 
     this.recurringNotificationTimer = null;
@@ -72,6 +73,7 @@ export class DashboardAudioNotificationHelper {
     alertIfUnreadConversationExist,
     audioAlertType = DEFAULT_ALERT_TYPE,
     audioAlertTone = DEFAULT_TONE,
+    taskAlertType = ['none'],
   }) => {
     this.notificationConfig = {
       ...this.notificationConfig,
@@ -211,6 +213,28 @@ export class DashboardAudioNotificationHelper {
     this.playAudioAlert();
     showBadgeOnFavicon();
     this.playAudioEvery30Seconds();
+  };
+  
+  onNewTask = task => {
+    const { taskAlertType, playAlertOnlyWhenHidden } = this.notificationConfig;
+    if (!taskAlertType || taskAlertType.includes('none')) return;
+    if (!taskAlertType.includes(TASK_EVENT_TYPES.TASK_CREATED)) return;
+    if (task.created_by?.id === this.currentUser?.id) return;
+    if (playAlertOnlyWhenHidden && WindowVisibilityHelper.isWindowVisible()) return;
+    
+    this.playAudioAlert();
+    showBadgeOnFavicon();
+  };
+
+  onTaskAssigned = task => {
+    const { taskAlertType, playAlertOnlyWhenHidden } = this.notificationConfig;
+    if (!taskAlertType || taskAlertType.includes('none')) return;
+    if (!taskAlertType.includes(TASK_EVENT_TYPES.TASK_ASSIGNED)) return;
+    if (task.assigned_to?.id !== this.currentUser?.id) return;
+    if (playAlertOnlyWhenHidden && WindowVisibilityHelper.isWindowVisible()) return;
+    
+    this.playAudioAlert();
+    showBadgeOnFavicon();
   };
 }
 
