@@ -86,6 +86,7 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     if user_id.present?
       user = Current.account.users.find(user_id)
       @agent_task.assign_to!(user)
+      Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_ASSIGNED, Time.zone.now, agent_task: @agent_task)
     else
       @agent_task.unassign!
     end
