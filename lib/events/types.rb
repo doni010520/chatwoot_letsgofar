@@ -56,5 +56,10 @@ module Events::Types
   AGENT_REMOVED = 'agent.removed'
 
   # copilot events
-  COPILOT_MESSAGE_CREATED = 'copilot.message.created'
+  COPILOT_MESSAGE_CREATED = 'copilot.message.created
+
+  # agent tasks events 
+  AGENT_TASK_CREATED = 'agent_task.created'
+  AGENT_TASK_ASSIGNED = 'agent_task.assigned'
+  AGENT_TASK_UPDATED = 'agent_task.updated'
 end
