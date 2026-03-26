@@ -19,6 +19,11 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     @agent_task.created_by = Current.user
 
     if @agent_task.save
+      Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_CREATED, Time.zone.now, agent_task: @agent_task)
+      if @agent_task.assigned_to_id.present?
+        Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_ASSIGNED, Time.zone.now, agent_task: @agent_task)
+      end
+      
       render :show, status: :created
     else
       render json: { errors: @agent_task.errors.full_messages }, status: :unprocessable_entity
