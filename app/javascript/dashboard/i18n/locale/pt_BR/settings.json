@@ -107,6 +107,14 @@
           "UNASSIGNED": "Conversas não atribuídas",
           "NOTME": "Conversas abertas atribuídas a outras pessoas"
         },
+        "TASK_ALERTS": {
+          "TITLE": "Notificações de Tarefas"
+        },
+        "TASK_ALERT_TYPES": {
+          "TASK_CREATED": "Nova tarefa criada na conta",
+          "TASK_ASSIGNED": "Tarefa atribuída a mim"
+        },
+        
         "ALERT_COMBINATIONS": {
           "NONE": "Você não selecionou nenhuma opção, você não receberá nenhum alerta de áudio.",
           "ASSIGNED": "Você receberá alertas para conversas atribuídas a você.",
