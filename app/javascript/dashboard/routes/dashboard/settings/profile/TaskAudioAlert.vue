@@ -1,15 +1,17 @@
 <script setup>
 import { computed } from 'vue';
 import CheckBox from 'v3/components/Form/CheckBox.vue';
+import AudioAlertTone from './AudioAlertTone.vue';
 import { TASK_ALERT_EVENTS, TASK_EVENT_TYPES } from './constants';
 
 const props = defineProps({
   label: { type: String, default: '' },
   value: { type: String, default: 'none' },
+  tone: { type: String, default: 'ding' },
   isAdmin: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update', 'update:tone']);
 
 const alertEvents = computed(() => {
   if (props.isAdmin) {
@@ -31,13 +33,17 @@ const selectedValue = computed({
 });
 
 const setValue = (isChecked, value) => {
-  let updated = selectedValue.value;
+  let updated = [...selectedValue.value];
   if (isChecked) {
     updated.push(value);
   } else {
     updated = updated.filter(item => item !== value);
   }
   selectedValue.value = updated;
+};
+
+const handleToneChange = value => {
+  emit('update:tone', value);
 };
 </script>
 
@@ -57,6 +63,14 @@ const setValue = (isChecked, value) => {
           {{ $t(`PROFILE_SETTINGS.FORM.AUDIO_NOTIFICATIONS_SECTION.TASK_ALERT_TYPES.${option.label.toUpperCase()}`) }}
         </label>
       </div>
+    </div>
+    
+    <div class="mt-4">
+      <AudioAlertTone
+        :value="tone"
+        :label="$t('PROFILE_SETTINGS.FORM.AUDIO_NOTIFICATIONS_SECTION.TASK_ALERTS.TONE_LABEL')"
+        @change="handleToneChange"
+      />
     </div>
   </div>
 </template>
