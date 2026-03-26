@@ -401,7 +401,6 @@ const actions = {
   clearCurrentTask({ commit }) {
     commit('SET_CURRENT_TASK', null);
   },
-};
 
   onTaskCreated({ commit, dispatch }, task) {
     commit('ADD_TASK', task);
