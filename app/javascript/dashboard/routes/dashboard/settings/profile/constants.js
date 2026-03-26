@@ -42,6 +42,11 @@ export const EVENT_TYPES = {
   UNASSIGNED: 'unassigned',
 };
 
+export const TASK_EVENT_TYPES = {
+  TASK_CREATED: 'task_created',
+  TASK_ASSIGNED: 'task_assigned',
+};
+
 export const ALERT_EVENTS = [
   {
     value: EVENT_TYPES.ASSIGNED,
@@ -54,5 +59,16 @@ export const ALERT_EVENTS = [
   {
     value: EVENT_TYPES.NOTME,
     label: 'notme',
+  },
+];
+
+export const TASK_ALERT_EVENTS = [
+  {
+    value: TASK_EVENT_TYPES.TASK_CREATED,
+    label: 'task_created',
+  },
+  {
+    value: TASK_EVENT_TYPES.TASK_ASSIGNED,
+    label: 'task_assigned',
   },
 ];
