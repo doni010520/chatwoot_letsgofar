@@ -173,6 +173,31 @@ class ActionCableListener < BaseListener
     broadcast(account, [user.pubsub_token], CONVERSATION_MENTIONED, conversation.push_event_data)
   end
 
+  def agent_task_created(event)
+    task = event.data[:agent_task]
+    account = task.account
+    tokens = user_tokens(account, account.users)
+
+    broadcast(account, tokens, AGENT_TASK_CREATED, task.push_event_data)
+  end
+
+  def agent_task_assigned(event)
+    task = event.data[:agent_task]
+    account = task.account
+    user = task.assigned_to
+    return unless user
+
+    broadcast(account, [user.pubsub_token], AGENT_TASK_ASSIGNED, task.push_event_data)
+  end
+
+  def agent_task_updated(event)
+    task = event.data[:agent_task]
+    account = task.account
+    tokens = user_tokens(account, account.users)
+
+    broadcast(account, tokens, AGENT_TASK_UPDATED, task.push_event_data)
+  end
+  
   private
 
   def account_token(account)
