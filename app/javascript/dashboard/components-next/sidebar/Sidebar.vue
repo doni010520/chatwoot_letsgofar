@@ -395,7 +395,7 @@ const menuItems = computed(() => {
       name: 'Contracts',
       label: 'Contratos',
       icon: 'i-lucide-file-signature',
-      activeOn: ['contracts_list', 'contracts_create', 'contracts_view', 'contracts_edit', 'contracts_draft', 'contracts_pending', 'contracts_signed', 'contracts_refused'],
+      activeOn: ['contracts_list', 'contracts_create', 'contracts_view', 'contracts_edit', 'contracts_draft', 'contracts_pending', 'contracts_signed', 'contracts_refused', 'contract_templates'],
       children: [
         {
           name: 'AllContracts',
@@ -426,6 +426,12 @@ const menuItems = computed(() => {
           label: 'Recusados',
           to: accountScopedRoute('contracts_refused'),
           activeOn: ['contracts_refused'],
+        },
+        {
+          name: 'ContractTemplates',
+          label: 'Modelos',
+          to: accountScopedRoute('contract_templates'),
+          activeOn: ['contract_templates'],
         },
       ],
     },

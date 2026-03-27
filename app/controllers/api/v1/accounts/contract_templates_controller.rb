@@ -2,7 +2,7 @@
 
 class Api::V1::Accounts::ContractTemplatesController < Api::V1::Accounts::BaseController
   before_action :check_authorization
-  before_action :set_template, only: [:show, :update, :destroy, :preview]
+  before_action :set_template, only: [:show, :update, :destroy, :preview, :duplicate]
 
   def index
     @templates = Current.account.contract_templates
@@ -52,6 +52,11 @@ class Api::V1::Accounts::ContractTemplatesController < Api::V1::Accounts::BaseCo
       html: rendered_html,
       missing_fields: @template.validate_variables(variables)
     }
+  end
+
+  def duplicate
+    new_template = @template.duplicate!(Current.user)
+    render json: { data: template_json(new_template, full: true) }, status: :created
   end
 
   # Retorna o template padrão da Let's Go Far

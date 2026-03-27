@@ -4,6 +4,7 @@ const ContractsIndex = () => import('./ContractsIndex.vue');
 const ContractCreate = () => import('./ContractCreate.vue');
 const ContractView = () => import('./ContractView.vue');
 const ContractEdit = () => import('./ContractEdit.vue');
+const ContractTemplates = () => import('./ContractTemplates.vue');
 
 export const routes = [
   {
@@ -20,6 +21,14 @@ export const routes = [
     component: ContractCreate,
     meta: {
       permissions: ['administrator', 'agent'],
+    },
+  },
+  {
+    path: frontendURL('accounts/:accountId/contracts/templates'),
+    name: 'contract_templates',
+    component: ContractTemplates,
+    meta: {
+      permissions: ['administrator'],
     },
   },
   {

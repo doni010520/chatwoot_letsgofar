@@ -422,6 +422,7 @@ Rails.application.routes.draw do
           resources :contract_templates do
             member do
               post :preview
+              post :duplicate
             end
             collection do
               get :default

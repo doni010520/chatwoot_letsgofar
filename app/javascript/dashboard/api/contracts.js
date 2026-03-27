@@ -101,6 +101,11 @@ class ContractTemplatesAPI extends ApiClient {
     return axios.post(`${this.url}/${id}/preview`, { variables });
   }
 
+  // Duplicar template
+  duplicate(id) {
+    return axios.post(`${this.url}/${id}/duplicate`);
+  }
+
   // Obter template padrão
   getDefault() {
     return axios.get(`${this.url}/default`);
