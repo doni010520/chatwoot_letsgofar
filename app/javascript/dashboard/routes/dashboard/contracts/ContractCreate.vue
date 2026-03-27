@@ -21,6 +21,8 @@ const currentStep = ref(1);
 const isLoading = ref(false);
 const isSaving = ref(false);
 const template = ref(null);
+const templates = ref([]);
+const selectedTemplateId = ref(null);
 const selectedContact = ref(null);
 
 const contractData = reactive({
@@ -117,6 +119,25 @@ const loadTemplate = async () => {
     template.value = response.data.data;
   } catch (error) {
     console.error('Erro ao carregar template:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const selectTemplate = async templateId => {
+  if (!templateId) {
+    // Revert to default template
+    await loadTemplate();
+    selectedTemplateId.value = null;
+    return;
+  }
+  isLoading.value = true;
+  try {
+    const response = await ContractTemplates.get(templateId);
+    template.value = response.data.data;
+    selectedTemplateId.value = templateId;
+  } catch (error) {
+    console.error('Erro ao carregar template selecionado:', error);
   } finally {
     isLoading.value = false;
   }
@@ -223,6 +244,12 @@ const updateSigners = signers => {
 
 onMounted(async () => {
   loadTemplate();
+  try {
+    const tplResponse = await ContractTemplates.list({ active_only: true });
+    templates.value = tplResponse.data.data || [];
+  } catch (error) {
+    console.error('Erro ao carregar lista de templates:', error);
+  }
   const contactId = route.query.contact_id;
   if (contactId) {
     try {
@@ -305,6 +332,31 @@ onMounted(async () => {
           :class="currentStep > step.number ? 'bg-n-teal-9' : 'bg-n-weak'"
         />
       </template>
+    </div>
+
+    <!-- Template Selector -->
+    <div class="px-6 py-3 border-b border-n-weak bg-n-solid-2">
+      <div class="max-w-3xl mx-auto flex items-center gap-3">
+        <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap">
+          <span class="i-lucide-file-text mr-1" />
+          Modelo:
+        </label>
+        <select
+          :value="selectedTemplateId"
+          class="flex-1 px-3 py-1.5 rounded-lg text-sm bg-n-solid-3 border border-n-weak text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+          @change="selectTemplate($event.target.value)"
+        >
+          <option value="" class="bg-n-solid-3 text-n-slate-12">Modelo Padrão</option>
+          <option
+            v-for="t in templates"
+            :key="t.id"
+            :value="t.id"
+            class="bg-n-solid-3 text-n-slate-12"
+          >
+            {{ t.name }}
+          </option>
+        </select>
+      </div>
     </div>
 
     <!-- Content -->
