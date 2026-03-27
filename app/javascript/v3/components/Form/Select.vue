@@ -68,7 +68,7 @@ export default {
         'text-n-slate-12': modelValue,
         'pl-9': icon,
       }"
-      class="block w-full px-3 py-2 pr-6 mb-0 border-0 shadow-sm appearance-none rounded-xl select-caret leading-6"
+      class="block w-full px-3 py-2 pr-6 mb-0 border-0 shadow-sm appearance-none rounded-xl select-caret leading-6 bg-n-solid-3"
       @input="onInput"
     >
       <option value="" disabled selected class="hidden">
@@ -83,12 +83,16 @@ export default {
   </WithLabel>
 </template>
 
-<style scoped>
 .select-caret {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' version='1.1' width='32' height='24' viewBox='0 0 32 24'><polygon points='0,0 32,0 16,24' style='fill: rgb%28110, 111, 115%29'></polygon></svg>");
   background-origin: content-box;
   background-position: right -1rem center;
   background-repeat: no-repeat;
   background-size: 9px 6px;
+}
+
+select option {
+  background-color: var(--n-solid-3);
+  color: var(--n-slate-12);
 }
 </style>
