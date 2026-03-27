@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class ContractMailer < ApplicationMailer
-  default from: ENV.fetch('CONTRACT_MAILER_FROM', 'Let\'s Go Far Contratos <contratos@letsgofar.com.br>')
+  default from: ENV.fetch('CONTRACT_MAILER_FROM', 'Let\'s Go Far Contratos <contratos@benitechlab.com>')
   layout 'mailer/contract'
 
   # Configurar SMTP separado para contratos (Resend)
