@@ -7,29 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <%= csrf_meta_tags %>
   <style>
-    /* A4 page simulation */
-    .contract-pages {
-      counter-reset: page;
-    }
     .contract-page {
       background: #ffffff;
-      width: 210mm;
+      max-width: 210mm;
       min-height: 297mm;
       padding: 25mm 20mm;
       margin: 0 auto 24px auto;
       box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
       border-radius: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-    .contract-page::after {
-      counter-increment: page;
-      content: "Página " counter(page);
-      position: absolute;
-      bottom: 10mm;
-      right: 20mm;
-      font-size: 9pt;
-      color: #999;
     }
 
     .contract-content {
@@ -54,26 +39,12 @@
 
     /* Responsive: on small screens, shrink the page */
     @media (max-width: 800px) {
-      .contract-page {
-        width: 100%;
-        min-height: auto;
-        padding: 16px;
-        margin: 0 auto 16px auto;
-        border-radius: 8px;
-      }
+      .contract-page { min-height: auto; padding: 16px; border-radius: 8px; }
     }
-
     @media print {
       body { background: white !important; }
       .no-print { display: none !important; }
-      .contract-page {
-        box-shadow: none !important;
-        margin: 0;
-        padding: 0;
-        border-radius: 0;
-        page-break-after: always;
-      }
-      .contract-page::after { display: none; }
+      .contract-page { box-shadow: none; margin: 0; padding: 15mm; border-radius: 0; page-break-after: always; min-height: auto; }
     }
   </style>
 </head>
@@ -129,59 +100,82 @@
       </div>
     </div>
 
-    <!-- Conteúdo do Contrato -->
-    <div class="contract-pages mb-6" id="contract-pages">
+    <!-- Conteúdo do Contrato: hidden source for measuring -->
+    <div id="contract-source" style="position:absolute;left:-9999px;visibility:hidden;">
       <div class="contract-page">
-        <div class="contract-content" id="contract-content">
+        <div class="contract-content">
           <%= raw @contract.content_html %>
         </div>
       </div>
     </div>
+    <div id="contract-pages" class="mb-6"></div>
 
     <script>
-      // Paginate contract content into A4-like pages
       document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('contract-pages');
-        const content = document.getElementById('contract-content');
-        if (!content || !container) return;
+        var source = document.getElementById('contract-source');
+        var pagesContainer = document.getElementById('contract-pages');
+        if (!source || !pagesContainer) return;
 
-        // Max content height per page (297mm - 50mm padding = ~247mm ≈ 935px)
-        const MAX_PAGE_HEIGHT = 935;
-        const children = Array.from(content.children);
+        var contentDiv = source.querySelector('.contract-content');
+        if (!contentDiv) return;
 
-        if (children.length === 0) return;
-
-        // Clear existing structure
-        container.innerHTML = '';
-
-        let currentPage = document.createElement('div');
-        currentPage.className = 'contract-page';
-        let currentContent = document.createElement('div');
-        currentContent.className = 'contract-content';
-        currentPage.appendChild(currentContent);
-        container.appendChild(currentPage);
-
-        let currentHeight = 0;
-
-        children.forEach(function(child) {
-          currentContent.appendChild(child);
-          const childHeight = child.offsetHeight + 16; // margin
-          currentHeight += childHeight;
-
-          if (currentHeight > MAX_PAGE_HEIGHT) {
-            // Start new page
-            currentPage = document.createElement('div');
-            currentPage.className = 'contract-page';
-            currentContent = document.createElement('div');
-            currentContent.className = 'contract-content';
-            currentPage.appendChild(currentContent);
-            container.appendChild(currentPage);
-
-            // Move overflowing element to new page
-            currentContent.appendChild(child);
-            currentHeight = childHeight;
+        // Wrap bare text nodes into <p> so we have real elements to measure
+        Array.from(contentDiv.childNodes).forEach(function(node) {
+          if (node.nodeType === 3 && node.textContent.trim()) {
+            var p = document.createElement('p');
+            p.textContent = node.textContent;
+            contentDiv.replaceChild(p, node);
           }
         });
+
+        var elements = Array.from(contentDiv.children);
+
+        // Fallback: no child elements, show as single page
+        if (elements.length === 0) {
+          source.style.position = 'static';
+          source.style.left = 'auto';
+          source.style.visibility = 'visible';
+          source.id = '';
+          pagesContainer.remove();
+          return;
+        }
+
+        var PAGE_HEIGHT = 970;
+        var pageNum = 0;
+
+        function createPage() {
+          pageNum++;
+          var page = document.createElement('div');
+          page.className = 'contract-page';
+          var content = document.createElement('div');
+          content.className = 'contract-content';
+          page.appendChild(content);
+          var footer = document.createElement('div');
+          footer.style.cssText = 'text-align:right;font-size:9pt;color:#999;margin-top:auto;padding-top:10px;border-top:1px solid #eee;';
+          footer.textContent = 'Página ' + pageNum;
+          page.appendChild(footer);
+          pagesContainer.appendChild(page);
+          return content;
+        }
+
+        var currentContent = createPage();
+        var currentHeight = 0;
+
+        elements.forEach(function(el) {
+          var clone = el.cloneNode(true);
+          currentContent.appendChild(clone);
+          var h = clone.getBoundingClientRect().height + 16;
+          currentHeight += h;
+
+          if (currentHeight > PAGE_HEIGHT && currentContent.children.length > 1) {
+            currentContent.removeChild(clone);
+            currentContent = createPage();
+            currentContent.appendChild(clone);
+            currentHeight = clone.getBoundingClientRect().height + 16;
+          }
+        });
+
+        source.remove();
       });
     </script>
 
