@@ -177,7 +177,9 @@ onMounted(() => loadContract());
               <h2 class="text-sm font-medium text-n-slate-12">Conteúdo do Contrato</h2>
               <button class="text-xs text-n-brand hover:underline" onclick="window.print()">Imprimir</button>
             </div>
-            <div class="p-6 prose prose-sm max-w-none text-n-slate-12" v-html="contract.content_html" />
+            <div class="p-6 bg-n-alpha-2">
+              <div class="contract-document" v-html="contract.content_html" />
+            </div>
           </div>
         </div>
 
@@ -242,3 +244,92 @@ onMounted(() => loadContract());
     </div>
   </div>
 </template>
+
+<style scoped>
+.contract-document {
+  background: #ffffff;
+  color: #1a1a1a;
+  padding: 48px 56px;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: 'Times New Roman', Georgia, serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.contract-document :deep(h1),
+.contract-document :deep(h2),
+.contract-document :deep(h3),
+.contract-document :deep(h4) {
+  color: #1a1a1a;
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.contract-document :deep(h1) {
+  font-size: 20px;
+  text-align: center;
+}
+
+.contract-document :deep(h2) {
+  font-size: 16px;
+  color: #333;
+}
+
+.contract-document :deep(p) {
+  color: #1a1a1a;
+  margin-bottom: 10px;
+  text-align: justify;
+}
+
+.contract-document :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+}
+
+.contract-document :deep(th),
+.contract-document :deep(td) {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  color: #1a1a1a;
+  background: #ffffff;
+  font-size: 13px;
+}
+
+.contract-document :deep(th) {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.contract-document :deep(a) {
+  color: #2563eb;
+}
+
+.contract-document :deep(strong),
+.contract-document :deep(b) {
+  color: #1a1a1a;
+}
+
+.contract-document :deep(ul),
+.contract-document :deep(ol) {
+  color: #1a1a1a;
+  padding-left: 24px;
+  margin-bottom: 10px;
+}
+
+.contract-document :deep(li) {
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+@media print {
+  .contract-document {
+    box-shadow: none;
+    padding: 0;
+    border-radius: 0;
+  }
+}
+</style>
