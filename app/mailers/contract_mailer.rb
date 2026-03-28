@@ -4,29 +4,14 @@ class ContractMailer < ApplicationMailer
   default from: ENV.fetch('CONTRACT_MAILER_FROM', 'Let\'s Go Far Contratos <contratos@benitechlab.com>')
   layout 'mailer/contract'
 
-  # Configurar SMTP separado para contratos (Resend)
-  def self.delivery_method
-    if ENV['RESEND_API_KEY'].present?
-      :smtp
-    else
-      ActionMailer::Base.delivery_method
-    end
-  end
-
-  def self.smtp_settings
-    if ENV['RESEND_API_KEY'].present?
-      {
-        address: 'smtp.resend.com',
-        port: 587,
-        user_name: 'resend',
-        password: ENV['RESEND_API_KEY'],
-        authentication: :plain,
-        enable_starttls_auto: true
-      }
-    else
-      ActionMailer::Base.smtp_settings
-    end
-  end
+  RESEND_SMTP = {
+    address: 'smtp.resend.com',
+    port: 465,
+    user_name: 'resend',
+    password: ENV.fetch('RESEND_API_KEY', ''),
+    authentication: :plain,
+    ssl: true
+  }.freeze
 
   def signature_request(signer)
     @signer = signer
@@ -36,8 +21,7 @@ class ContractMailer < ApplicationMailer
     mail(
       to: signer.email,
       subject: "Contrato para assinatura: #{@contract.title}",
-      delivery_method: self.class.delivery_method,
-      delivery_method_options: self.class.smtp_settings
+      **resend_options
     )
   end
 
@@ -46,7 +30,6 @@ class ContractMailer < ApplicationMailer
     @contract = signer.contract
     @signature = signer.contract_signature
 
-    # Anexar PDF se o contrato já está totalmente assinado
     if @contract.signed?
       begin
         pdf_data = @contract.generate_signed_pdf
@@ -62,8 +45,7 @@ class ContractMailer < ApplicationMailer
     mail(
       to: signer.email,
       subject: "Contrato assinado com sucesso: #{@contract.title}",
-      delivery_method: self.class.delivery_method,
-      delivery_method_options: self.class.smtp_settings
+      **resend_options
     )
   end
 
@@ -77,8 +59,7 @@ class ContractMailer < ApplicationMailer
     mail(
       to: @owner.email,
       subject: "Contrato recusado: #{@contract.title}",
-      delivery_method: self.class.delivery_method,
-      delivery_method_options: self.class.smtp_settings
+      **resend_options
     )
   end
 
@@ -99,15 +80,23 @@ class ContractMailer < ApplicationMailer
       Rails.logger.error "Erro ao gerar PDF para conclusão: #{e.message}"
     end
 
-    # Enviar para o dono do contrato + signatários auto_sign (empresa)
     company_emails = contract.contract_signers.where(auto_sign: true).pluck(:email)
     recipients = ([@owner.email] + company_emails).uniq
 
     mail(
       to: recipients,
       subject: "Todas as assinaturas concluídas: #{@contract.title}",
-      delivery_method: self.class.delivery_method,
-      delivery_method_options: self.class.smtp_settings
+      **resend_options
     )
+  end
+
+  private
+
+  def resend_options
+    if ENV['RESEND_API_KEY'].present?
+      { delivery_method: :smtp, delivery_method_options: RESEND_SMTP }
+    else
+      {}
+    end
   end
 end
