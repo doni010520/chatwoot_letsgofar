@@ -335,10 +335,10 @@ onMounted(async () => {
     </div>
 
     <!-- Template Selector -->
-    <div class="px-6 py-3 border-b border-n-weak bg-n-solid-2">
-      <div class="max-w-3xl mx-auto flex items-center gap-3">
-        <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap">
-          <span class="i-lucide-file-text mr-1" />
+    <div class="max-w-3xl mx-auto px-6 pt-4">
+      <div class="flex items-center gap-3 p-3 rounded-lg bg-n-solid-2 border border-n-weak">
+        <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap flex items-center gap-1">
+          <span class="i-lucide-file-text" />
           Modelo:
         </label>
         <select
@@ -346,12 +346,12 @@ onMounted(async () => {
           class="flex-1 px-3 py-1.5 rounded-lg text-sm bg-n-solid-3 border border-n-weak text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
           @change="selectTemplate($event.target.value)"
         >
-          <option value="" class="bg-n-solid-3 text-n-slate-12">Modelo Padrão</option>
+          <option value="" style="background:#1e293b;color:#e2e8f0">Modelo Padrão</option>
           <option
             v-for="t in templates"
             :key="t.id"
             :value="t.id"
-            class="bg-n-solid-3 text-n-slate-12"
+            style="background:#1e293b;color:#e2e8f0"
           >
             {{ t.name }}
           </option>

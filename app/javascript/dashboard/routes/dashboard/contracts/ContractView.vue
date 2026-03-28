@@ -172,12 +172,12 @@ onMounted(() => loadContract());
       <div class="flex gap-4 p-6">
         <!-- Main -->
         <div class="flex-1 min-w-0">
-          <div class="rounded-xl bg-n-solid-2 border border-n-weak overflow-hidden">
-            <div class="px-6 py-3 border-b border-n-weak flex items-center justify-between">
+          <div class="rounded-xl border border-n-weak overflow-hidden">
+            <div class="px-6 py-3 border-b border-n-weak flex items-center justify-between bg-n-solid-2">
               <h2 class="text-sm font-medium text-n-slate-12">Conteúdo do Contrato</h2>
               <button class="text-xs text-n-brand hover:underline" onclick="window.print()">Imprimir</button>
             </div>
-            <div class="p-6 prose prose-sm max-w-none text-n-slate-12" v-html="contract.content_html" />
+            <div class="contract-preview-content p-6 prose prose-sm max-w-none" v-html="contract.content_html" />
           </div>
         </div>
 
@@ -242,3 +242,42 @@ onMounted(() => loadContract());
     </div>
   </div>
 </template>
+
+<style scoped>
+.contract-preview-content {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+.contract-preview-content :deep(*) {
+  color: #1a1a1a !important;
+}
+
+.contract-preview-content :deep(a) {
+  color: #1e40af !important;
+}
+
+.contract-preview-content :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.contract-preview-content :deep(td),
+.contract-preview-content :deep(th) {
+  border: 1px solid #d1d5db;
+  padding: 8px 12px;
+  color: #1a1a1a !important;
+  background: #ffffff;
+}
+
+.contract-preview-content :deep(h1),
+.contract-preview-content :deep(h2),
+.contract-preview-content :deep(h3),
+.contract-preview-content :deep(h4) {
+  color: #111827 !important;
+}
+
+.contract-preview-content :deep(p) {
+  color: #1a1a1a !important;
+}
+</style>
