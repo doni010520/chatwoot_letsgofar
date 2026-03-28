@@ -7,29 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <%= csrf_meta_tags %>
   <style>
-    /* A4 page simulation */
-    .contract-pages {
-      counter-reset: page;
-    }
     .contract-page {
       background: #ffffff;
-      width: 210mm;
+      max-width: 210mm;
       min-height: 297mm;
       padding: 25mm 20mm;
       margin: 0 auto 24px auto;
       box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
       border-radius: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-    .contract-page::after {
-      counter-increment: page;
-      content: "Página " counter(page);
-      position: absolute;
-      bottom: 10mm;
-      right: 20mm;
-      font-size: 9pt;
-      color: #999;
     }
 
     .contract-content {
@@ -54,26 +39,12 @@
 
     /* Responsive: on small screens, shrink the page */
     @media (max-width: 800px) {
-      .contract-page {
-        width: 100%;
-        min-height: auto;
-        padding: 16px;
-        margin: 0 auto 16px auto;
-        border-radius: 8px;
-      }
+      .contract-page { min-height: auto; padding: 16px; border-radius: 8px; }
     }
-
     @media print {
       body { background: white !important; }
       .no-print { display: none !important; }
-      .contract-page {
-        box-shadow: none !important;
-        margin: 0;
-        padding: 0;
-        border-radius: 0;
-        page-break-after: always;
-      }
-      .contract-page::after { display: none; }
+      .contract-page { box-shadow: none; margin: 0; padding: 15mm; border-radius: 0; page-break-after: always; min-height: auto; }
     }
   </style>
 </head>
@@ -129,59 +100,105 @@
       </div>
     </div>
 
-    <!-- Conteúdo do Contrato -->
-    <div class="contract-pages mb-6" id="contract-pages">
+    <!-- Conteúdo do Contrato: hidden source for measuring -->
+    <div id="contract-source" style="position:absolute;left:-9999px;visibility:hidden;">
       <div class="contract-page">
-        <div class="contract-content" id="contract-content">
+        <div class="contract-content">
           <%= raw @contract.content_html %>
         </div>
       </div>
     </div>
+    <div id="contract-pages" class="mb-6"></div>
 
     <script>
-      // Paginate contract content into A4-like pages
       document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('contract-pages');
-        const content = document.getElementById('contract-content');
-        if (!content || !container) return;
+        var source = document.getElementById('contract-source');
+        var pagesContainer = document.getElementById('contract-pages');
+        if (!source || !pagesContainer) return;
 
-        // Max content height per page (297mm - 50mm padding = ~247mm ≈ 935px)
-        const MAX_PAGE_HEIGHT = 935;
-        const children = Array.from(content.children);
+        var contentDiv = source.querySelector('.contract-content');
+        if (!contentDiv) return;
 
-        if (children.length === 0) return;
+        // The content_html is wrapped in a <div style="..."> container.
+        // We need to collect all block-level elements recursively from wrappers.
+        function collectElements(parent) {
+          var result = [];
+          Array.from(parent.childNodes).forEach(function(node) {
+            if (node.nodeType === 3) {
+              // Bare text node - wrap in <p>
+              if (node.textContent.trim()) {
+                var p = document.createElement('p');
+                p.textContent = node.textContent;
+                result.push(p);
+              }
+            } else if (node.nodeType === 1) {
+              var tag = node.tagName.toLowerCase();
+              // If it's a wrapper div with only block children, flatten it
+              if (tag === 'div' && node.children.length > 0) {
+                // Check if this div is a structural wrapper (has style, no semantic meaning)
+                // Collect its children instead
+                var inner = collectElements(node);
+                result = result.concat(inner);
+              } else {
+                result.push(node.cloneNode(true));
+              }
+            }
+          });
+          return result;
+        }
 
-        // Clear existing structure
-        container.innerHTML = '';
+        var elements = collectElements(contentDiv);
 
-        let currentPage = document.createElement('div');
-        currentPage.className = 'contract-page';
-        let currentContent = document.createElement('div');
-        currentContent.className = 'contract-content';
-        currentPage.appendChild(currentContent);
-        container.appendChild(currentPage);
+        // Fallback: no elements, show as single page
+        if (elements.length === 0) {
+          source.style.position = 'static';
+          source.style.left = 'auto';
+          source.style.visibility = 'visible';
+          source.id = '';
+          pagesContainer.remove();
+          return;
+        }
 
-        let currentHeight = 0;
+        var PAGE_HEIGHT = 920;
+        var pageNum = 0;
 
-        children.forEach(function(child) {
-          currentContent.appendChild(child);
-          const childHeight = child.offsetHeight + 16; // margin
-          currentHeight += childHeight;
+        function createPage() {
+          pageNum++;
+          var page = document.createElement('div');
+          page.className = 'contract-page';
+          page.style.display = 'flex';
+          page.style.flexDirection = 'column';
+          var content = document.createElement('div');
+          content.className = 'contract-content';
+          content.style.flex = '1';
+          page.appendChild(content);
+          var footer = document.createElement('div');
+          footer.style.cssText = 'text-align:right;font-size:9pt;color:#999;padding-top:10px;border-top:1px solid #eee;margin-top:20px;';
+          footer.textContent = 'Página ' + pageNum;
+          page.appendChild(footer);
+          pagesContainer.appendChild(page);
+          return content;
+        }
 
-          if (currentHeight > MAX_PAGE_HEIGHT) {
-            // Start new page
-            currentPage = document.createElement('div');
-            currentPage.className = 'contract-page';
-            currentContent = document.createElement('div');
-            currentContent.className = 'contract-content';
-            currentPage.appendChild(currentContent);
-            container.appendChild(currentPage);
+        var currentContent = createPage();
+        var currentHeight = 0;
 
-            // Move overflowing element to new page
-            currentContent.appendChild(child);
-            currentHeight = childHeight;
+        elements.forEach(function(el) {
+          currentContent.appendChild(el);
+          var rect = el.getBoundingClientRect();
+          var style = window.getComputedStyle(el);
+          var h = rect.height + parseInt(style.marginTop || 0) + parseInt(style.marginBottom || 0) + 8;
+          currentHeight += h;
+
+          if (currentHeight > PAGE_HEIGHT && currentContent.children.length > 1) {
+            currentContent.removeChild(el);
+            currentContent = createPage();
+            currentContent.appendChild(el);
+            currentHeight = el.getBoundingClientRect().height + 8;
           }
         });
+
+        source.remove();
       });
     </script>
 
