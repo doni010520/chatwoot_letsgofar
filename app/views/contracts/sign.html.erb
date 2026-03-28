@@ -7,29 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <%= csrf_meta_tags %>
   <style>
-    /* A4 page simulation */
-    .contract-pages {
-      counter-reset: page;
-    }
     .contract-page {
       background: #ffffff;
-      width: 210mm;
-      min-height: 297mm;
-      padding: 25mm 20mm;
-      margin: 0 auto 24px auto;
-      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.12);
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.12);
       border-radius: 4px;
-      position: relative;
-      overflow: hidden;
-    }
-    .contract-page::after {
-      counter-increment: page;
-      content: "Página " counter(page);
-      position: absolute;
-      bottom: 10mm;
-      right: 20mm;
-      font-size: 9pt;
-      color: #999;
     }
 
     .contract-content {
@@ -52,28 +36,14 @@
     .contract-content li { margin-bottom: 4px; }
     .contract-content .anexo { margin-top: 40px; padding-top: 20px; border-top: 2px solid #8B0000; }
 
-    /* Responsive: on small screens, shrink the page */
     @media (max-width: 800px) {
-      .contract-page {
-        width: 100%;
-        min-height: auto;
-        padding: 16px;
-        margin: 0 auto 16px auto;
-        border-radius: 8px;
-      }
+      .contract-page { padding: 16px; border-radius: 8px; }
     }
 
     @media print {
       body { background: white !important; }
       .no-print { display: none !important; }
-      .contract-page {
-        box-shadow: none !important;
-        margin: 0;
-        padding: 0;
-        border-radius: 0;
-        page-break-after: always;
-      }
-      .contract-page::after { display: none; }
+      .contract-page { box-shadow: none !important; margin: 0; padding: 0; border-radius: 0; }
     }
   </style>
 </head>
@@ -130,60 +100,11 @@
     </div>
 
     <!-- Conteúdo do Contrato -->
-    <div class="contract-pages mb-6" id="contract-pages">
-      <div class="contract-page">
-        <div class="contract-content" id="contract-content">
-          <%= raw @contract.content_html %>
-        </div>
+    <div class="contract-page mb-6">
+      <div class="contract-content">
+        <%= raw @contract.content_html %>
       </div>
     </div>
-
-    <script>
-      // Paginate contract content into A4-like pages
-      document.addEventListener('DOMContentLoaded', function() {
-        const container = document.getElementById('contract-pages');
-        const content = document.getElementById('contract-content');
-        if (!content || !container) return;
-
-        // Max content height per page (297mm - 50mm padding = ~247mm ≈ 935px)
-        const MAX_PAGE_HEIGHT = 935;
-        const children = Array.from(content.children);
-
-        if (children.length === 0) return;
-
-        // Clear existing structure
-        container.innerHTML = '';
-
-        let currentPage = document.createElement('div');
-        currentPage.className = 'contract-page';
-        let currentContent = document.createElement('div');
-        currentContent.className = 'contract-content';
-        currentPage.appendChild(currentContent);
-        container.appendChild(currentPage);
-
-        let currentHeight = 0;
-
-        children.forEach(function(child) {
-          currentContent.appendChild(child);
-          const childHeight = child.offsetHeight + 16; // margin
-          currentHeight += childHeight;
-
-          if (currentHeight > MAX_PAGE_HEIGHT) {
-            // Start new page
-            currentPage = document.createElement('div');
-            currentPage.className = 'contract-page';
-            currentContent = document.createElement('div');
-            currentContent.className = 'contract-content';
-            currentPage.appendChild(currentContent);
-            container.appendChild(currentPage);
-
-            // Move overflowing element to new page
-            currentContent.appendChild(child);
-            currentHeight = childHeight;
-          }
-        });
-      });
-    </script>
 
     <% if @signer.can_sign? %>
       <!-- Formulário de Assinatura -->
