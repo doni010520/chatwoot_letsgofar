@@ -6,9 +6,11 @@ const props = defineProps({
   modelValue: { type: Object, required: true },
   section: { type: String, default: 'contractor' },
   selectedContact: { type: Object, default: null },
+  templates: { type: Array, default: () => [] },
+  selectedTemplateId: { type: [String, Number], default: null },
 });
 
-const emit = defineEmits(['update:modelValue', 'contact-selected', 'contact-cleared']);
+const emit = defineEmits(['update:modelValue', 'contact-selected', 'contact-cleared', 'template-changed']);
 
 // Contact search state
 const searchQuery = ref('');
@@ -112,6 +114,25 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
   <div class="flex flex-col gap-4">
     <!-- Seção: Dados do Contratante -->
     <template v-if="section === 'contractor'">
+      <!-- Template Selector -->
+      <div v-if="templates.length > 0" class="mb-4">
+        <label :class="labelClass">Modelo de Contrato *</label>
+        <select
+          :value="selectedTemplateId"
+          :class="inputClass"
+          @change="emit('template-changed', $event.target.value)"
+        >
+          <option
+            v-for="t in templates"
+            :key="t.id"
+            :value="t.id"
+            class="bg-n-solid-3 text-n-slate-12"
+          >
+            {{ t.name }}
+          </option>
+        </select>
+      </div>
+
       <!-- Contact Search / Selector -->
       <div class="mb-4 p-4 rounded-lg bg-n-alpha-2 border border-n-weak">
         <label :class="labelClass">Vincular a Contato do CRM</label>
