@@ -21,7 +21,7 @@ class ContractTemplate < ApplicationRecord
 
   # Validações
   validates :name, presence: true
-  validates :content_html, presence: true
+  validates :content_html, presence: true, length: { maximum: 150_000 }
 
   # Scopes
   scope :active, -> { where(active: true) }
