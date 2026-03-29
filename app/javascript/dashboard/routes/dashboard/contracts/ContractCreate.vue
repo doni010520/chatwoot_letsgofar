@@ -243,12 +243,17 @@ const updateSigners = signers => {
 };
 
 onMounted(async () => {
-  loadTemplate();
   try {
     const tplResponse = await ContractTemplates.list({ active_only: true });
     templates.value = tplResponse.data.data || [];
+    if (templates.value.length > 0) {
+      await selectTemplate(templates.value[0].id);
+    } else {
+      loadTemplate();
+    }
   } catch (error) {
     console.error('Erro ao carregar lista de templates:', error);
+    loadTemplate();
   }
   const contactId = route.query.contact_id;
   if (contactId) {
@@ -337,16 +342,14 @@ onMounted(async () => {
     <!-- Template Selector -->
     <div class="px-6 py-3 border-b border-n-weak bg-n-solid-2">
       <div class="max-w-3xl mx-auto flex items-center gap-3">
-        <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap">
-          <span class="i-lucide-file-text mr-1" />
-          Modelo:
+        <label class="text-sm font-medium text-n-slate-12 whitespace-nowrap">
+          Modelo de Contrato
         </label>
         <select
           :value="selectedTemplateId"
-          class="flex-1 px-3 py-1.5 rounded-lg text-sm bg-n-solid-3 border border-n-weak text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+          class="flex-1 px-3 py-2 rounded-lg text-sm bg-n-solid-3 border border-n-weak text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
           @change="selectTemplate($event.target.value)"
         >
-          <option value="" class="bg-n-solid-3 text-n-slate-12">Modelo Padrão</option>
           <option
             v-for="t in templates"
             :key="t.id"
