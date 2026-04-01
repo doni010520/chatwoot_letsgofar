@@ -147,7 +147,20 @@ const applyVariables = () => {
   if (!template.value?.content_html) return;
 
   let html = template.value.content_html;
+
+  const fmtCurrency = v => {
+    const n = parseFloat(v);
+    if (isNaN(n)) return '0,00';
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const fmtDate = v => {
+    if (!v) return '-';
+    try { return new Date(v).toLocaleDateString('pt-BR'); } catch { return '-'; }
+  };
+
   const variables = {
+    // Contratante - padrão
     contractor_name: contractData.contractor_name,
     contractor_cpf: contractData.contractor_cpf,
     contractor_rg: contractData.contractor_rg || '-',
@@ -158,31 +171,32 @@ const applyVariables = () => {
     contractor_cep: contractData.contractor_cep,
     contractor_email: contractData.contractor_email,
     contractor_phone: contractData.contractor_phone,
-    contractor_birth_date: contractData.contractor_birth_date
-      ? new Date(contractData.contractor_birth_date).toLocaleDateString('pt-BR')
-      : '-',
+    contractor_birth_date: fmtDate(contractData.contractor_birth_date),
+    // Aliases para template Aulas em Grupo
+    contractor_birthdate: fmtDate(contractData.contractor_birth_date),
+    contractor_street: contractData.contractor_address,
+    contractor_number: '',
+    contractor_complement: '',
+    legal_representative_name: '-',
+    legal_representative_cpf: '-',
+    // Plano
     plan_name: contractData.plan_name,
     plan_duration: contractData.plan_duration,
     sessions_call_estrategica: contractData.sessions_call_estrategica || 0,
     sessions_individual: contractData.sessions_individual || 0,
     sessions_group_consultive: contractData.sessions_group_consultive || 0,
     sessions_group_meetings: contractData.sessions_group_meetings || 0,
-    plan_value: contractData.plan_value
-      ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-      : '0,00',
+    lessons_count: contractData.sessions_individual || 0,
+    plan_value: fmtCurrency(contractData.plan_value),
     installments_count: contractData.installments_count || 1,
-    first_installment_value: contractData.first_installment_value
-      ? parseFloat(contractData.first_installment_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-      : contractData.plan_value
-        ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-        : '0,00',
+    first_installment_value: fmtCurrency(
+      contractData.first_installment_value || contractData.plan_value
+    ),
+    enrollment_fee: fmtCurrency(contractData.first_installment_value || 0),
     installment_due_day: contractData.installment_due_day || 10,
-    plan_start_date: contractData.plan_start_date
-      ? new Date(contractData.plan_start_date).toLocaleDateString('pt-BR')
-      : '-',
-    plan_end_date: contractData.plan_end_date
-      ? new Date(contractData.plan_end_date).toLocaleDateString('pt-BR')
-      : '-',
+    plan_start_date: fmtDate(contractData.plan_start_date),
+    plan_end_date: fmtDate(contractData.plan_end_date),
+    first_installment_date: fmtDate(contractData.plan_start_date),
     contract_date: new Date().toLocaleDateString('pt-BR'),
   };
 
