@@ -953,7 +953,7 @@ export default {
   &__th {
     position: sticky;
     top: 0;
-    padding: 14px 16px;
+    padding: 14px 10px;
     text-align: left;
     font-weight: 600;
     font-size: 12px;
@@ -1014,7 +1014,7 @@ export default {
   }
 
   &__td {
-    padding: 14px 16px;
+    padding: 14px 10px;
     border-bottom: 1px solid var(--s-100);
     color: var(--s-700);
 
