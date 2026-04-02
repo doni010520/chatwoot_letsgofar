@@ -992,7 +992,7 @@ export default {
   // Coluna de status com largura fixa
   &__th:nth-child(4),
   &__td:nth-child(4) {
-    width: 120px;
+    width: 100px;
   }
 
   &__row {
@@ -1036,17 +1036,17 @@ export default {
     }
 
     &--user {
-      width: 180px;
+      width: 130px;
     }
 
     &--date-small {
-      width: 160px;
+      width: 120px;
       font-size: 13px;
       color: var(--s-600);
     }
 
     &--actions {
-      width: 80px;
+      width: 70px;
       text-align: right;
     }
   }
