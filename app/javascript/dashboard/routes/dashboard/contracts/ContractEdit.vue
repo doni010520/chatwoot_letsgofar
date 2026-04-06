@@ -187,9 +187,11 @@ const replaceInHtml = (html, oldVariations, newValue) => {
   let result = html;
   // oldVariations é um array de possíveis valores antigos a procurar
   for (const oldVal of oldVariations) {
-    if (oldVal && oldVal.length > 2 && result.includes(oldVal)) {
+    // Aceita valores com pelo menos 1 caractere (removida restrição length > 2)
+    if (oldVal && oldVal.length >= 1 && result.includes(oldVal)) {
       const escaped = oldVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       result = result.replace(new RegExp(escaped, 'g'), newValue || '');
+      console.log(`[ContractEdit] Substituído: "${oldVal}" -> "${newValue}"`);
     }
   }
   return result;
@@ -197,9 +199,21 @@ const replaceInHtml = (html, oldVariations, newValue) => {
 
 // Função para aplicar variáveis ao template OU substituir valores no HTML existente
 const applyVariables = () => {
+  console.log('[ContractEdit] applyVariables() iniciada');
+  console.log('[ContractEdit] template.value:', template.value ? 'existe' : 'null');
+  console.log('[ContractEdit] originalValues.contractor_cpf:', originalValues.value.contractor_cpf);
+  console.log('[ContractEdit] originalValues.contractor_cpf_formatted:', originalValues.value.contractor_cpf_formatted);
+  console.log('[ContractEdit] contractData.contractor_cpf:', contractData.contractor_cpf);
+  
   let html = template.value?.content_html || contractData.content_html;
   
-  if (!html) return;
+  if (!html) {
+    console.log('[ContractEdit] HTML vazio, saindo');
+    return;
+  }
+  
+  console.log('[ContractEdit] HTML length:', html.length);
+  console.log('[ContractEdit] Tem template?', !!template.value?.content_html);
 
   // Se NÃO tem template, faz substituição dos valores antigos pelos novos
   if (!template.value?.content_html) {
@@ -349,19 +363,24 @@ const applyVariables = () => {
 };
 
 const nextStep = () => {
-  // Aplicar variáveis ao avançar do passo 2 para o 3
-  if (currentStep.value === 2) {
-    applyVariables();
+  // Aplicar variáveis ao ir para o passo 3 (de qualquer lugar)
+  if (currentStep.value < 4) {
+    const nextStepNum = currentStep.value + 1;
+    if (nextStepNum === 3) {
+      console.log('[ContractEdit] Chamando applyVariables() ao ir para passo 3');
+      applyVariables();
+    }
+    currentStep.value = nextStepNum;
   }
-  if (currentStep.value < 4) currentStep.value++;
 };
 
 const prevStep = () => { if (currentStep.value > 1) currentStep.value--; };
 
 const goToStep = step => {
   if (step <= currentStep.value || isStepValid.value) {
-    // Aplicar variáveis se estiver indo para o passo 3 vindo do passo 2
-    if (step === 3 && currentStep.value === 2) {
+    // Aplicar variáveis sempre que for para o passo 3
+    if (step === 3 && currentStep.value !== 3) {
+      console.log('[ContractEdit] Chamando applyVariables() via goToStep para passo 3');
       applyVariables();
     }
     currentStep.value = step;
@@ -371,6 +390,10 @@ const goToStep = step => {
 const saveContract = async () => {
   isSaving.value = true;
   try {
+    // IMPORTANTE: Garantir que o HTML reflita os dados atuais antes de salvar
+    console.log('[ContractEdit] Aplicando variáveis antes de salvar...');
+    applyVariables();
+    
     await ContractsAPI.update(contractId.value, { ...contractData });
     showAlert('Contrato atualizado!');
     router.push(accountScopedRoute('contracts_view', { contractId: contractId.value }));
