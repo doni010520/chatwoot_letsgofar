@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, toRaw } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
@@ -82,7 +82,7 @@ const goToStep = step => { if (step <= currentStep.value || isStepValid.value) c
 const saveContract = async () => {
   isSaving.value = true;
   try {
-    await ContractsAPI.update(contractId.value, { ...contractData });
+    await ContractsAPI.update(contractId.value, toRaw(contractData));
     showAlert('Contrato atualizado!');
     router.push(accountScopedRoute('contracts_view', { contractId: contractId.value }));
   } catch {
