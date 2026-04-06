@@ -224,6 +224,22 @@ const applyVariables = () => {
     
     // CPF - tenta todas as variações (formatado, raw, original)
     const newCpfFormatted = formatCPF(contractData.contractor_cpf);
+    console.log('[ContractEdit] === DEBUG CPF ===');
+    console.log('[ContractEdit] CPF original (banco):', orig.contractor_cpf);
+    console.log('[ContractEdit] CPF original formatado:', orig.contractor_cpf_formatted);
+    console.log('[ContractEdit] CPF original raw:', orig.contractor_cpf_raw);
+    console.log('[ContractEdit] CPF novo (campo):', contractData.contractor_cpf);
+    console.log('[ContractEdit] CPF novo formatado:', newCpfFormatted);
+    console.log('[ContractEdit] HTML contém CPF original?', html.includes(orig.contractor_cpf));
+    console.log('[ContractEdit] HTML contém CPF formatado?', html.includes(orig.contractor_cpf_formatted));
+    console.log('[ContractEdit] HTML contém CPF raw?', html.includes(orig.contractor_cpf_raw));
+    
+    // Mostrar trecho do HTML onde deveria ter o CPF
+    const cpfIndex = html.indexOf('CPF');
+    if (cpfIndex > -1) {
+      console.log('[ContractEdit] Trecho HTML próximo a "CPF":', html.substring(cpfIndex, cpfIndex + 100));
+    }
+    
     html = replaceInHtml(html, [
       orig.contractor_cpf_formatted,
       orig.contractor_cpf,
