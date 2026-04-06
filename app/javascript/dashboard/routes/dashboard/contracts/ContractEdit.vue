@@ -22,6 +22,7 @@ const isSaving = ref(false);
 const contractId = computed(() => route.params.contractId);
 const template = ref(null);
 const contractTemplateId = ref(null);
+const originalValues = ref({});  // Armazena os valores originais para substituição
 
 const contractData = reactive({
   title: '', contractor_name: '', contractor_cpf: '', contractor_rg: '',
@@ -84,6 +85,33 @@ const loadContract = async () => {
       }
     });
     
+    // Salvar valores originais para substituição no HTML (quando não há template)
+    originalValues.value = {
+      contractor_name: data.contractor_name || '',
+      contractor_cpf: data.contractor_cpf || '',
+      contractor_rg: data.contractor_rg || '',
+      contractor_address: data.contractor_address || '',
+      contractor_neighborhood: data.contractor_neighborhood || '',
+      contractor_city: data.contractor_city || '',
+      contractor_state: data.contractor_state || '',
+      contractor_cep: data.contractor_cep || '',
+      contractor_email: data.contractor_email || '',
+      contractor_phone: data.contractor_phone || '',
+      contractor_birth_date: data.contractor_birth_date || '',
+      plan_name: data.plan_name || '',
+      plan_duration: data.plan_duration || '',
+      plan_value: data.plan_value || '',
+      installments_count: data.installments_count || 1,
+      first_installment_value: data.first_installment_value || '',
+      installment_due_day: data.installment_due_day || 10,
+      plan_start_date: data.plan_start_date || '',
+      plan_end_date: data.plan_end_date || '',
+      sessions_call_estrategica: data.sessions_call_estrategica || 0,
+      sessions_individual: data.sessions_individual || 0,
+      sessions_group_consultive: data.sessions_group_consultive || 0,
+      sessions_group_meetings: data.sessions_group_meetings || 0,
+    };
+    
     // Carregar o template original para poder regenerar o HTML
     if (contractTemplateId.value) {
       await loadTemplate(contractTemplateId.value);
@@ -96,61 +124,149 @@ const loadContract = async () => {
   }
 };
 
-// Função para aplicar variáveis ao template (igual ao ContractCreate)
+// Função para aplicar variáveis ao template OU substituir valores no HTML existente
 const applyVariables = () => {
-  if (!template.value?.content_html) return;
+  // Se tem template, usa o template como base
+  // Se não tem template, faz substituição direta no HTML existente
+  let html = template.value?.content_html || contractData.content_html;
+  
+  if (!html) return;
 
-  let html = template.value.content_html;
-  const variables = {
-    contractor_name: contractData.contractor_name,
-    contractor_cpf: contractData.contractor_cpf,
-    contractor_rg: contractData.contractor_rg || '-',
-    contractor_address: contractData.contractor_address,
-    contractor_neighborhood: contractData.contractor_neighborhood,
-    contractor_city: contractData.contractor_city,
-    contractor_state: contractData.contractor_state,
-    contractor_cep: contractData.contractor_cep,
-    contractor_email: contractData.contractor_email,
-    contractor_phone: contractData.contractor_phone,
-    contractor_birth_date: contractData.contractor_birth_date
-      ? new Date(contractData.contractor_birth_date).toLocaleDateString('pt-BR')
-      : '-',
-    plan_name: contractData.plan_name,
-    plan_duration: contractData.plan_duration,
-    sessions_call_estrategica: contractData.sessions_call_estrategica || 0,
-    sessions_individual: contractData.sessions_individual || 0,
-    sessions_group_consultive: contractData.sessions_group_consultive || 0,
-    sessions_group_meetings: contractData.sessions_group_meetings || 0,
-    plan_value: contractData.plan_value
-      ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-      : '0,00',
-    installments_count: contractData.installments_count || 1,
-    first_installment_value: contractData.first_installment_value
-      ? parseFloat(contractData.first_installment_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-      : contractData.plan_value
-        ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-        : '0,00',
-    installment_due_day: contractData.installment_due_day || 10,
-    plan_start_date: contractData.plan_start_date
-      ? new Date(contractData.plan_start_date).toLocaleDateString('pt-BR')
-      : '-',
-    plan_end_date: contractData.plan_end_date
-      ? new Date(contractData.plan_end_date).toLocaleDateString('pt-BR')
-      : '-',
-    contract_date: new Date().toLocaleDateString('pt-BR'),
+  // Função auxiliar para formatar valores
+  const formatCurrency = (val) => {
+    if (!val) return '0,00';
+    return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  };
+  
+  const formatDate = (val) => {
+    if (!val) return '-';
+    return new Date(val).toLocaleDateString('pt-BR');
   };
 
-  Object.entries(variables).forEach(([key, value]) => {
-    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
-    html = html.replace(regex, value?.toString() || '');
-  });
+  // Se NÃO tem template, faz substituição dos valores antigos pelos novos
+  if (!template.value?.content_html) {
+    const replacements = [
+      // Nome
+      { old: originalValues.value.contractor_name, new: contractData.contractor_name },
+      // CPF
+      { old: originalValues.value.contractor_cpf, new: contractData.contractor_cpf },
+      // RG
+      { old: originalValues.value.contractor_rg, new: contractData.contractor_rg || '-' },
+      // Endereço
+      { old: originalValues.value.contractor_address, new: contractData.contractor_address },
+      // Bairro
+      { old: originalValues.value.contractor_neighborhood, new: contractData.contractor_neighborhood },
+      // Cidade
+      { old: originalValues.value.contractor_city, new: contractData.contractor_city },
+      // Estado
+      { old: originalValues.value.contractor_state, new: contractData.contractor_state },
+      // CEP
+      { old: originalValues.value.contractor_cep, new: contractData.contractor_cep },
+      // Email
+      { old: originalValues.value.contractor_email, new: contractData.contractor_email },
+      // Telefone
+      { old: originalValues.value.contractor_phone, new: contractData.contractor_phone },
+      // Data nascimento
+      { old: formatDate(originalValues.value.contractor_birth_date), new: formatDate(contractData.contractor_birth_date) },
+      // Nome do plano
+      { old: originalValues.value.plan_name, new: contractData.plan_name },
+      // Duração
+      { old: originalValues.value.plan_duration, new: contractData.plan_duration },
+      // Valor do plano (formatado)
+      { old: formatCurrency(originalValues.value.plan_value), new: formatCurrency(contractData.plan_value) },
+      // Parcelas
+      { old: String(originalValues.value.installments_count || 1), new: String(contractData.installments_count || 1) },
+      // Valor primeira parcela
+      { old: formatCurrency(originalValues.value.first_installment_value || originalValues.value.plan_value), new: formatCurrency(contractData.first_installment_value || contractData.plan_value) },
+      // Dia vencimento
+      { old: String(originalValues.value.installment_due_day || 10), new: String(contractData.installment_due_day || 10) },
+      // Data início
+      { old: formatDate(originalValues.value.plan_start_date), new: formatDate(contractData.plan_start_date) },
+      // Data fim
+      { old: formatDate(originalValues.value.plan_end_date), new: formatDate(contractData.plan_end_date) },
+      // Sessões
+      { old: String(originalValues.value.sessions_call_estrategica || 0), new: String(contractData.sessions_call_estrategica || 0) },
+      { old: String(originalValues.value.sessions_individual || 0), new: String(contractData.sessions_individual || 0) },
+      { old: String(originalValues.value.sessions_group_consultive || 0), new: String(contractData.sessions_group_consultive || 0) },
+      { old: String(originalValues.value.sessions_group_meetings || 0), new: String(contractData.sessions_group_meetings || 0) },
+    ];
+    
+    // Aplica as substituições (apenas se o valor antigo existir e for diferente do novo)
+    replacements.forEach(({ old: oldVal, new: newVal }) => {
+      if (oldVal && oldVal !== newVal && html.includes(oldVal)) {
+        // Usa uma regex global para substituir todas as ocorrências
+        const escaped = oldVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        html = html.replace(new RegExp(escaped, 'g'), newVal || '');
+      }
+    });
+    
+    // Atualiza os valores originais para próximas edições
+    originalValues.value = {
+      contractor_name: contractData.contractor_name,
+      contractor_cpf: contractData.contractor_cpf,
+      contractor_rg: contractData.contractor_rg,
+      contractor_address: contractData.contractor_address,
+      contractor_neighborhood: contractData.contractor_neighborhood,
+      contractor_city: contractData.contractor_city,
+      contractor_state: contractData.contractor_state,
+      contractor_cep: contractData.contractor_cep,
+      contractor_email: contractData.contractor_email,
+      contractor_phone: contractData.contractor_phone,
+      contractor_birth_date: contractData.contractor_birth_date,
+      plan_name: contractData.plan_name,
+      plan_duration: contractData.plan_duration,
+      plan_value: contractData.plan_value,
+      installments_count: contractData.installments_count,
+      first_installment_value: contractData.first_installment_value,
+      installment_due_day: contractData.installment_due_day,
+      plan_start_date: contractData.plan_start_date,
+      plan_end_date: contractData.plan_end_date,
+      sessions_call_estrategica: contractData.sessions_call_estrategica,
+      sessions_individual: contractData.sessions_individual,
+      sessions_group_consultive: contractData.sessions_group_consultive,
+      sessions_group_meetings: contractData.sessions_group_meetings,
+    };
+  } else {
+    // Se TEM template, substitui os placeholders {{variavel}}
+    const variables = {
+      contractor_name: contractData.contractor_name,
+      contractor_cpf: contractData.contractor_cpf,
+      contractor_rg: contractData.contractor_rg || '-',
+      contractor_address: contractData.contractor_address,
+      contractor_neighborhood: contractData.contractor_neighborhood,
+      contractor_city: contractData.contractor_city,
+      contractor_state: contractData.contractor_state,
+      contractor_cep: contractData.contractor_cep,
+      contractor_email: contractData.contractor_email,
+      contractor_phone: contractData.contractor_phone,
+      contractor_birth_date: formatDate(contractData.contractor_birth_date),
+      plan_name: contractData.plan_name,
+      plan_duration: contractData.plan_duration,
+      sessions_call_estrategica: contractData.sessions_call_estrategica || 0,
+      sessions_individual: contractData.sessions_individual || 0,
+      sessions_group_consultive: contractData.sessions_group_consultive || 0,
+      sessions_group_meetings: contractData.sessions_group_meetings || 0,
+      plan_value: formatCurrency(contractData.plan_value),
+      installments_count: contractData.installments_count || 1,
+      first_installment_value: formatCurrency(contractData.first_installment_value || contractData.plan_value),
+      installment_due_day: contractData.installment_due_day || 10,
+      plan_start_date: formatDate(contractData.plan_start_date),
+      plan_end_date: formatDate(contractData.plan_end_date),
+      contract_date: new Date().toLocaleDateString('pt-BR'),
+    };
+
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+      html = html.replace(regex, value?.toString() || '');
+    });
+  }
 
   contractData.content_html = html;
 };
 
 const nextStep = () => {
   // Aplicar variáveis ao avançar do passo 2 para o 3
-  if (currentStep.value === 2 && template.value) {
+  if (currentStep.value === 2) {
     applyVariables();
   }
   if (currentStep.value < 4) currentStep.value++;
@@ -161,7 +277,7 @@ const prevStep = () => { if (currentStep.value > 1) currentStep.value--; };
 const goToStep = step => {
   if (step <= currentStep.value || isStepValid.value) {
     // Aplicar variáveis se estiver indo para o passo 3 vindo do passo 2
-    if (step === 3 && currentStep.value === 2 && template.value) {
+    if (step === 3 && currentStep.value === 2) {
       applyVariables();
     }
     currentStep.value = step;
@@ -233,13 +349,6 @@ onMounted(() => loadContract());
         </div>
 
         <div v-else-if="currentStep === 3">
-          <!-- Aviso se não houver template disponível -->
-          <div v-if="!template" class="mb-4 p-4 rounded-lg bg-n-amber-3 border border-n-amber-6">
-            <p class="text-sm text-n-amber-11">
-              <span class="i-lucide-alert-triangle mr-2" />
-              Template original não disponível. Edite o conteúdo manualmente no editor abaixo.
-            </p>
-          </div>
           <ContractEditor v-model="contractData.content_html" :title="contractData.title" @update:title="contractData.title = $event" />
         </div>
 
