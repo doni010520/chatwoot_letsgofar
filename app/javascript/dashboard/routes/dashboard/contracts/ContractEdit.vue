@@ -22,7 +22,7 @@ const isSaving = ref(false);
 const contractId = computed(() => route.params.contractId);
 const template = ref(null);
 const contractTemplateId = ref(null);
-const originalValues = ref({});  // Armazena os valores originais para substituição
+const originalValues = ref({});
 
 const contractData = reactive({
   title: '', contractor_name: '', contractor_cpf: '', contractor_rg: '',
@@ -42,6 +42,47 @@ const steps = [
   { number: 3, title: 'Contrato' },
   { number: 4, title: 'Signatários' },
 ];
+
+// === FUNÇÕES DE FORMATAÇÃO ===
+const formatCPF = (v) => {
+  if (!v) return '';
+  const n = v.toString().replace(/\D/g, '').slice(0, 11);
+  if (n.length <= 3) return n;
+  if (n.length <= 6) return `${n.slice(0,3)}.${n.slice(3)}`;
+  if (n.length <= 9) return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6)}`;
+  return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6,9)}-${n.slice(9)}`;
+};
+
+const formatCEP = (v) => {
+  if (!v) return '';
+  const n = v.toString().replace(/\D/g, '').slice(0, 8);
+  if (n.length <= 5) return n;
+  return `${n.slice(0,5)}-${n.slice(5)}`;
+};
+
+const formatPhone = (v) => {
+  if (!v) return '';
+  const n = v.toString().replace(/\D/g, '').slice(0, 11);
+  if (n.length <= 2) return `(${n}`;
+  if (n.length <= 7) return `(${n.slice(0,2)}) ${n.slice(2)}`;
+  return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`;
+};
+
+const formatCurrency = (val) => {
+  if (!val) return '0,00';
+  return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+};
+
+const formatDate = (val) => {
+  if (!val) return '-';
+  return new Date(val).toLocaleDateString('pt-BR');
+};
+
+// Remove formatação (apenas dígitos)
+const unformat = (v) => {
+  if (!v) return '';
+  return v.toString().replace(/\D/g, '');
+};
 
 const isStepValid = computed(() => {
   switch (currentStep.value) {
@@ -74,7 +115,6 @@ const loadContract = async () => {
       return;
     }
     
-    // Salvar o template_id para poder regenerar o HTML
     contractTemplateId.value = data.contract_template_id;
     
     Object.keys(contractData).forEach(key => {
@@ -85,19 +125,38 @@ const loadContract = async () => {
       }
     });
     
-    // Salvar valores originais para substituição no HTML (quando não há template)
+    // Salvar valores originais - tanto formatados quanto não formatados
+    // para conseguir encontrar no HTML independente de como foi salvo
+    const cpfRaw = data.contractor_cpf || '';
+    const cepRaw = data.contractor_cep || '';
+    const phoneRaw = data.contractor_phone || '';
+    
     originalValues.value = {
       contractor_name: data.contractor_name || '',
-      contractor_cpf: data.contractor_cpf || '',
+      // CPF: salva ambas versões
+      contractor_cpf: cpfRaw,
+      contractor_cpf_formatted: formatCPF(cpfRaw),
+      contractor_cpf_raw: unformat(cpfRaw),
+      // RG
       contractor_rg: data.contractor_rg || '',
+      // Endereço
       contractor_address: data.contractor_address || '',
       contractor_neighborhood: data.contractor_neighborhood || '',
       contractor_city: data.contractor_city || '',
       contractor_state: data.contractor_state || '',
-      contractor_cep: data.contractor_cep || '',
+      // CEP: salva ambas versões
+      contractor_cep: cepRaw,
+      contractor_cep_formatted: formatCEP(cepRaw),
+      contractor_cep_raw: unformat(cepRaw),
+      // Email
       contractor_email: data.contractor_email || '',
-      contractor_phone: data.contractor_phone || '',
+      // Telefone: salva ambas versões
+      contractor_phone: phoneRaw,
+      contractor_phone_formatted: formatPhone(phoneRaw),
+      contractor_phone_raw: unformat(phoneRaw),
+      // Data nascimento
       contractor_birth_date: data.contractor_birth_date || '',
+      // Plano
       plan_name: data.plan_name || '',
       plan_duration: data.plan_duration || '',
       plan_value: data.plan_value || '',
@@ -112,7 +171,6 @@ const loadContract = async () => {
       sessions_group_meetings: data.sessions_group_meetings || 0,
     };
     
-    // Carregar o template original para poder regenerar o HTML
     if (contractTemplateId.value) {
       await loadTemplate(contractTemplateId.value);
     }
@@ -124,94 +182,120 @@ const loadContract = async () => {
   }
 };
 
+// Função auxiliar para substituir valor no HTML (tenta múltiplas variações)
+const replaceInHtml = (html, oldVariations, newValue) => {
+  let result = html;
+  // oldVariations é um array de possíveis valores antigos a procurar
+  for (const oldVal of oldVariations) {
+    if (oldVal && oldVal.length > 2 && result.includes(oldVal)) {
+      const escaped = oldVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      result = result.replace(new RegExp(escaped, 'g'), newValue || '');
+    }
+  }
+  return result;
+};
+
 // Função para aplicar variáveis ao template OU substituir valores no HTML existente
 const applyVariables = () => {
-  // Se tem template, usa o template como base
-  // Se não tem template, faz substituição direta no HTML existente
   let html = template.value?.content_html || contractData.content_html;
   
   if (!html) return;
 
-  // Função auxiliar para formatar valores
-  const formatCurrency = (val) => {
-    if (!val) return '0,00';
-    return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-  };
-  
-  const formatDate = (val) => {
-    if (!val) return '-';
-    return new Date(val).toLocaleDateString('pt-BR');
-  };
-
   // Se NÃO tem template, faz substituição dos valores antigos pelos novos
   if (!template.value?.content_html) {
-    const replacements = [
-      // Nome
-      { old: originalValues.value.contractor_name, new: contractData.contractor_name },
-      // CPF
-      { old: originalValues.value.contractor_cpf, new: contractData.contractor_cpf },
-      // RG
-      { old: originalValues.value.contractor_rg, new: contractData.contractor_rg || '-' },
-      // Endereço
-      { old: originalValues.value.contractor_address, new: contractData.contractor_address },
-      // Bairro
-      { old: originalValues.value.contractor_neighborhood, new: contractData.contractor_neighborhood },
-      // Cidade
-      { old: originalValues.value.contractor_city, new: contractData.contractor_city },
-      // Estado
-      { old: originalValues.value.contractor_state, new: contractData.contractor_state },
-      // CEP
-      { old: originalValues.value.contractor_cep, new: contractData.contractor_cep },
-      // Email
-      { old: originalValues.value.contractor_email, new: contractData.contractor_email },
-      // Telefone
-      { old: originalValues.value.contractor_phone, new: contractData.contractor_phone },
-      // Data nascimento
-      { old: formatDate(originalValues.value.contractor_birth_date), new: formatDate(contractData.contractor_birth_date) },
-      // Nome do plano
-      { old: originalValues.value.plan_name, new: contractData.plan_name },
-      // Duração
-      { old: originalValues.value.plan_duration, new: contractData.plan_duration },
-      // Valor do plano (formatado)
-      { old: formatCurrency(originalValues.value.plan_value), new: formatCurrency(contractData.plan_value) },
-      // Parcelas
-      { old: String(originalValues.value.installments_count || 1), new: String(contractData.installments_count || 1) },
-      // Valor primeira parcela
-      { old: formatCurrency(originalValues.value.first_installment_value || originalValues.value.plan_value), new: formatCurrency(contractData.first_installment_value || contractData.plan_value) },
-      // Dia vencimento
-      { old: String(originalValues.value.installment_due_day || 10), new: String(contractData.installment_due_day || 10) },
-      // Data início
-      { old: formatDate(originalValues.value.plan_start_date), new: formatDate(contractData.plan_start_date) },
-      // Data fim
-      { old: formatDate(originalValues.value.plan_end_date), new: formatDate(contractData.plan_end_date) },
-      // Sessões
-      { old: String(originalValues.value.sessions_call_estrategica || 0), new: String(contractData.sessions_call_estrategica || 0) },
-      { old: String(originalValues.value.sessions_individual || 0), new: String(contractData.sessions_individual || 0) },
-      { old: String(originalValues.value.sessions_group_consultive || 0), new: String(contractData.sessions_group_consultive || 0) },
-      { old: String(originalValues.value.sessions_group_meetings || 0), new: String(contractData.sessions_group_meetings || 0) },
-    ];
+    const orig = originalValues.value;
     
-    // Aplica as substituições (apenas se o valor antigo existir e for diferente do novo)
-    replacements.forEach(({ old: oldVal, new: newVal }) => {
-      if (oldVal && oldVal !== newVal && html.includes(oldVal)) {
-        // Usa uma regex global para substituir todas as ocorrências
-        const escaped = oldVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        html = html.replace(new RegExp(escaped, 'g'), newVal || '');
-      }
-    });
+    // Nome
+    html = replaceInHtml(html, [orig.contractor_name], contractData.contractor_name);
+    
+    // CPF - tenta todas as variações (formatado, raw, original)
+    const newCpfFormatted = formatCPF(contractData.contractor_cpf);
+    html = replaceInHtml(html, [
+      orig.contractor_cpf_formatted,
+      orig.contractor_cpf,
+      orig.contractor_cpf_raw,
+    ], newCpfFormatted);
+    
+    // RG
+    html = replaceInHtml(html, [orig.contractor_rg], contractData.contractor_rg || '-');
+    
+    // Endereço
+    html = replaceInHtml(html, [orig.contractor_address], contractData.contractor_address);
+    
+    // Bairro
+    html = replaceInHtml(html, [orig.contractor_neighborhood], contractData.contractor_neighborhood);
+    
+    // Cidade
+    html = replaceInHtml(html, [orig.contractor_city], contractData.contractor_city);
+    
+    // Estado
+    html = replaceInHtml(html, [orig.contractor_state], contractData.contractor_state);
+    
+    // CEP - tenta todas as variações
+    const newCepFormatted = formatCEP(contractData.contractor_cep);
+    html = replaceInHtml(html, [
+      orig.contractor_cep_formatted,
+      orig.contractor_cep,
+      orig.contractor_cep_raw,
+    ], newCepFormatted);
+    
+    // Email
+    html = replaceInHtml(html, [orig.contractor_email], contractData.contractor_email);
+    
+    // Telefone - tenta todas as variações
+    const newPhoneFormatted = formatPhone(contractData.contractor_phone);
+    html = replaceInHtml(html, [
+      orig.contractor_phone_formatted,
+      orig.contractor_phone,
+      orig.contractor_phone_raw,
+    ], newPhoneFormatted);
+    
+    // Data nascimento
+    html = replaceInHtml(html, [formatDate(orig.contractor_birth_date)], formatDate(contractData.contractor_birth_date));
+    
+    // Nome do plano
+    html = replaceInHtml(html, [orig.plan_name], contractData.plan_name);
+    
+    // Duração
+    html = replaceInHtml(html, [orig.plan_duration], contractData.plan_duration);
+    
+    // Valor do plano
+    html = replaceInHtml(html, [formatCurrency(orig.plan_value)], formatCurrency(contractData.plan_value));
+    
+    // Primeira parcela
+    html = replaceInHtml(html, 
+      [formatCurrency(orig.first_installment_value || orig.plan_value)], 
+      formatCurrency(contractData.first_installment_value || contractData.plan_value)
+    );
+    
+    // Data início
+    html = replaceInHtml(html, [formatDate(orig.plan_start_date)], formatDate(contractData.plan_start_date));
+    
+    // Data fim
+    html = replaceInHtml(html, [formatDate(orig.plan_end_date)], formatDate(contractData.plan_end_date));
     
     // Atualiza os valores originais para próximas edições
+    const cpfNew = contractData.contractor_cpf;
+    const cepNew = contractData.contractor_cep;
+    const phoneNew = contractData.contractor_phone;
+    
     originalValues.value = {
       contractor_name: contractData.contractor_name,
-      contractor_cpf: contractData.contractor_cpf,
+      contractor_cpf: cpfNew,
+      contractor_cpf_formatted: formatCPF(cpfNew),
+      contractor_cpf_raw: unformat(cpfNew),
       contractor_rg: contractData.contractor_rg,
       contractor_address: contractData.contractor_address,
       contractor_neighborhood: contractData.contractor_neighborhood,
       contractor_city: contractData.contractor_city,
       contractor_state: contractData.contractor_state,
-      contractor_cep: contractData.contractor_cep,
+      contractor_cep: cepNew,
+      contractor_cep_formatted: formatCEP(cepNew),
+      contractor_cep_raw: unformat(cepNew),
       contractor_email: contractData.contractor_email,
-      contractor_phone: contractData.contractor_phone,
+      contractor_phone: phoneNew,
+      contractor_phone_formatted: formatPhone(phoneNew),
+      contractor_phone_raw: unformat(phoneNew),
       contractor_birth_date: contractData.contractor_birth_date,
       plan_name: contractData.plan_name,
       plan_duration: contractData.plan_duration,
@@ -230,15 +314,15 @@ const applyVariables = () => {
     // Se TEM template, substitui os placeholders {{variavel}}
     const variables = {
       contractor_name: contractData.contractor_name,
-      contractor_cpf: contractData.contractor_cpf,
+      contractor_cpf: formatCPF(contractData.contractor_cpf),
       contractor_rg: contractData.contractor_rg || '-',
       contractor_address: contractData.contractor_address,
       contractor_neighborhood: contractData.contractor_neighborhood,
       contractor_city: contractData.contractor_city,
       contractor_state: contractData.contractor_state,
-      contractor_cep: contractData.contractor_cep,
+      contractor_cep: formatCEP(contractData.contractor_cep),
       contractor_email: contractData.contractor_email,
-      contractor_phone: contractData.contractor_phone,
+      contractor_phone: formatPhone(contractData.contractor_phone),
       contractor_birth_date: formatDate(contractData.contractor_birth_date),
       plan_name: contractData.plan_name,
       plan_duration: contractData.plan_duration,
