@@ -1,10 +1,10 @@
 <script setup>
-import { ref, reactive, computed, onMounted, toRaw } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccount } from 'dashboard/composables/useAccount';
 import { useAlert } from 'dashboard/composables';
 
-import ContractsAPI from 'dashboard/api/contracts';
+import ContractsAPI, { ContractTemplates } from 'dashboard/api/contracts';
 import ContractForm from './components/ContractForm.vue';
 import ContractEditor from './components/ContractEditor.vue';
 import ContractSigners from './components/ContractSigners.vue';
@@ -20,6 +20,8 @@ const currentStep = ref(1);
 const isLoading = ref(true);
 const isSaving = ref(false);
 const contractId = computed(() => route.params.contractId);
+const template = ref(null);
+const contractTemplateId = ref(null);
 
 const contractData = reactive({
   title: '', contractor_name: '', contractor_cpf: '', contractor_rg: '',
@@ -50,6 +52,16 @@ const isStepValid = computed(() => {
   }
 });
 
+const loadTemplate = async (templateId) => {
+  if (!templateId) return;
+  try {
+    const response = await ContractTemplates.get(templateId);
+    template.value = response.data.data;
+  } catch (error) {
+    console.error('Erro ao carregar template:', error);
+  }
+};
+
 const loadContract = async () => {
   isLoading.value = true;
   try {
@@ -60,6 +72,10 @@ const loadContract = async () => {
       router.push(accountScopedRoute('contracts_view', { contractId: contractId.value }));
       return;
     }
+    
+    // Salvar o template_id para poder regenerar o HTML
+    contractTemplateId.value = data.contract_template_id;
+    
     Object.keys(contractData).forEach(key => {
       if (key === 'contract_signers_attributes') {
         contractData[key] = data.signers?.map(s => ({ id: s.id, name: s.name, email: s.email, role: s.role })) || [];
@@ -67,6 +83,11 @@ const loadContract = async () => {
         contractData[key] = data[key];
       }
     });
+    
+    // Carregar o template original para poder regenerar o HTML
+    if (contractTemplateId.value) {
+      await loadTemplate(contractTemplateId.value);
+    }
   } catch {
     showAlert('Erro ao carregar contrato');
     router.push(accountScopedRoute('contracts_list'));
@@ -75,14 +96,82 @@ const loadContract = async () => {
   }
 };
 
-const nextStep = () => { if (currentStep.value < 4) currentStep.value++; };
+// Função para aplicar variáveis ao template (igual ao ContractCreate)
+const applyVariables = () => {
+  if (!template.value?.content_html) return;
+
+  let html = template.value.content_html;
+  const variables = {
+    contractor_name: contractData.contractor_name,
+    contractor_cpf: contractData.contractor_cpf,
+    contractor_rg: contractData.contractor_rg || '-',
+    contractor_address: contractData.contractor_address,
+    contractor_neighborhood: contractData.contractor_neighborhood,
+    contractor_city: contractData.contractor_city,
+    contractor_state: contractData.contractor_state,
+    contractor_cep: contractData.contractor_cep,
+    contractor_email: contractData.contractor_email,
+    contractor_phone: contractData.contractor_phone,
+    contractor_birth_date: contractData.contractor_birth_date
+      ? new Date(contractData.contractor_birth_date).toLocaleDateString('pt-BR')
+      : '-',
+    plan_name: contractData.plan_name,
+    plan_duration: contractData.plan_duration,
+    sessions_call_estrategica: contractData.sessions_call_estrategica || 0,
+    sessions_individual: contractData.sessions_individual || 0,
+    sessions_group_consultive: contractData.sessions_group_consultive || 0,
+    sessions_group_meetings: contractData.sessions_group_meetings || 0,
+    plan_value: contractData.plan_value
+      ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+      : '0,00',
+    installments_count: contractData.installments_count || 1,
+    first_installment_value: contractData.first_installment_value
+      ? parseFloat(contractData.first_installment_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+      : contractData.plan_value
+        ? parseFloat(contractData.plan_value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
+        : '0,00',
+    installment_due_day: contractData.installment_due_day || 10,
+    plan_start_date: contractData.plan_start_date
+      ? new Date(contractData.plan_start_date).toLocaleDateString('pt-BR')
+      : '-',
+    plan_end_date: contractData.plan_end_date
+      ? new Date(contractData.plan_end_date).toLocaleDateString('pt-BR')
+      : '-',
+    contract_date: new Date().toLocaleDateString('pt-BR'),
+  };
+
+  Object.entries(variables).forEach(([key, value]) => {
+    const regex = new RegExp(`\\{\\{${key}\\}\\}`, 'g');
+    html = html.replace(regex, value?.toString() || '');
+  });
+
+  contractData.content_html = html;
+};
+
+const nextStep = () => {
+  // Aplicar variáveis ao avançar do passo 2 para o 3
+  if (currentStep.value === 2 && template.value) {
+    applyVariables();
+  }
+  if (currentStep.value < 4) currentStep.value++;
+};
+
 const prevStep = () => { if (currentStep.value > 1) currentStep.value--; };
-const goToStep = step => { if (step <= currentStep.value || isStepValid.value) currentStep.value = step; };
+
+const goToStep = step => {
+  if (step <= currentStep.value || isStepValid.value) {
+    // Aplicar variáveis se estiver indo para o passo 3 vindo do passo 2
+    if (step === 3 && currentStep.value === 2 && template.value) {
+      applyVariables();
+    }
+    currentStep.value = step;
+  }
+};
 
 const saveContract = async () => {
   isSaving.value = true;
   try {
-    await ContractsAPI.update(contractId.value, toRaw(contractData));
+    await ContractsAPI.update(contractId.value, { ...contractData });
     showAlert('Contrato atualizado!');
     router.push(accountScopedRoute('contracts_view', { contractId: contractId.value }));
   } catch {
@@ -144,6 +233,13 @@ onMounted(() => loadContract());
         </div>
 
         <div v-else-if="currentStep === 3">
+          <!-- Aviso se não houver template disponível -->
+          <div v-if="!template" class="mb-4 p-4 rounded-lg bg-n-amber-3 border border-n-amber-6">
+            <p class="text-sm text-n-amber-11">
+              <span class="i-lucide-alert-triangle mr-2" />
+              Template original não disponível. Edite o conteúdo manualmente no editor abaixo.
+            </p>
+          </div>
           <ContractEditor v-model="contractData.content_html" :title="contractData.title" @update:title="contractData.title = $event" />
         </div>
 
