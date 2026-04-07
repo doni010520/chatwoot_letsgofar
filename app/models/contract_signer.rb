@@ -121,9 +121,6 @@ class ContractSigner < ApplicationRecord
     end
 
     true
-  rescue StandardError => e
-    Rails.logger.error "Erro ao assinar contrato: #{e.message}"
-    false
   end
 
   def refuse!(reason = nil, ip_address = nil)
