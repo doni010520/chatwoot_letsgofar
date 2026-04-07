@@ -56,24 +56,21 @@ class Public::Api::V1::ContractsController < PublicController
       user_agent: request.user_agent,
       geolocation: params[:geolocation],
       browser_fingerprint: params[:browser_fingerprint],
-      metadata: {
-        name_confirmation: params[:name_confirmation],
-        cpf_confirmation: params[:cpf_confirmation],
-        accepted_at: Time.current.utc.iso8601
-      }
+      confirmation_name: params[:name_confirmation],
+      confirmation_cpf: params[:cpf_confirmation]
     }
 
-    if @signer.sign!(signature_data)
-      render json: {
-        message: 'Contrato assinado com sucesso',
-        data: {
-          signed_at: @signer.signed_at,
-          signature_hash: @signer.contract_signature&.signature_hash
-        }
+    @signer.sign!(signature_data)
+    render json: {
+      message: 'Contrato assinado com sucesso',
+      data: {
+        signed_at: @signer.signed_at,
+        signature_hash: @signer.contract_signature&.signature_hash
       }
-    else
-      render json: { error: 'Erro ao assinar o contrato' }, status: :unprocessable_entity
-    end
+    }
+  rescue StandardError => e
+    Rails.logger.error "Erro ao assinar contrato #{@contract.contract_number}: #{e.message}\n#{e.backtrace&.first(5)&.join("\n")}"
+    render json: { error: "Erro ao assinar: #{e.message}" }, status: :unprocessable_entity
   end
 
   # POST /public/api/v1/contracts/:token/refuse
