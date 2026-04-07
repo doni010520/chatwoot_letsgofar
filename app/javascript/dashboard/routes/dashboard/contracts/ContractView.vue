@@ -6,6 +6,7 @@ import { useAlert } from 'dashboard/composables';
 
 import ContractsAPI from 'dashboard/api/contracts';
 import ContractTimeline from './components/ContractTimeline.vue';
+import ContractEditor from './components/ContractEditor.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 
@@ -64,6 +65,25 @@ const loadContract = async () => {
 };
 
 const editContract = () => router.push(accountScopedRoute('contracts_edit', { contractId: contractId.value }));
+
+const updateContentHtml = async newHtml => {
+  try {
+    await ContractsAPI.update(contractId.value, { content_html: newHtml });
+    contract.value.content_html = newHtml;
+    showAlert('Conteúdo salvo!');
+  } catch {
+    showAlert('Erro ao salvar conteúdo');
+  }
+};
+
+const updateTitle = async newTitle => {
+  try {
+    await ContractsAPI.update(contractId.value, { title: newTitle });
+    contract.value.title = newTitle;
+  } catch {
+    showAlert('Erro ao salvar título');
+  }
+};
 
 const sendForSignature = async () => {
   if (!confirm('Deseja enviar este contrato para assinatura?')) return;
@@ -172,15 +192,13 @@ onMounted(() => loadContract());
       <div class="flex gap-4 p-6">
         <!-- Main -->
         <div class="flex-1 min-w-0">
-          <div class="rounded-xl bg-n-solid-2 border border-n-weak overflow-hidden">
-            <div class="px-6 py-3 border-b border-n-weak flex items-center justify-between">
-              <h2 class="text-sm font-medium text-n-slate-12">Conteúdo do Contrato</h2>
-              <button class="text-xs text-n-brand hover:underline" onclick="window.print()">Imprimir</button>
-            </div>
-            <div class="p-6 bg-n-alpha-2">
-              <div class="contract-document" v-html="contract.content_html" />
-            </div>
-          </div>
+          <ContractEditor
+            :model-value="contract.content_html"
+            :title="contract.title"
+            :readonly="contract.status !== 'draft'"
+            @update:model-value="updateContentHtml"
+            @update:title="updateTitle"
+          />
         </div>
 
         <!-- Sidebar -->
