@@ -9,6 +9,7 @@ import TaskModal from './TaskModal.vue';
 import TaskComments from './TaskComments.vue';
 import TaskFiles from './TaskFiles.vue';
 import TaskChecklist from './TaskChecklist.vue';
+import TaskActivityLog from './TaskActivityLog.vue';
 
 const props = defineProps({
   task: {
@@ -337,6 +338,22 @@ const getRecurrenceLabel = (type) => {
               </span>
             </button>
           </div>
+
+          <!-- Activity Tab -->
+            <button
+              type="button"
+              class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+              :class="[
+                activeTab === 'activity'
+                  ? 'bg-n-brand text-white'
+                  : 'text-n-slate-11 hover:bg-n-alpha-2',
+              ]"
+              @click="activeTab = 'activity'"
+            >
+              Activity
+            </button>
+
+          <TaskActivityLog v-if="activeTab === 'activity'" :task="task" />
 
           <!-- Aba Checklist usando componente existente com drag-and-drop -->
           <TaskChecklist
