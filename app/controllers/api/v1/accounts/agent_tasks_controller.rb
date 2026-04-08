@@ -17,7 +17,6 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   def create
     @agent_task = Current.account.agent_tasks.new(agent_task_params)
     @agent_task.created_by = Current.user
-    @agent_task.current_user = Current.user  # Para log de atividade
 
     if @agent_task.save
       Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_CREATED, Time.zone.now, agent_task: @agent_task)
@@ -34,13 +33,15 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   def update
     authorize @agent_task
     
+    # Separar files dos outros parâmetros
     params_hash = agent_task_params.to_h
     files_to_attach = params_hash.delete('files')
     
-    @agent_task.current_user = Current.user  # Para log de atividade
-    
+    # Atualizar tarefa SEM files
     if @agent_task.update(params_hash)
+      # Depois anexar files separadamente
       @agent_task.files.attach(files_to_attach) if files_to_attach.present?
+      
       render :show
     else
       render json: { errors: @agent_task.errors.full_messages }, status: :unprocessable_entity
@@ -56,35 +57,30 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   # Ações customizadas
   def complete
     authorize @agent_task
-    @agent_task.current_user = Current.user
     @agent_task.complete!
     render :show
   end
 
   def start
     authorize @agent_task
-    @agent_task.current_user = Current.user
     @agent_task.start!
     render :show
   end
 
   def cancel
     authorize @agent_task
-    @agent_task.current_user = Current.user
     @agent_task.cancel!
     render :show
   end
 
   def reopen
     authorize @agent_task
-    @agent_task.current_user = Current.user
     @agent_task.reopen!
     render :show
   end
 
   def assign
     authorize @agent_task
-    @agent_task.current_user = Current.user
 
     user_id = params[:user_id]
     if user_id.present?
