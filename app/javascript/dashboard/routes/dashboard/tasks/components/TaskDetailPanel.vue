@@ -322,13 +322,12 @@ const getRecurrenceLabel = (type) => {
             </button>
 
             <!-- Files Tab -->
-            <button
-              type="button"
-              class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+          <button
+              class="text-sm font-medium pb-2 border-b-2 transition-colors"
               :class="[
                 activeTab === 'files'
-                  ? 'bg-n-brand text-white'
-                  : 'text-n-slate-11 hover:bg-n-alpha-2',
+                  ? 'border-n-brand text-n-brand'
+                  : 'border-transparent text-n-slate-10 hover:text-n-slate-12',
               ]"
               @click="activeTab = 'files'"
             >
