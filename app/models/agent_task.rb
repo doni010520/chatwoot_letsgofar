@@ -409,4 +409,5 @@ class AgentTask < ApplicationRecord
         )
       end
     end
+  end
 end
