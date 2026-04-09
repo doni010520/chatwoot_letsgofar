@@ -402,7 +402,6 @@ Rails.application.routes.draw do
           end
 
           resources :scheduled_messages, only: [:index, :create, :update, :destroy]
-          resources :activities, controller: 'agent_task_activities', only: [:index]
 
           # Contracts (Assinatura de Contratos)
           resources :contracts do
