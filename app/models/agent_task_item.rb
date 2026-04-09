@@ -11,12 +11,6 @@ class AgentTaskItem < ApplicationRecord
   scope :completed, -> { where(completed: true) }
   scope :pending, -> { where(completed: false) }
   scope :ordered, -> { order(position: :asc, created_at: :asc) }
-  
-  # Para log de atividades
-  attr_accessor :current_user
-  after_create :log_item_created
-  after_update :log_item_changes
-  after_destroy :log_item_removed
 
   # Callbacks
   before_create :set_position
@@ -61,28 +55,4 @@ class AgentTaskItem < ApplicationRecord
       agent_task.update_column(:status, 'in_progress')
     end
   end 
-
-    def log_item_created
-    return unless current_user
-    agent_task.activities.create!(user: current_user, action: 'item_added', new_value: title)
-  end
-
-  def log_item_changes
-    return unless current_user
-
-    if saved_change_to_completed?
-      action = saved_change_to_completed.last ? 'item_completed' : 'item_reopened'
-      agent_task.activities.create!(user: current_user, action: action, new_value: title)
-    end
-
-    if saved_change_to_title?
-      old_title, new_title = saved_change_to_title
-      agent_task.activities.create!(user: current_user, action: 'item_updated', old_value: old_title, new_value: new_title)
-    end
-  end
-
-  def log_item_removed
-    return unless current_user
-    agent_task.activities.create!(user: current_user, action: 'item_removed', old_value: title)
-  end
 end 
