@@ -60,6 +60,7 @@ class AgentTaskItem < ApplicationRecord
     elsif completed_items > 0 && completed_items < total_items && agent_task.status == 'pending'
       agent_task.update_column(:status, 'in_progress')
     end
+  end 
 
     def log_item_created
     return unless current_user
