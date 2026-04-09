@@ -364,4 +364,5 @@ class AgentTask < ApplicationRecord
         new_value: new_display.to_s
       )
     end
+  end 
 end
