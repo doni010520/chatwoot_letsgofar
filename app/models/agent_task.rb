@@ -16,7 +16,6 @@ class AgentTask < ApplicationRecord
   has_many :comments, class_name: 'AgentTaskComment', dependent: :destroy
   has_many :task_labels, class_name: 'AgentTaskLabel', dependent: :destroy
   has_many :labels, through: :task_labels
-  has_many :activities, class_name: 'AgentTaskActivity', dependent: :destroy
 
   # Anexos
   has_many_attached :files
