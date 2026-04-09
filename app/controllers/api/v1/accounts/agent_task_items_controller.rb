@@ -14,10 +14,9 @@ class Api::V1::Accounts::AgentTaskItemsController < Api::V1::Accounts::BaseContr
       render json: { errors: @item.errors.full_messages }, status: :unprocessable_entity
     end
   end
-
-  @item.current_user = Current.user
   
   def update
+    @item.current_user = Current.user
     if @item.update(item_params)
       render json: item_json(@item)
     else
