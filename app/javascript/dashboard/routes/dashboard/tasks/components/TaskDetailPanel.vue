@@ -1,4 +1,3 @@
-
 <script setup>
 import { ref, computed } from 'vue';
 import { useStore } from 'vuex';
@@ -10,7 +9,6 @@ import TaskModal from './TaskModal.vue';
 import TaskComments from './TaskComments.vue';
 import TaskFiles from './TaskFiles.vue';
 import TaskChecklist from './TaskChecklist.vue';
-import TaskActivityLog from './TaskActivityLog.vue';
 
 const props = defineProps({
   task: {
@@ -337,18 +335,6 @@ const getRecurrenceLabel = (type) => {
                 ({{ task.files_count }})
               </span>
             </button>
-
-            <button
-              class="text-sm font-medium pb-2 border-b-2 transition-colors"
-              :class="[
-                activeTab === 'activity'
-                  ? 'border-n-brand text-n-brand'
-                  : 'border-transparent text-n-slate-10 hover:text-n-slate-12',
-              ]"
-              @click="activeTab = 'activity'"
-            >
-              Activity
-            </button>
           </div>
 
           <!-- Aba Checklist usando componente existente com drag-and-drop -->
@@ -361,7 +347,6 @@ const getRecurrenceLabel = (type) => {
           <!-- Aba Comentários -->
           <TaskComments v-if="activeTab === 'comments'" :task="task" />
           <TaskFiles v-if="activeTab === 'files'" :task="task" @updated="emit('updated')" />
-          <TaskActivityLog v-if="activeTab === 'activity'" :task="task" />
         </div>
       </div>
     </div>
