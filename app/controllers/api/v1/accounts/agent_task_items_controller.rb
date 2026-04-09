@@ -6,7 +6,6 @@ class Api::V1::Accounts::AgentTaskItemsController < Api::V1::Accounts::BaseContr
 
   def create
     @item = @agent_task.items.new(item_params)
-    @item.current_user = Current.user
 
     if @item.save
       render json: item_json(@item), status: :created
@@ -16,7 +15,6 @@ class Api::V1::Accounts::AgentTaskItemsController < Api::V1::Accounts::BaseContr
   end
   
   def update
-    @item.current_user = Current.user
     if @item.update(item_params)
       render json: item_json(@item)
     else
@@ -25,13 +23,11 @@ class Api::V1::Accounts::AgentTaskItemsController < Api::V1::Accounts::BaseContr
   end
 
   def destroy
-    @item.current_user = Current.user
     @item.destroy!
     head :no_content
   end
 
   def toggle
-    @item.current_user = Current.user
     @item.toggle!
     
     # Retorna a tarefa atualizada também
