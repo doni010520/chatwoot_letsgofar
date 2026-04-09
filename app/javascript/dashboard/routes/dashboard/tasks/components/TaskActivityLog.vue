@@ -16,9 +16,8 @@ const isLoading = ref(true);
 const fetchActivities = async () => {
   isLoading.value = true;
   try {
-    const accountId = window.location.pathname.match(/\/accounts\/(\d+)/)?.[1];
     const response = await axios.get(
-      `/api/v1/accounts/${accountId}/agent_tasks/${props.task.id}/activities`
+      `/api/v1/accounts/${props.task.account_id}/agent_tasks/${props.task.id}/activities`
     );
     activities.value = response.data.data || [];
   } catch (error) {
