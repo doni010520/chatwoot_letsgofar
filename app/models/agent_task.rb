@@ -36,10 +36,6 @@ class AgentTask < ApplicationRecord
   validates :recurrence_type, inclusion: { in: RECURRENCE_TYPES }
   validates :description, length: { maximum: 50000 }, allow_nil: true
 
-  # Para log de atividades
-  attr_accessor :current_user
-  after_create :log_creation
-  after_update :log_changes
 
   # Scopes de status
   scope :pending, -> { where(status: 'pending') }
@@ -327,42 +323,4 @@ class AgentTask < ApplicationRecord
       updated_at: updated_at
     }
   end
-  private
-
-  def log_creation
-    return unless current_user
-
-    activities.create!(user: current_user, action: 'created')
-  end
-
-  def log_changes
-    return unless current_user
-
-    tracked_fields = %w[title description priority status due_date due_time assigned_to_id recurrence_type]
-
-    saved_changes.each do |field, (old_val, new_val)|
-      next unless tracked_fields.include?(field)
-
-      action = case field
-               when 'status' then 'status_changed'
-               when 'priority' then 'priority_changed'
-               when 'assigned_to_id'
-                 new_val.present? ? 'assigned' : 'unassigned'
-               when 'due_date'
-                 new_val.present? ? 'due_date_changed' : 'due_date_removed'
-               else 'updated'
-               end
-
-      old_display = field == 'assigned_to_id' && old_val ? User.find_by(id: old_val)&.name : old_val
-      new_display = field == 'assigned_to_id' && new_val ? User.find_by(id: new_val)&.name : new_val
-
-      activities.create!(
-        user: current_user,
-        action: action,
-        field_name: field,
-        old_value: old_display.to_s,
-        new_value: new_display.to_s
-      )
-    end
-  end 
 end
