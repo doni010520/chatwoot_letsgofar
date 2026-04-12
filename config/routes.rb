@@ -199,6 +199,7 @@ Rails.application.routes.draw do
               get :contactable_inboxes
               post :destroy_custom_attributes
               delete :avatar
+              post :add_to_crm
             end
             scope module: :contacts do
               resources :conversations, only: [:index]

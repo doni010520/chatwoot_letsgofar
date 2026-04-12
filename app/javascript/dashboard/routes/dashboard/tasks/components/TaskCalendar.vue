@@ -109,25 +109,25 @@ const getTasksForDay = dateString => {
 
 // Cores por prioridade - usando sistema Radix UI do Chatwoot
 const getPriorityStyle = (priority, status) => {
-  // Se a tarefa estiver concluída, usar cor verde
+  // Se a tarefa estiver concluída, usar cor teal
   if (status === 'completed') {
-    return 'bg-green-9 text-white';
+    return 'bg-n-teal-9 text-white';
   }
-  
+
   // Se cancelada, usar cor cinza
   if (status === 'cancelled') {
     return 'bg-n-slate-6 text-n-slate-11';
   }
-  
+
   const styles = {
-    urgent: 'bg-ruby-9 text-white',
-    high: 'bg-orange-9 text-white',
-    medium: 'bg-blue-9 text-white',
-    low: 'bg-green-9 text-white',
+    urgent: 'bg-n-ruby-9 text-white',
+    high: 'bg-n-amber-9 text-white',
+    medium: 'bg-n-blue-9 text-white',
+    low: 'bg-n-teal-9 text-white',
   };
-  
+
   // Sempre retornar uma cor (default para azul se não tiver prioridade)
-  return styles[priority] || 'bg-blue-9 text-white';
+  return styles[priority] || 'bg-n-blue-9 text-white';
 };
 
 // Navegação

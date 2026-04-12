@@ -20,6 +20,34 @@ class AgentTask < ApplicationRecord
   # Anexos
   has_many_attached :files
 
+  # Validação de anexos
+  ALLOWED_FILE_CONTENT_TYPES = %w[
+    image/png image/jpeg image/gif image/bmp image/webp image/svg+xml
+    video/mp4 video/quicktime video/webm video/x-msvideo
+    audio/mpeg audio/ogg audio/wav audio/webm
+    application/pdf
+    application/msword application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    application/vnd.ms-excel application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    application/vnd.ms-powerpoint application/vnd.openxmlformats-officedocument.presentationml.presentation
+    application/zip application/x-rar-compressed application/gzip
+    text/plain text/csv
+  ].freeze
+
+  MAX_FILE_SIZE = 300.megabytes # 300MB para suportar vídeos
+
+  validate :validate_attached_files
+
+  def validate_attached_files
+    files.each do |file|
+      if file.byte_size > MAX_FILE_SIZE
+        errors.add(:files, "#{file.filename} excede o tamanho máximo de 300MB")
+      end
+      unless ALLOWED_FILE_CONTENT_TYPES.include?(file.content_type)
+        errors.add(:files, "#{file.filename} possui um tipo de arquivo não permitido (#{file.content_type})")
+      end
+    end
+  end
+
   # Aceita nested attributes
   accepts_nested_attributes_for :items, allow_destroy: true
 

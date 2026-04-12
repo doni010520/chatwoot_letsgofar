@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import KanbanAPI from 'dashboard/api/kanban';
 
@@ -150,6 +150,13 @@ export default {
     const refresh = () => {
       loadActivities();
     };
+
+    // Reset history when switching conversations
+    watch(() => props.conversationId, () => {
+      activities.value = [];
+      showForm.value = false;
+      loadActivities();
+    });
 
     onMounted(() => {
       loadActivities();

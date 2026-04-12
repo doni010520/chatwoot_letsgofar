@@ -98,6 +98,7 @@ provide('contextMenuElementTarget', conversationDynamicScroller);
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
+const searchQuery = ref('');
 const showAdvancedFilters = ref(false);
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
@@ -294,6 +295,7 @@ const conversationFilters = computed(() => {
     labels: props.label ? [props.label] : undefined,
     teamId: props.teamId || undefined,
     conversationType: props.conversationType || undefined,
+    q: searchQuery.value || undefined,
   };
 });
 
@@ -647,6 +649,11 @@ function onBasicFilterChange(value, type) {
   resetAndFetchData();
 }
 
+function onSearch(query) {
+  searchQuery.value = query;
+  resetAndFetchData();
+}
+
 function openLastSavedItemInFolder() {
   const lastItemOfFolder = folders.value[folders.value.length - 1];
   const lastItemId = lastItemOfFolder.id;
@@ -932,6 +939,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       @filters-modal="onToggleAdvanceFiltersModal"
       @reset-filters="resetAndFetchData"
       @basic-filter-change="onBasicFilterChange"
+      @search="onSearch"
     />
 
     <TeleportWithDirection

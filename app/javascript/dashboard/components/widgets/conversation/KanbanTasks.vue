@@ -92,7 +92,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'dashboard/composables/store';
 import KanbanAPI from 'dashboard/api/kanban';
 
@@ -201,6 +201,13 @@ export default {
       return date.toLocaleDateString('pt-BR');
     };
 
+    // Reset tasks when switching conversations
+    watch(() => props.conversationId, () => {
+      tasks.value = [];
+      showForm.value = false;
+      loadTasks();
+    });
+
     onMounted(() => {
       loadTasks();
     });
@@ -229,9 +236,9 @@ export default {
 .tasks-add-btn {
   width: 100%;
   padding: 10px;
-  border: 1px dashed var(--s-300);
+  border: 1px dashed rgb(var(--slate-6));
   background-color: transparent;
-  color: var(--s-600);
+  color: rgb(var(--slate-11));
   font-size: 13px;
   cursor: pointer;
   border-radius: 6px;
@@ -240,16 +247,16 @@ export default {
 }
 
 .tasks-add-btn:hover {
-  border-color: var(--w-500);
-  color: var(--w-500);
-  background-color: var(--w-50);
+  border-color: rgb(var(--blue-9));
+  color: rgb(var(--blue-9));
+  background-color: rgb(var(--blue-2));
 }
 
 .tasks-loading,
 .tasks-empty {
   text-align: center;
   padding: 20px;
-  color: var(--s-500);
+  color: rgb(var(--slate-10));
   font-size: 13px;
 }
 
@@ -259,7 +266,7 @@ export default {
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background-color: var(--s-50);
+  background-color: rgb(var(--slate-2));
   border-radius: 8px;
   margin-bottom: 12px;
 }
@@ -269,10 +276,10 @@ export default {
 .task-form__select {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid var(--s-200);
+  border: 1px solid rgb(var(--slate-5));
   border-radius: 6px;
   font-size: 13px;
-  background-color: white;
+  background-color: rgb(var(--slate-1));
 }
 
 .task-form__textarea {
@@ -293,7 +300,7 @@ export default {
 
 .task-form__field label {
   font-size: 11px;
-  color: var(--s-600);
+  color: rgb(var(--slate-11));
 }
 
 .task-form__actions {
@@ -313,12 +320,12 @@ export default {
 
 .btn-cancel {
   background: none;
-  border: 1px solid var(--s-300);
-  color: var(--s-600);
+  border: 1px solid rgb(var(--slate-6));
+  color: rgb(var(--slate-11));
 }
 
 .btn-save {
-  background-color: var(--w-500);
+  background-color: rgb(var(--blue-9));
   border: none;
   color: white;
 }
@@ -342,14 +349,14 @@ export default {
   align-items: flex-start;
   gap: 10px;
   padding: 10px;
-  background-color: var(--s-50);
+  background-color: rgb(var(--slate-2));
   border-radius: 8px;
-  border-left: 3px solid var(--s-300);
+  border-left: 3px solid rgb(var(--slate-6));
 }
 
 .task-item--completed {
   opacity: 0.6;
-  border-left-color: var(--g-500);
+  border-left-color: rgb(var(--teal-9));
 }
 
 .task-item--overdue {
@@ -360,9 +367,9 @@ export default {
 .task-item__check {
   width: 20px;
   height: 20px;
-  border: 2px solid var(--s-400);
+  border: 2px solid rgb(var(--slate-7));
   border-radius: 4px;
-  background: white;
+  background: rgb(var(--slate-1));
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -372,8 +379,8 @@ export default {
 }
 
 .task-item__check--done {
-  background-color: var(--g-500);
-  border-color: var(--g-500);
+  background-color: rgb(var(--teal-9));
+  border-color: rgb(var(--teal-9));
   color: white;
 }
 
@@ -385,7 +392,7 @@ export default {
 .task-item__title {
   font-size: 13px;
   font-weight: 500;
-  color: var(--s-800);
+  color: rgb(var(--slate-12));
 }
 
 .task-item--completed .task-item__title {
@@ -394,7 +401,7 @@ export default {
 
 .task-item__desc {
   font-size: 12px;
-  color: var(--s-600);
+  color: rgb(var(--slate-11));
   margin-top: 2px;
 }
 
@@ -406,7 +413,7 @@ export default {
 
 .task-item__due {
   font-size: 11px;
-  color: var(--s-600);
+  color: rgb(var(--slate-11));
 }
 
 .task-item__due--overdue {
@@ -422,8 +429,8 @@ export default {
 }
 
 .task-item__priority--low {
-  background-color: var(--s-100);
-  color: var(--s-600);
+  background-color: rgb(var(--slate-3));
+  color: rgb(var(--slate-11));
 }
 
 .task-item__priority--medium {
@@ -444,7 +451,7 @@ export default {
 .task-item__delete {
   background: none;
   border: none;
-  color: var(--s-400);
+  color: rgb(var(--slate-7));
   cursor: pointer;
   font-size: 12px;
   padding: 2px;

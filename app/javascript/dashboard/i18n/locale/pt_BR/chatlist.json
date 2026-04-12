@@ -13,6 +13,7 @@
     "SEARCH": {
       "INPUT": "Pesquisar pessoas, conversas, respostas salvas .."
     },
+    "SEARCH_INPUT_PLACEHOLDER": "Buscar por nome...",
     "FILTER_ALL": "Todos",
     "ASSIGNEE_TYPE_TABS": {
       "me": "Minhas",

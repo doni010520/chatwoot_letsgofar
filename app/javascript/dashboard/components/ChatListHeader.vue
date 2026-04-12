@@ -1,5 +1,6 @@
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useDebounceFn } from '@vueuse/core';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { formatNumber } from '@chatwoot/utils';
 import wootConstants from 'dashboard/constants/globals';
@@ -24,7 +25,23 @@ const emit = defineEmits([
   'resetFilters',
   'basicFilterChange',
   'filtersModal',
+  'search',
 ]);
+
+const searchQuery = ref('');
+
+const debouncedSearch = useDebounceFn(value => {
+  emit('search', value);
+}, 300);
+
+watch(searchQuery, value => {
+  debouncedSearch(value);
+});
+
+function clearSearch() {
+  searchQuery.value = '';
+  emit('search', '');
+}
 
 const { uiSettings, updateUISettings } = useUISettings();
 
@@ -56,12 +73,13 @@ const toggleConversationLayout = () => {
 </script>
 
 <template>
-  <div
-    class="flex items-center justify-between gap-2 px-3 h-[3.25rem]"
-    :class="{
-      'border-b border-n-strong': hasAppliedFiltersOrActiveFolders,
-    }"
-  >
+  <div class="flex flex-col">
+    <div
+      class="flex items-center justify-between gap-2 px-3 h-[3.25rem]"
+      :class="{
+        'border-b border-n-strong': hasAppliedFiltersOrActiveFolders,
+      }"
+    >
     <div class="flex items-center justify-center min-w-0">
       <h1
         class="text-base font-medium truncate text-n-slate-12"
@@ -163,6 +181,27 @@ const toggleConversationLayout = () => {
         :is-on-expanded-layout="isOnExpandedLayout"
         @toggle="toggleConversationLayout"
       />
+    </div>
+    </div>
+    <div class="relative px-3 pb-2">
+      <span
+        class="absolute inset-y-0 flex items-center pb-2 ltr:left-5 rtl:right-5 text-n-slate-10"
+      >
+        <span class="i-lucide-search size-3.5" />
+      </span>
+      <input
+        v-model="searchQuery"
+        type="text"
+        :placeholder="$t('CHAT_LIST.SEARCH_INPUT_PLACEHOLDER')"
+        class="w-full py-1.5 text-sm rounded-lg border border-n-weak bg-n-alpha-2 text-n-slate-12 placeholder:text-n-slate-10 ltr:pl-8 ltr:pr-8 rtl:pr-8 rtl:pl-8 focus:outline-none focus:border-n-brand focus:ring-1 focus:ring-n-brand"
+      />
+      <button
+        v-if="searchQuery"
+        class="absolute inset-y-0 flex items-center pb-2 ltr:right-5 rtl:left-5 text-n-slate-10 hover:text-n-slate-12"
+        @click="clearSearch"
+      >
+        <span class="i-lucide-x size-3.5" />
+      </button>
     </div>
   </div>
 </template>
