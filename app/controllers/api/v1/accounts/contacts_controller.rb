@@ -13,7 +13,7 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
 
   before_action :check_authorization
   before_action :set_current_page, only: [:index, :active, :search, :filter]
-  before_action :fetch_contact, only: [:show, :update, :destroy, :avatar, :contactable_inboxes, :destroy_custom_attributes]
+  before_action :fetch_contact, only: [:show, :update, :destroy, :avatar, :contactable_inboxes, :destroy_custom_attributes, :add_to_crm]
   before_action :set_include_contact_inboxes, only: [:index, :active, :search, :filter, :show, :update]
 
   def index
@@ -112,6 +112,42 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
   def avatar
     @contact.avatar.purge if @contact.avatar.attached?
     @contact
+  end
+
+  def add_to_crm
+    pipeline_id = params[:pipeline_id]
+    stage_id = params[:stage_id]
+    deal_value = params[:deal_value]
+
+    return render json: { error: 'pipeline_id and stage_id are required' }, status: :unprocessable_entity if pipeline_id.blank? || stage_id.blank?
+
+    stage = KanbanStage.find_by(id: stage_id)
+    return render json: { error: 'Stage not found' }, status: :not_found unless stage
+
+    inbox = Current.account.inboxes.find_or_create_by!(channel_type: 'Channel::Api', name: 'CRM Interno') do |new_inbox|
+      new_inbox.channel = Channel::Api.create!(account: Current.account)
+    end
+
+    contact_inbox = ContactInbox.find_or_create_by!(contact: @contact, inbox: inbox) do |ci|
+      ci.source_id = SecureRandom.uuid
+    end
+
+    conversation = Current.account.conversations.create!(
+      contact: @contact,
+      inbox: inbox,
+      contact_inbox: contact_inbox,
+      kanban_stage_id: stage.id,
+      deal_value: deal_value.presence,
+      status: :open,
+      assignee: Current.user
+    )
+
+    render json: {
+      conversation_id: conversation.display_id,
+      id: conversation.id,
+      kanban_stage_id: conversation.kanban_stage_id,
+      deal_value: conversation.deal_value
+    }, status: :ok
   end
 
   private

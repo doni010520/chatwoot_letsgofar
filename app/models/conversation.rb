@@ -127,6 +127,7 @@ class Conversation < ApplicationRecord
   after_update_commit :execute_after_update_commit_callbacks
   after_update_commit :log_kanban_changes
   after_update_commit :trigger_kanban_automations
+  after_create :inherit_crm_from_contact
   after_create_commit :notify_conversation_creation
   after_create_commit :load_attributes_created_by_db_triggers
 
@@ -224,6 +225,23 @@ class Conversation < ApplicationRecord
   end
 
   private
+
+  def inherit_crm_from_contact
+    return if kanban_stage_id.present?
+
+    existing = contact&.conversations
+      &.where&.not(id: id)
+      &.where&.not(kanban_stage_id: nil)
+      &.order(updated_at: :desc)
+      &.first
+
+    return unless existing
+
+    self.kanban_stage_id = existing.kanban_stage_id
+    self.deal_value = existing.deal_value
+    self.closed_won = existing.closed_won
+    self.closed_reason = existing.closed_reason
+  end
 
   def execute_after_update_commit_callbacks
     handle_resolved_status_change

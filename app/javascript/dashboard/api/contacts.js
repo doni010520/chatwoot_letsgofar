@@ -92,6 +92,10 @@ class ContactAPI extends ApiClient {
     });
   }
 
+  addToCrm(contactId, data) {
+    return axios.post(`${this.url}/${contactId}/add_to_crm`, data);
+  }
+
   destroyAvatar(contactId) {
     return axios.delete(`${this.url}/${contactId}/avatar`);
   }

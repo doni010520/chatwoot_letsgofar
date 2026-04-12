@@ -19,8 +19,28 @@ const { t } = useI18n();
 const isDragging = ref(false);
 const isUploading = ref(false);
 const fileInput = ref(null);
+const expandedVideo = ref(null);
 
 const files = computed(() => props.task.files || []);
+
+const ACCEPTED_FILE_TYPES = [
+  'image/*',
+  'video/mp4',
+  'video/quicktime',
+  'video/webm',
+  'video/x-msvideo',
+  'audio/*',
+  'application/pdf',
+  '.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.gz,.txt,.csv',
+].join(',');
+
+const isVideo = (contentType) => {
+  return contentType?.startsWith('video/');
+};
+
+const isImage = (contentType) => {
+  return contentType?.startsWith('image/');
+};
 
 const formatFileSize = (bytes) => {
   if (bytes === 0) return '0 Bytes';
@@ -91,14 +111,26 @@ const downloadFile = (file) => {
 };
 
 const openFile = (file) => {
-  // Abrir no navegador (visualização inline)
+  if (isVideo(file.content_type)) {
+    expandedVideo.value = file;
+    return;
+  }
   const link = document.createElement('a');
   link.href = file.url;
   link.target = '_blank';
   link.rel = 'noopener noreferrer';
   link.click();
 };
-  
+
+const closeVideoModal = () => {
+  expandedVideo.value = null;
+};
+
+const handleModalBackdropClick = (event) => {
+  if (event.target === event.currentTarget) {
+    closeVideoModal();
+  }
+};
 </script>
 
 <template>
@@ -119,15 +151,16 @@ const openFile = (file) => {
         ref="fileInput"
         type="file"
         multiple
+        :accept="ACCEPTED_FILE_TYPES"
         class="hidden"
         @change="handleFileSelect"
       />
-      
+
       <div v-if="isUploading" class="flex flex-col items-center gap-2">
         <span class="i-lucide-loader-2 size-8 text-n-brand animate-spin" />
         <span class="text-sm text-n-slate-11">Enviando...</span>
       </div>
-      
+
       <div v-else class="flex flex-col items-center gap-2">
         <span class="i-lucide-upload-cloud size-8 text-n-slate-10" />
         <p class="text-sm text-n-slate-11">
@@ -140,6 +173,9 @@ const openFile = (file) => {
             clique para selecionar
           </button>
         </p>
+        <p class="text-xs text-n-slate-9">
+          Suporta imagens, videos, PDFs, documentos e mais (max 300MB)
+        </p>
       </div>
     </div>
 
@@ -148,38 +184,69 @@ const openFile = (file) => {
       <div
         v-for="file in files"
         :key="file.id"
-        class="flex items-center gap-3 p-3 rounded-lg bg-n-alpha-1 hover:bg-n-alpha-2"
+        class="rounded-lg bg-n-alpha-1 hover:bg-n-alpha-2 overflow-hidden"
       >
-        <span :class="getFileIcon(file.content_type)" class="size-5 text-n-slate-11" />
-        
-        <div class="flex-1 min-w-0">
-          <p class="text-sm font-medium text-n-slate-12 truncate">
-            {{ file.filename }}
-          </p>
-          <p class="text-xs text-n-slate-10">
-            {{ formatFileSize(file.byte_size) }}
-          </p>
+        <!-- Inline Video Player -->
+        <div
+          v-if="isVideo(file.content_type)"
+          class="p-3"
+        >
+          <video
+            :src="file.url"
+            controls
+            preload="metadata"
+            class="w-full max-h-48 rounded-lg bg-n-alpha-black object-contain"
+            @click.stop
+          >
+            Seu navegador nao suporta a tag de video.
+          </video>
         </div>
 
-        <div class="flex items-center gap-1">
-          <Button
-            icon="i-lucide-eye"
-            size="xs"
-            color="slate"
-            @click="openFile(file)"
-          />
-          <Button
-            icon="i-lucide-download"
-            size="xs"
-            color="slate"
-            @click="downloadFile(file)"
-          />
-          <Button
-            icon="i-lucide-trash-2"
-            size="xs"
-            color="ruby"
-            @click="removeFile(file.id)"
-          />
+        <!-- File Info Row -->
+        <div class="flex items-center gap-3 p-3">
+          <span :class="getFileIcon(file.content_type)" class="size-5 text-n-slate-11 shrink-0" />
+
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-n-slate-12 truncate">
+              {{ file.filename }}
+            </p>
+            <p class="text-xs text-n-slate-10">
+              {{ formatFileSize(file.byte_size) }}
+              <span v-if="isVideo(file.content_type)" class="ml-1 text-n-slate-9">
+                &middot; Video
+              </span>
+            </p>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <Button
+              v-if="isVideo(file.content_type)"
+              icon="i-lucide-maximize-2"
+              size="xs"
+              color="slate"
+              title="Expandir video"
+              @click="openFile(file)"
+            />
+            <Button
+              v-else
+              icon="i-lucide-eye"
+              size="xs"
+              color="slate"
+              @click="openFile(file)"
+            />
+            <Button
+              icon="i-lucide-download"
+              size="xs"
+              color="slate"
+              @click="downloadFile(file)"
+            />
+            <Button
+              icon="i-lucide-trash-2"
+              size="xs"
+              color="ruby"
+              @click="removeFile(file.id)"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -192,5 +259,58 @@ const openFile = (file) => {
       <span class="i-lucide-paperclip size-8 mb-2" />
       <p class="text-sm">Nenhum anexo</p>
     </div>
+
+    <!-- Video Modal -->
+    <Teleport to="body">
+      <div
+        v-if="expandedVideo"
+        class="fixed inset-0 z-[9999] flex items-center justify-center bg-n-alpha-black/80 backdrop-blur-sm"
+        @click="handleModalBackdropClick"
+        @keydown.escape="closeVideoModal"
+      >
+        <div class="relative w-full max-w-4xl mx-4">
+          <!-- Close Button -->
+          <button
+            type="button"
+            class="absolute -top-10 right-0 flex items-center gap-1 text-sm text-n-slate-9 hover:text-n-slate-12 transition-colors"
+            @click="closeVideoModal"
+          >
+            <span class="i-lucide-x size-4" />
+            Fechar
+          </button>
+
+          <!-- Video Player -->
+          <div class="rounded-xl overflow-hidden bg-n-alpha-black shadow-2xl">
+            <video
+              :src="expandedVideo.url"
+              controls
+              autoplay
+              class="w-full max-h-[80vh] object-contain"
+            >
+              Seu navegador nao suporta a tag de video.
+            </video>
+
+            <!-- Video Info Bar -->
+            <div class="flex items-center justify-between px-4 py-3 bg-n-alpha-1">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="i-lucide-video size-4 text-n-slate-10 shrink-0" />
+                <span class="text-sm text-n-slate-12 truncate">
+                  {{ expandedVideo.filename }}
+                </span>
+                <span class="text-xs text-n-slate-9 shrink-0">
+                  {{ formatFileSize(expandedVideo.byte_size) }}
+                </span>
+              </div>
+              <Button
+                icon="i-lucide-download"
+                size="xs"
+                color="slate"
+                @click="downloadFile(expandedVideo)"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

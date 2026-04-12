@@ -374,6 +374,24 @@ export default {
     };
 
     watch(() => props.currentStageId, (newVal) => { currentStageIdLocal.value = newVal; if (newVal) loadCustomFields(); });
+
+    // Reset all CRM state when switching conversations
+    watch(() => props.conversationId, () => {
+      dealValue.value = props.initialDealValue;
+      closedWon.value = props.initialClosedWon;
+      closedReason.value = props.initialClosedReason;
+      customFieldValues.value = {};
+      selectedPipelineId.value = null;
+      selectedStageId.value = null;
+      currentStageIdLocal.value = props.currentStageId;
+      loadData();
+    });
+
+    // Sync props when parent updates them for the new conversation
+    watch(() => props.initialDealValue, (newVal) => { dealValue.value = newVal; });
+    watch(() => props.initialClosedWon, (newVal) => { closedWon.value = newVal; });
+    watch(() => props.initialClosedReason, (newVal) => { closedReason.value = newVal; });
+
     onMounted(loadData);
 
     return {

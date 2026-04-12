@@ -134,11 +134,20 @@ class ConversationFinder
   def filter_by_query
     return unless params[:q]
 
+    search_term = "%#{params[:q]}%"
     allowed_message_types = [Message.message_types[:incoming], Message.message_types[:outgoing]]
-    @conversations = conversations.joins(:messages).where('messages.content ILIKE :search', search: "%#{params[:q]}%")
-                                  .where(messages: { message_type: allowed_message_types }).includes(:messages)
-                                  .where('messages.content ILIKE :search', search: "%#{params[:q]}%")
-                                  .where(messages: { message_type: allowed_message_types })
+
+    @conversations = @conversations
+                     .left_joins(:messages, :contact)
+                     .where(
+                       '(messages.content ILIKE :search AND messages.message_type IN (:types)) OR ' \
+                       'contacts.name ILIKE :search OR ' \
+                       'contacts.email ILIKE :search OR ' \
+                       'contacts.phone_number ILIKE :search',
+                       search: search_term,
+                       types: allowed_message_types
+                     )
+                     .distinct
   end
 
   def filter_by_status
