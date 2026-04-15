@@ -89,16 +89,28 @@ const formatCEP = v => {
 };
 
 const formatCurrency = v => {
-  if (!v) return '';
-  const n = v.toString().replace(/\D/g, '');
-  const amount = parseInt(n, 10) / 100;
-  return amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (!v && v !== 0) return '';
+  const str = v.toString().replace(/[^\d]/g, '');
+  if (!str) return '';
+  const cents = parseInt(str, 10);
+  if (isNaN(cents)) return '';
+  const reais = cents / 100;
+  return reais.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 const parseCurrency = v => {
-  if (!v) return '';
-  const n = v.replace(/\D/g, '');
-  return (parseInt(n, 10) / 100).toFixed(2);
+  if (!v) return 0;
+  const str = v.toString().replace(/[^\d]/g, '');
+  if (!str) return 0;
+  return parseInt(str, 10) / 100;
+};
+
+// Format a stored numeric value for display (e.g., 0.40 → "0,40")
+const displayCurrency = v => {
+  if (!v && v !== 0) return '';
+  const n = parseFloat(v);
+  if (isNaN(n)) return '';
+  return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 const handleCPFInput = e => { const f = formatCPF(e.target.value); e.target.value = f; updateField('contractor_cpf', f); };
@@ -329,7 +341,7 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-n-slate-10 z-10 pointer-events-none">R$</span>
             <input type="text" :class="inputClass" style="padding-left: 2.5rem;"
-              :value="modelValue.plan_value ? formatCurrency(modelValue.plan_value * 100) : ''"
+              :value="displayCurrency(modelValue.plan_value)"
               placeholder="0,00" @input="handleCurrencyInput('plan_value', $event)" />
           </div>
         </div>
@@ -351,7 +363,7 @@ const labelClass = 'block mb-1 text-sm font-medium text-n-slate-12';
           <div class="relative">
             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-n-slate-10 z-10 pointer-events-none">R$</span>
             <input type="text" :class="inputClass" style="padding-left: 2.5rem;"
-              :value="modelValue.first_installment_value ? formatCurrency(modelValue.first_installment_value * 100) : ''"
+              :value="displayCurrency(modelValue.first_installment_value)"
               placeholder="0,00" @input="handleCurrencyInput('first_installment_value', $event)" />
           </div>
           <p class="text-xs text-n-slate-11 mt-1">Deixe em branco se todas iguais</p>

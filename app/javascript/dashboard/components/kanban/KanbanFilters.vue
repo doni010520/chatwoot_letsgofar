@@ -63,17 +63,27 @@
         />
       </div>
 
-      <!-- Filtro de Data de Entrada -->
-      <div class="filter-item">
+      <!-- Filtro de Data de Entrada (Período) -->
+      <div class="filter-item filter-item--date-range">
+        <span class="filter-prefix">📅</span>
         <input
-          v-model="dateInput"
+          v-model="dateFromInput"
           type="text"
-          placeholder="📅 Data de entrada (dd/mm/aaaa)"
-          class="filter-input"
+          placeholder="De (dd/mm/aaaa)"
+          class="filter-input filter-input--date"
           maxlength="10"
-          @input="formatDateInput"
+          @input="formatDateFromInput"
         />
-      </div>      
+        <span class="filter-separator">-</span>
+        <input
+          v-model="dateToInput"
+          type="text"
+          placeholder="Até (dd/mm/aaaa)"
+          class="filter-input filter-input--date"
+          maxlength="10"
+          @input="formatDateToInput"
+        />
+      </div>
 
       <!-- Campos Personalizados -->
       <div v-if="customFields.length > 0" class="filter-item">
@@ -86,16 +96,21 @@
       </div>
       
       <div v-if="selectedCustomField" class="filter-item">
-        <input
-          v-if="selectedCustomField === 'data_entrada'"
-          v-model="dateInput"
-          type="text"
-          placeholder="dd/mm/aaaa"
-          class="filter-input"
-          maxlength="10"
-          @input="formatDateInput"
-        />
-        
+        <select
+          v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'"
+          v-model="localFilters.custom_value"
+          class="filter-select"
+          @change="applyFilters"
+        >
+          <option value="">Selecione...</option>
+          <option
+            v-for="opt in selectedFieldOptions"
+            :key="opt"
+            :value="opt"
+          >
+            {{ opt }}
+          </option>
+        </select>
         <input
           v-else
           v-model="localFilters.custom_value"
@@ -150,6 +165,10 @@
         Valor: {{ formatValueRange() }}
         <button @click="removeValueFilters">×</button>
       </span>
+      <span v-if="localFilters.date_from || localFilters.date_to" class="filter-tag">
+        Período: {{ formatDateRange() }}
+        <button @click="removeDateFilters">×</button>
+      </span>
       <span v-if="selectedCustomField && localFilters.custom_value" class="filter-tag">
         {{ getCustomFieldName() }}: {{ localFilters.custom_value }}
         <button @click="removeCustomFilter">×</button>
@@ -188,30 +207,75 @@ export default {
       max_value: '',
       custom_field: '',
       custom_value: '',
-      date_field: '',
-      date_value: '',
+      date_from: '',
+      date_to: '',
       sort_by: 'last_activity',
     });
 
-    const dateInput = ref('');
-    
-    const formatDateInput = (event) => {
-      let value = event.target.value.replace(/\D/g, '');
-      
-      if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2);
-      if (value.length >= 5) value = value.substring(0, 5) + '/' + value.substring(5, 9);
-      
-      dateInput.value = value;
-      
-      if (value.length === 10) {
-        const [day, month, year] = value.split('/');
-        localFilters.value.date_field = 'created_at';
-        localFilters.value.date_value = `${year}-${month}-${day}`;
+    const dateFromInput = ref('');
+    const dateToInput = ref('');
+
+    const autoFormatDate = (raw) => {
+      let digits = raw.replace(/\D/g, '').substring(0, 8);
+      if (digits.length >= 2) digits = digits.substring(0, 2) + '/' + digits.substring(2);
+      if (digits.length >= 5) digits = digits.substring(0, 5) + '/' + digits.substring(5);
+      return digits.substring(0, 10);
+    };
+
+    const ddmmyyyyToISO = (formatted) => {
+      if (formatted.length !== 10) return '';
+      const parts = formatted.split('/');
+      if (parts.length !== 3) return '';
+      const [day, month, year] = parts;
+      if (!/^\d{2}$/.test(day) || !/^\d{2}$/.test(month) || !/^\d{4}$/.test(year)) return '';
+      const d = parseInt(day, 10);
+      const m = parseInt(month, 10);
+      const y = parseInt(year, 10);
+      if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return '';
+      const date = new Date(y, m - 1, d);
+      if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return '';
+      const isoMonth = String(m).padStart(2, '0');
+      const isoDay = String(d).padStart(2, '0');
+      return `${year}-${isoMonth}-${isoDay}`;
+    };
+
+    const formatDateFromInput = (event) => {
+      dateFromInput.value = autoFormatDate(event.target.value);
+      if (dateFromInput.value.length === 10) {
+        localFilters.value.date_from = ddmmyyyyToISO(dateFromInput.value);
         applyFilters();
-      } else {
-        localFilters.value.date_field = '';
-        localFilters.value.date_value = '';
+      } else if (dateFromInput.value.length === 0) {
+        localFilters.value.date_from = '';
+        applyFilters();
       }
+    };
+
+    const formatDateToInput = (event) => {
+      dateToInput.value = autoFormatDate(event.target.value);
+      if (dateToInput.value.length === 10) {
+        localFilters.value.date_to = ddmmyyyyToISO(dateToInput.value);
+        applyFilters();
+      } else if (dateToInput.value.length === 0) {
+        localFilters.value.date_to = '';
+        applyFilters();
+      }
+    };
+
+    const formatDateRange = () => {
+      const from = dateFromInput.value;
+      const to = dateToInput.value;
+      if (from && to) return `${from} - ${to}`;
+      if (from) return `a partir de ${from}`;
+      if (to) return `até ${to}`;
+      return '';
+    };
+
+    const removeDateFilters = () => {
+      dateFromInput.value = '';
+      dateToInput.value = '';
+      localFilters.value.date_from = '';
+      localFilters.value.date_to = '';
+      applyFilters();
     };
 
     const selectedCustomField = ref('');
@@ -236,6 +300,8 @@ export default {
         localFilters.value.tasks_filter ||
         localFilters.value.min_value ||
         localFilters.value.max_value ||
+        localFilters.value.date_from ||
+        localFilters.value.date_to ||
         (selectedCustomField.value && localFilters.value.custom_value);
     });
 
@@ -276,9 +342,13 @@ export default {
         max_value: '',
         custom_field: '',
         custom_value: '',
+        date_from: '',
+        date_to: '',
         sort_by: 'last_activity',
       };
       selectedCustomField.value = '';
+      dateFromInput.value = '';
+      dateToInput.value = '';
       applyFilters();
     };
 
@@ -360,14 +430,18 @@ export default {
       removeFilter,
       removeValueFilters,
       removeCustomFilter,
+      removeDateFilters,
       onCustomFieldSelect,
       getAssigneeName,
       getStatusLabel,
       getTasksFilterLabel,
       getCustomFieldName,
       formatValueRange,
-      dateInput,
-      formatDateInput,
+      formatDateRange,
+      dateFromInput,
+      dateToInput,
+      formatDateFromInput,
+      formatDateToInput,
     };
   },
 };
@@ -376,8 +450,8 @@ export default {
 <style scoped>
 .kanban-filters {
   padding: 12px 16px;
-  background-color: #1f2937;
-  border-bottom: 1px solid #374151;
+  background-color: rgb(var(--slate-3));
+  border-bottom: 1px solid rgb(var(--slate-6));
 }
 
 .filters-row {
@@ -404,6 +478,16 @@ export default {
   gap: 4px;
 }
 
+.filter-item--date-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-input--date {
+  width: 130px;
+}
+
 .filter-item--sort {
   margin-left: auto;
 }
@@ -411,21 +495,26 @@ export default {
 .filter-input,
 .filter-select {
   padding: 8px 12px;
-  background-color: #111827;
-  border: 1px solid #374151;
+  background-color: rgb(var(--slate-2));
+  border: 1px solid rgb(var(--slate-6));
   border-radius: 6px;
-  color: #f3f4f6;
+  color: rgb(var(--slate-12));
   font-size: 13px;
+}
+
+.filter-select option {
+  background-color: rgb(var(--slate-2));
+  color: rgb(var(--slate-12));
 }
 
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: rgb(var(--blue-9));
 }
 
 .filter-input::placeholder {
-  color: #6b7280;
+  color: rgb(var(--slate-9));
 }
 
 .filter-input--small {
@@ -433,29 +522,29 @@ export default {
 }
 
 .filter-prefix {
-  color: #9ca3af;
+  color: rgb(var(--slate-10));
   font-size: 13px;
   margin-right: 4px;
 }
 
 .filter-separator {
-  color: #6b7280;
+  color: rgb(var(--slate-9));
   margin: 0 2px;
 }
 
 .filter-clear {
   padding: 8px 12px;
-  background-color: #374151;
+  background-color: rgb(var(--slate-5));
   border: none;
   border-radius: 6px;
-  color: #f3f4f6;
+  color: rgb(var(--slate-12));
   font-size: 13px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .filter-clear:hover {
-  background-color: #4b5563;
+  background-color: rgb(var(--slate-6));
 }
 
 .filters-active {
@@ -468,7 +557,7 @@ export default {
 
 .filters-active__label {
   font-size: 12px;
-  color: #9ca3af;
+  color: rgb(var(--slate-10));
 }
 
 .filter-tag {
@@ -476,7 +565,7 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background-color: #3b82f6;
+  background-color: rgb(var(--blue-9));
   border-radius: 4px;
   font-size: 12px;
   color: white;
