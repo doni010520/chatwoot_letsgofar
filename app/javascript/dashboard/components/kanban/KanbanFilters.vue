@@ -96,7 +96,23 @@
       </div>
       
       <div v-if="selectedCustomField" class="filter-item">
+        <select
+          v-if="selectedFieldType === 'select' || selectedFieldType === 'multiselect'"
+          v-model="localFilters.custom_value"
+          class="filter-select"
+          @change="applyFilters"
+        >
+          <option value="">Selecione...</option>
+          <option
+            v-for="opt in selectedFieldOptions"
+            :key="opt"
+            :value="opt"
+          >
+            {{ opt }}
+          </option>
+        </select>
         <input
+          v-else
           v-model="localFilters.custom_value"
           type="text"
           placeholder="Valor..."
@@ -200,16 +216,27 @@ export default {
     const dateToInput = ref('');
 
     const autoFormatDate = (raw) => {
-      let digits = raw.replace(/\D/g, '');
+      let digits = raw.replace(/\D/g, '').substring(0, 8);
       if (digits.length >= 2) digits = digits.substring(0, 2) + '/' + digits.substring(2);
-      if (digits.length >= 5) digits = digits.substring(0, 5) + '/' + digits.substring(5, 9);
-      return digits;
+      if (digits.length >= 5) digits = digits.substring(0, 5) + '/' + digits.substring(5);
+      return digits.substring(0, 10);
     };
 
     const ddmmyyyyToISO = (formatted) => {
       if (formatted.length !== 10) return '';
-      const [day, month, year] = formatted.split('/');
-      return `${year}-${month}-${day}`;
+      const parts = formatted.split('/');
+      if (parts.length !== 3) return '';
+      const [day, month, year] = parts;
+      if (!/^\d{2}$/.test(day) || !/^\d{2}$/.test(month) || !/^\d{4}$/.test(year)) return '';
+      const d = parseInt(day, 10);
+      const m = parseInt(month, 10);
+      const y = parseInt(year, 10);
+      if (m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return '';
+      const date = new Date(y, m - 1, d);
+      if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return '';
+      const isoMonth = String(m).padStart(2, '0');
+      const isoDay = String(d).padStart(2, '0');
+      return `${year}-${isoMonth}-${isoDay}`;
     };
 
     const formatDateFromInput = (event) => {
@@ -423,8 +450,8 @@ export default {
 <style scoped>
 .kanban-filters {
   padding: 12px 16px;
-  background-color: #1f2937;
-  border-bottom: 1px solid #374151;
+  background-color: rgb(var(--slate-3));
+  border-bottom: 1px solid rgb(var(--slate-6));
 }
 
 .filters-row {
@@ -468,21 +495,26 @@ export default {
 .filter-input,
 .filter-select {
   padding: 8px 12px;
-  background-color: #111827;
-  border: 1px solid #374151;
+  background-color: rgb(var(--slate-2));
+  border: 1px solid rgb(var(--slate-6));
   border-radius: 6px;
-  color: #f3f4f6;
+  color: rgb(var(--slate-12));
   font-size: 13px;
+}
+
+.filter-select option {
+  background-color: rgb(var(--slate-2));
+  color: rgb(var(--slate-12));
 }
 
 .filter-input:focus,
 .filter-select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: rgb(var(--blue-9));
 }
 
 .filter-input::placeholder {
-  color: #6b7280;
+  color: rgb(var(--slate-9));
 }
 
 .filter-input--small {
@@ -490,29 +522,29 @@ export default {
 }
 
 .filter-prefix {
-  color: #9ca3af;
+  color: rgb(var(--slate-10));
   font-size: 13px;
   margin-right: 4px;
 }
 
 .filter-separator {
-  color: #6b7280;
+  color: rgb(var(--slate-9));
   margin: 0 2px;
 }
 
 .filter-clear {
   padding: 8px 12px;
-  background-color: #374151;
+  background-color: rgb(var(--slate-5));
   border: none;
   border-radius: 6px;
-  color: #f3f4f6;
+  color: rgb(var(--slate-12));
   font-size: 13px;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .filter-clear:hover {
-  background-color: #4b5563;
+  background-color: rgb(var(--slate-6));
 }
 
 .filters-active {
@@ -525,7 +557,7 @@ export default {
 
 .filters-active__label {
   font-size: 12px;
-  color: #9ca3af;
+  color: rgb(var(--slate-10));
 }
 
 .filter-tag {
@@ -533,7 +565,7 @@ export default {
   align-items: center;
   gap: 6px;
   padding: 4px 8px;
-  background-color: #3b82f6;
+  background-color: rgb(var(--blue-9));
   border-radius: 4px;
   font-size: 12px;
   color: white;

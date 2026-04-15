@@ -120,9 +120,11 @@ const loadContract = async () => {
     Object.keys(contractData).forEach(key => {
       if (key === 'contract_signers_attributes') {
         contractData[key] = data.signers?.map(s => ({ id: s.id, name: s.name, email: s.email, role: s.role })) || [];
-      } else if (data[key] !== undefined) {
+      } else if (data[key] !== undefined && data[key] !== null) {
         contractData[key] = data[key];
       }
+      // When API returns null, keep the default value from contractData initialization
+      // (e.g. '' for strings, 0 for numbers) so fields display and save correctly
     });
     
     // Salvar valores originais - tanto formatados quanto não formatados
@@ -409,8 +411,38 @@ const saveContract = async () => {
     // IMPORTANTE: Garantir que o HTML reflita os dados atuais antes de salvar
     console.log('[ContractEdit] Aplicando variáveis antes de salvar...');
     applyVariables();
-    
-    await ContractsAPI.update(contractId.value, { ...contractData });
+
+    // Build payload explicitly to ensure all fields are included with correct types
+    const payload = {
+      title: contractData.title,
+      contractor_name: contractData.contractor_name,
+      contractor_cpf: contractData.contractor_cpf,
+      contractor_rg: contractData.contractor_rg,
+      contractor_address: contractData.contractor_address,
+      contractor_neighborhood: contractData.contractor_neighborhood,
+      contractor_city: contractData.contractor_city,
+      contractor_cep: contractData.contractor_cep,
+      contractor_state: contractData.contractor_state,
+      contractor_email: contractData.contractor_email,
+      contractor_phone: contractData.contractor_phone,
+      contractor_birth_date: contractData.contractor_birth_date || null,
+      plan_name: contractData.plan_name,
+      plan_duration: contractData.plan_duration,
+      plan_start_date: contractData.plan_start_date || null,
+      plan_end_date: contractData.plan_end_date || null,
+      sessions_call_estrategica: parseInt(contractData.sessions_call_estrategica) || 0,
+      sessions_individual: parseInt(contractData.sessions_individual) || 0,
+      sessions_group_consultive: parseInt(contractData.sessions_group_consultive) || 0,
+      sessions_group_meetings: parseInt(contractData.sessions_group_meetings) || 0,
+      plan_value: contractData.plan_value,
+      installments_count: parseInt(contractData.installments_count) || 1,
+      first_installment_value: contractData.first_installment_value || null,
+      installment_due_day: parseInt(contractData.installment_due_day) || 10,
+      content_html: contractData.content_html,
+      contract_signers_attributes: contractData.contract_signers_attributes,
+    };
+
+    await ContractsAPI.update(contractId.value, payload);
     showAlert('Contrato atualizado!');
     router.push(accountScopedRoute('contracts_view', { contractId: contractId.value }));
   } catch {

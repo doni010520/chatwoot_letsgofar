@@ -21,15 +21,15 @@
       <div v-else class="dropdown-content">
         <!-- Resumo -->
         <div class="tasks-summary">
-          <div v-if="summary.overdue > 0" class="summary-item summary-item--overdue">
+          <div v-if="summary.overdue > 0" class="summary-item summary-item--overdue summary-item--clickable" @click.stop="goToTasksFiltered('overdue')">
             <span class="summary-count">{{ summary.overdue }}</span>
             <span class="summary-label">Atrasadas</span>
           </div>
-          <div v-if="summary.due_today > 0" class="summary-item summary-item--today">
+          <div v-if="summary.due_today > 0" class="summary-item summary-item--today summary-item--clickable" @click.stop="goToTasksFiltered('due_today')">
             <span class="summary-count">{{ summary.due_today }}</span>
             <span class="summary-label">Vence hoje</span>
           </div>
-          <div v-if="summary.due_tomorrow > 0" class="summary-item summary-item--tomorrow">
+          <div v-if="summary.due_tomorrow > 0" class="summary-item summary-item--tomorrow summary-item--clickable" @click.stop="goToTasksFiltered('due_tomorrow')">
             <span class="summary-count">{{ summary.due_tomorrow }}</span>
             <span class="summary-label">Vence amanhã</span>
           </div>
@@ -184,6 +184,14 @@ export default {
         });
       }
     },
+    goToTasksFiltered(filter) {
+      this.showDropdown = false;
+      this.$router.push({
+        name: 'tasks_list',
+        params: { accountId: this.accountId },
+        query: { filter },
+      });
+    },
     goToKanban() {
       this.showDropdown = false;
       this.$router.push({
@@ -319,6 +327,16 @@ export default {
   text-align: center;
   padding: 8px;
   border-radius: 6px;
+}
+
+.summary-item--clickable {
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.summary-item--clickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .summary-item--overdue {

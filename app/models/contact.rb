@@ -67,6 +67,7 @@ class Contact < ApplicationRecord
   before_validation :prepare_contact_attributes
   after_create_commit :dispatch_create_event, :ip_lookup
   after_update_commit :dispatch_update_event
+  after_update :sync_phone_to_contact_inboxes, if: :saved_change_to_phone_number?
   after_destroy_commit :dispatch_destroy_event
   before_save :sync_contact_attributes
 
@@ -252,6 +253,14 @@ class Contact < ApplicationRecord
       Time.zone.now,
       contact_data: push_event_data.merge(account_id: account_id)
     )
+  end
+
+  def sync_phone_to_contact_inboxes
+    return if phone_number.blank?
+
+    contact_inboxes.joins(:inbox).where(inboxes: { channel_type: ['Channel::Whatsapp', 'Channel::Api'] }).find_each do |ci|
+      ci.update_column(:source_id, phone_number)
+    end
   end
 end
 Contact.include_mod_with('Concerns::Contact')
