@@ -92,24 +92,59 @@ class Api::V1::Accounts::Kanban::ReportsController < Api::V1::Accounts::Kanban::
   end
 
   def top_performers
-    performers = pipeline_conversations
-      .where(closed_won: true)
-      .joins(:assignee)
-      .group('users.id', 'users.name')
-      .select('users.id, users.name, COUNT(*) as won_count, SUM(deal_value) as total_value')
-      .order('won_count DESC')
-      .limit(10)
+    won_conversations = pipeline_conversations.where(closed_won: true)
+    won_conversation_ids = won_conversations.pluck(:id)
 
-    render json: {
-      performers: performers.map do |p|
-        {
-          id: p.id,
-          name: p.name,
-          won_count: p.won_count,
-          total_value: p.total_value.to_f
-        }
-      end
-    }
+    # Primary source: KanbanActivity records that track who actually marked the deal as won
+    activity_records = KanbanActivity
+      .where(activity_type: 'marked_won', conversation_id: won_conversation_ids)
+      .where(created_at: @start_date.beginning_of_day..@end_date.end_of_day)
+      .where.not(user_id: nil)
+
+    # Find conversations covered by activity records
+    conversations_with_activity = activity_records.pluck(:conversation_id).uniq
+
+    # Aggregate from activity records: group by the user who marked as won
+    activity_stats = activity_records
+      .joins('INNER JOIN conversations ON conversations.id = kanban_activities.conversation_id')
+      .joins('INNER JOIN users ON users.id = kanban_activities.user_id')
+      .group('users.id', 'users.name')
+      .pluck(
+        Arel.sql('users.id'),
+        Arel.sql('users.name'),
+        Arel.sql('COUNT(DISTINCT kanban_activities.conversation_id)'),
+        Arel.sql('SUM(conversations.deal_value)')
+      )
+
+    # Fallback: legacy conversations without a marked_won activity, attribute to current assignee
+    legacy_conversation_ids = won_conversation_ids - conversations_with_activity
+    legacy_stats = if legacy_conversation_ids.any?
+                     Conversation
+                       .where(id: legacy_conversation_ids)
+                       .where.not(assignee_id: nil)
+                       .joins(:assignee)
+                       .group('users.id', 'users.name')
+                       .pluck(
+                         Arel.sql('users.id'),
+                         Arel.sql('users.name'),
+                         Arel.sql('COUNT(*)'),
+                         Arel.sql('SUM(deal_value)')
+                       )
+                   else
+                     []
+                   end
+
+    # Merge both sources into a single hash keyed by user id
+    merged = {}
+    (activity_stats + legacy_stats).each do |user_id, user_name, count, value|
+      entry = merged[user_id] ||= { id: user_id, name: user_name, won_count: 0, total_value: 0.0 }
+      entry[:won_count] += count.to_i
+      entry[:total_value] += value.to_f
+    end
+
+    performers = merged.values.sort_by { |p| -p[:won_count] }.first(10)
+
+    render json: { performers: performers }
   end
 
   private

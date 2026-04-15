@@ -63,17 +63,27 @@
         />
       </div>
 
-      <!-- Filtro de Data de Entrada -->
-      <div class="filter-item">
+      <!-- Filtro de Data de Entrada (Período) -->
+      <div class="filter-item filter-item--date-range">
+        <span class="filter-prefix">📅</span>
         <input
-          v-model="dateInput"
+          v-model="dateFromInput"
           type="text"
-          placeholder="📅 Data de entrada (dd/mm/aaaa)"
-          class="filter-input"
+          placeholder="De (dd/mm/aaaa)"
+          class="filter-input filter-input--date"
           maxlength="10"
-          @input="formatDateInput"
+          @input="formatDateFromInput"
         />
-      </div>      
+        <span class="filter-separator">-</span>
+        <input
+          v-model="dateToInput"
+          type="text"
+          placeholder="Até (dd/mm/aaaa)"
+          class="filter-input filter-input--date"
+          maxlength="10"
+          @input="formatDateToInput"
+        />
+      </div>
 
       <!-- Campos Personalizados -->
       <div v-if="customFields.length > 0" class="filter-item">
@@ -87,17 +97,6 @@
       
       <div v-if="selectedCustomField" class="filter-item">
         <input
-          v-if="selectedCustomField === 'data_entrada'"
-          v-model="dateInput"
-          type="text"
-          placeholder="dd/mm/aaaa"
-          class="filter-input"
-          maxlength="10"
-          @input="formatDateInput"
-        />
-        
-        <input
-          v-else
           v-model="localFilters.custom_value"
           type="text"
           placeholder="Valor..."
@@ -150,6 +149,10 @@
         Valor: {{ formatValueRange() }}
         <button @click="removeValueFilters">×</button>
       </span>
+      <span v-if="localFilters.date_from || localFilters.date_to" class="filter-tag">
+        Período: {{ formatDateRange() }}
+        <button @click="removeDateFilters">×</button>
+      </span>
       <span v-if="selectedCustomField && localFilters.custom_value" class="filter-tag">
         {{ getCustomFieldName() }}: {{ localFilters.custom_value }}
         <button @click="removeCustomFilter">×</button>
@@ -188,30 +191,64 @@ export default {
       max_value: '',
       custom_field: '',
       custom_value: '',
-      date_field: '',
-      date_value: '',
+      date_from: '',
+      date_to: '',
       sort_by: 'last_activity',
     });
 
-    const dateInput = ref('');
-    
-    const formatDateInput = (event) => {
-      let value = event.target.value.replace(/\D/g, '');
-      
-      if (value.length >= 2) value = value.substring(0, 2) + '/' + value.substring(2);
-      if (value.length >= 5) value = value.substring(0, 5) + '/' + value.substring(5, 9);
-      
-      dateInput.value = value;
-      
-      if (value.length === 10) {
-        const [day, month, year] = value.split('/');
-        localFilters.value.date_field = 'created_at';
-        localFilters.value.date_value = `${year}-${month}-${day}`;
+    const dateFromInput = ref('');
+    const dateToInput = ref('');
+
+    const autoFormatDate = (raw) => {
+      let digits = raw.replace(/\D/g, '');
+      if (digits.length >= 2) digits = digits.substring(0, 2) + '/' + digits.substring(2);
+      if (digits.length >= 5) digits = digits.substring(0, 5) + '/' + digits.substring(5, 9);
+      return digits;
+    };
+
+    const ddmmyyyyToISO = (formatted) => {
+      if (formatted.length !== 10) return '';
+      const [day, month, year] = formatted.split('/');
+      return `${year}-${month}-${day}`;
+    };
+
+    const formatDateFromInput = (event) => {
+      dateFromInput.value = autoFormatDate(event.target.value);
+      if (dateFromInput.value.length === 10) {
+        localFilters.value.date_from = ddmmyyyyToISO(dateFromInput.value);
         applyFilters();
-      } else {
-        localFilters.value.date_field = '';
-        localFilters.value.date_value = '';
+      } else if (dateFromInput.value.length === 0) {
+        localFilters.value.date_from = '';
+        applyFilters();
       }
+    };
+
+    const formatDateToInput = (event) => {
+      dateToInput.value = autoFormatDate(event.target.value);
+      if (dateToInput.value.length === 10) {
+        localFilters.value.date_to = ddmmyyyyToISO(dateToInput.value);
+        applyFilters();
+      } else if (dateToInput.value.length === 0) {
+        localFilters.value.date_to = '';
+        applyFilters();
+      }
+    };
+
+    const formatDateRange = () => {
+      const from = dateFromInput.value;
+      const to = dateToInput.value;
+      if (from && to) return `${from} - ${to}`;
+      if (from) return `a partir de ${from}`;
+      if (to) return `até ${to}`;
+      return '';
+    };
+
+    const removeDateFilters = () => {
+      dateFromInput.value = '';
+      dateToInput.value = '';
+      localFilters.value.date_from = '';
+      localFilters.value.date_to = '';
+      applyFilters();
     };
 
     const selectedCustomField = ref('');
@@ -236,6 +273,8 @@ export default {
         localFilters.value.tasks_filter ||
         localFilters.value.min_value ||
         localFilters.value.max_value ||
+        localFilters.value.date_from ||
+        localFilters.value.date_to ||
         (selectedCustomField.value && localFilters.value.custom_value);
     });
 
@@ -276,9 +315,13 @@ export default {
         max_value: '',
         custom_field: '',
         custom_value: '',
+        date_from: '',
+        date_to: '',
         sort_by: 'last_activity',
       };
       selectedCustomField.value = '';
+      dateFromInput.value = '';
+      dateToInput.value = '';
       applyFilters();
     };
 
@@ -360,14 +403,18 @@ export default {
       removeFilter,
       removeValueFilters,
       removeCustomFilter,
+      removeDateFilters,
       onCustomFieldSelect,
       getAssigneeName,
       getStatusLabel,
       getTasksFilterLabel,
       getCustomFieldName,
       formatValueRange,
-      dateInput,
-      formatDateInput,
+      formatDateRange,
+      dateFromInput,
+      dateToInput,
+      formatDateFromInput,
+      formatDateToInput,
     };
   },
 };
@@ -402,6 +449,16 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.filter-item--date-range {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-input--date {
+  width: 130px;
 }
 
 .filter-item--sort {

@@ -14,6 +14,7 @@ import ContactHistory from 'dashboard/components-next/Contacts/ContactsSidebar/C
 import ContactMerge from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMerge.vue';
 import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes.vue';
 import ContactContracts from 'dashboard/components-next/Contacts/ContactsSidebar/ContactContracts.vue';
+import ContactTasks from 'dashboard/components-next/Contacts/ContactsSidebar/ContactTasks.vue';
 
 const store = useStore();
 const route = useRoute();
@@ -40,6 +41,7 @@ const { t } = useI18n();
 const CONTACT_TABS_OPTIONS = [
   { key: 'ATTRIBUTES', value: 'attributes' },
   { key: 'CONTRACTS', value: 'contracts' },
+  { key: 'TASKS', value: 'tasks' },
   { key: 'HISTORY', value: 'history' },
   { key: 'NOTES', value: 'notes' },
   { key: 'MERGE', value: 'merge' },
@@ -173,6 +175,10 @@ onMounted(() => {
           />
           <ContactContracts
             v-if="activeTab === 'contracts'"
+            :contact-id="route.params.contactId"
+          />
+          <ContactTasks
+            v-if="activeTab === 'tasks'"
             :contact-id="route.params.contactId"
           />
           <ContactNotes v-if="activeTab === 'notes'" />
