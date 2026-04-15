@@ -126,6 +126,8 @@ const handleAdd = async () => {
 };
 
 const handleDelete = async item => {
+  if (!window.confirm('Tem certeza que deseja excluir este item?')) return;
+
   try {
     await store.dispatch('agentTasks/deleteItem', {
       taskId: props.task.id,
@@ -171,6 +173,18 @@ const saveEditItem = async (item) => {
 const cancelEditItem = () => {
   editingItemId.value = null;
   editingItemTitle.value = '';
+};
+
+// Formatar data/hora em pt-BR (dd/mm HH:mm)
+const formatDateTimePtBR = (dateStr) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month} ${hours}:${minutes}`;
 };
 </script>
 
@@ -224,25 +238,37 @@ const cancelEditItem = () => {
           </button>
 
           <!-- TEXTO DA SUBTAREFA (editável ao clicar) -->
-          <div v-if="editingItemId === item.id" class="flex-1 flex items-center gap-2">
-            <input
-              v-model="editingItemTitle"
-              type="text"
-              class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
-              @keyup.enter="saveEditItem(item)"
-              @keyup.esc="cancelEditItem"
-              @blur="saveEditItem(item)"
-              autofocus
-            />
+          <div v-if="editingItemId === item.id" class="flex-1">
+            <div class="flex items-center gap-2">
+              <input
+                v-model="editingItemTitle"
+                type="text"
+                class="flex-1 px-2 py-0.5 text-sm rounded border border-n-brand bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
+                @keyup.enter="saveEditItem(item)"
+                @keyup.esc="cancelEditItem"
+                @blur="saveEditItem(item)"
+                autofocus
+              />
+            </div>
           </div>
-          <span
-            v-else
-            class="flex-1 text-sm cursor-pointer hover:text-n-brand"
-            :class="item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12'"
-            @click="startEditItem(item)"
-          >
-            {{ item.title }}
-          </span>
+          <div v-else class="flex-1">
+            <span
+              class="text-sm cursor-pointer hover:text-n-brand"
+              :class="item.completed ? 'line-through text-n-slate-9' : 'text-n-slate-12'"
+              @click="startEditItem(item)"
+            >
+              {{ item.title }}
+            </span>
+            <div class="text-xs text-n-slate-10 mt-0.5">
+              <span v-if="item.created_at">{{ formatDateTimePtBR(item.created_at) }}</span>
+              <span v-if="item.completed && item.completed_at" class="ml-2">
+                · Concluído: {{ formatDateTimePtBR(item.completed_at) }}
+              </span>
+              <span v-else-if="item.completed && item.updated_at" class="ml-2">
+                · Concluído: {{ formatDateTimePtBR(item.updated_at) }}
+              </span>
+            </div>
+          </div>
 
           <!-- BOTÃO DELETAR -->
           <button
