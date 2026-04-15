@@ -503,6 +503,7 @@
       "TABS": {
         "ATTRIBUTES": "Attributes",
         "CONTRACTS": "Contracts",
+        "TASKS": "Tasks",
         "HISTORY": "History",
         "NOTES": "Notes",
         "MERGE": "Merge"

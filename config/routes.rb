@@ -402,7 +402,11 @@ Rails.application.routes.draw do
             resources :labels, controller: 'agent_task_labels', only: [:create, :destroy]
           end
 
-          resources :scheduled_messages, only: [:index, :create, :update, :destroy]
+          resources :scheduled_messages, only: [:index, :create, :update, :destroy] do
+            member do
+              delete 'files/:file_id', action: :remove_file, as: :remove_file
+            end
+          end
 
           # Contracts (Assinatura de Contratos)
           resources :contracts do

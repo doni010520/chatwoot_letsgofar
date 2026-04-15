@@ -198,6 +198,41 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       end
     end
 
+    # Filtro por período (date_from / date_to) - datas no formato dd/mm/yyyy ou yyyy-mm-dd
+    if params[:date_from].present? || params[:date_to].present?
+      tz = ActiveSupport::TimeZone['America/Sao_Paulo']
+
+      if params[:date_from].present?
+        begin
+          raw_from = params[:date_from]
+          date_from = if raw_from.match?(%r{\A\d{2}/\d{2}/\d{4}\z})
+                        Date.strptime(raw_from, '%d/%m/%Y')
+                      else
+                        Date.parse(raw_from)
+                      end
+          start_time = tz.local(date_from.year, date_from.month, date_from.day).beginning_of_day.utc
+          conversations = conversations.where('conversations.created_at >= ?', start_time)
+        rescue ArgumentError, Date::Error
+          # Data inválida, ignora filtro date_from
+        end
+      end
+
+      if params[:date_to].present?
+        begin
+          raw_to = params[:date_to]
+          date_to = if raw_to.match?(%r{\A\d{2}/\d{2}/\d{4}\z})
+                      Date.strptime(raw_to, '%d/%m/%Y')
+                    else
+                      Date.parse(raw_to)
+                    end
+          end_time = tz.local(date_to.year, date_to.month, date_to.day).end_of_day.utc
+          conversations = conversations.where('conversations.created_at <= ?', end_time)
+        rescue ArgumentError, Date::Error
+          # Data inválida, ignora filtro date_to
+        end
+      end
+    end
+
     # Filtro por tarefas
     if params[:tasks_filter].present?
       case params[:tasks_filter]
@@ -267,7 +302,9 @@ class Api::V1::Accounts::Kanban::BoardController < Api::V1::Accounts::Kanban::Ba
       params[:search].present? ||
       params[:custom_field].present? ||
       params[:custom_fields].present? ||
-      params[:tasks_filter].present?
+      params[:tasks_filter].present? ||
+      params[:date_from].present? ||
+      params[:date_to].present?
   end
 
   def available_filters

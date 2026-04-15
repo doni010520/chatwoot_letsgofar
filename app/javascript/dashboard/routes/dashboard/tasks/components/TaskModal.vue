@@ -1,10 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 
 import Button from 'dashboard/components-next/button/Button.vue';
 import Modal from 'dashboard/components/Modal.vue';
+import Avatar from 'dashboard/components-next/avatar/Avatar.vue';
+import ContactAPI from 'dashboard/api/contacts';
   
 const props = defineProps({
   task: {
@@ -64,6 +66,85 @@ const items = ref([]);
 const filesToUpload = ref([]);
 const fileInput = ref(null);
 const isDragging = ref(false);
+
+// ==========================================
+// CONTATO - Busca e seleção de contato
+// ==========================================
+const contactSearchQuery = ref('');
+const contactSuggestions = ref([]);
+const selectedContact = ref(null);
+const isSearchingContacts = ref(false);
+const showContactDropdown = ref(false);
+let contactSearchTimeout = null;
+
+const searchContacts = async (query) => {
+  if (!query || query.length < 2) {
+    contactSuggestions.value = [];
+    showContactDropdown.value = false;
+    return;
+  }
+  isSearchingContacts.value = true;
+  try {
+    const response = await ContactAPI.search(query, 1, 'name', '');
+    contactSuggestions.value = (response.data.payload || []).slice(0, 8);
+    showContactDropdown.value = contactSuggestions.value.length > 0;
+  } catch (error) {
+    console.error('Error searching contacts:', error);
+    contactSuggestions.value = [];
+  } finally {
+    isSearchingContacts.value = false;
+  }
+};
+
+const onContactSearchInput = () => {
+  clearTimeout(contactSearchTimeout);
+  contactSearchTimeout = setTimeout(() => {
+    searchContacts(contactSearchQuery.value);
+  }, 300);
+};
+
+const selectContact = (contact) => {
+  selectedContact.value = contact;
+  formData.value.contact_id = contact.id;
+  contactSearchQuery.value = '';
+  contactSuggestions.value = [];
+  showContactDropdown.value = false;
+};
+
+const clearContact = () => {
+  selectedContact.value = null;
+  formData.value.contact_id = null;
+  contactSearchQuery.value = '';
+};
+
+const hideContactDropdown = () => {
+  setTimeout(() => {
+    showContactDropdown.value = false;
+  }, 200);
+};
+
+// Auto-fill contact when conversation_id changes
+watch(() => formData.value.conversation_id, async (newVal) => {
+  if (newVal && !selectedContact.value) {
+    try {
+      const conversations = store.getters['contactConversations/getConversations'] || [];
+      const conv = conversations.find(c => c.id === newVal);
+      if (conv?.meta?.sender) {
+        const sender = conv.meta.sender;
+        selectContact({
+          id: sender.id,
+          name: sender.name,
+          email: sender.email,
+          phone_number: sender.phone_number,
+          thumbnail: sender.thumbnail,
+        });
+      }
+    } catch (e) {
+      // Silently ignore if conversation contact can't be resolved
+    }
+  }
+});
+// ==========================================
 
 const openFilePicker = () => {
   fileInput.value?.click();
@@ -308,6 +389,11 @@ onMounted(() => {
       ...item,
       position: item.position ?? index,
     }));
+
+    // Preencher contato selecionado se existir
+    if (props.task.contact) {
+      selectedContact.value = props.task.contact;
+    }
   }
 
   store.dispatch('agents/get');
@@ -378,6 +464,91 @@ onMounted(() => {
                 {{ opt.label }}
               </option>
             </select>
+          </div>
+        </div>
+
+        <!-- Contato vinculado -->
+        <div>
+          <label class="block text-sm font-medium text-n-slate-12 mb-1">
+            Contato
+          </label>
+
+          <!-- Contato selecionado -->
+          <div
+            v-if="selectedContact"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg border border-n-weak bg-n-alpha-1"
+          >
+            <Avatar
+              :name="selectedContact.name"
+              :src="selectedContact.thumbnail || selectedContact.avatar_url"
+              size="24px"
+            />
+            <div class="flex-1 min-w-0">
+              <span class="text-sm text-n-slate-12 truncate block">
+                {{ selectedContact.name }}
+              </span>
+              <span
+                v-if="selectedContact.email || selectedContact.phone_number"
+                class="text-xs text-n-slate-10 truncate block"
+              >
+                {{ selectedContact.email || selectedContact.phone_number }}
+              </span>
+            </div>
+            <button
+              type="button"
+              class="p-1 text-n-slate-9 hover:text-ruby-9 hover:bg-ruby-500/10 rounded transition-colors"
+              @click="clearContact"
+            >
+              <span class="i-lucide-x size-4" />
+            </button>
+          </div>
+
+          <!-- Campo de busca de contato -->
+          <div v-else class="relative">
+            <div class="relative">
+              <span class="i-lucide-search size-4 text-n-slate-9 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                v-model="contactSearchQuery"
+                type="text"
+                placeholder="Buscar contato por nome, e-mail ou telefone..."
+                class="w-full pl-9 pr-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand"
+                @input="onContactSearchInput"
+                @focus="contactSearchQuery.length >= 2 && (showContactDropdown = true)"
+                @blur="hideContactDropdown"
+              />
+              <span
+                v-if="isSearchingContacts"
+                class="i-lucide-loader-2 size-4 text-n-slate-9 absolute right-3 top-1/2 -translate-y-1/2 animate-spin"
+              />
+            </div>
+
+            <!-- Dropdown de sugestões -->
+            <div
+              v-if="showContactDropdown && contactSuggestions.length > 0"
+              class="absolute z-50 w-full mt-1 bg-n-background border border-n-weak rounded-lg shadow-lg max-h-48 overflow-y-auto"
+            >
+              <button
+                v-for="contact in contactSuggestions"
+                :key="contact.id"
+                type="button"
+                class="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-n-alpha-2 transition-colors"
+                @mousedown.prevent="selectContact(contact)"
+              >
+                <Avatar
+                  :name="contact.name"
+                  :src="contact.thumbnail"
+                  size="24px"
+                />
+                <div class="flex-1 min-w-0">
+                  <span class="text-sm text-n-slate-12 truncate block">
+                    {{ contact.name }}
+                  </span>
+                  <span class="text-xs text-n-slate-10 truncate block">
+                    {{ contact.email || contact.phone_number || '' }}
+                  </span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
 
