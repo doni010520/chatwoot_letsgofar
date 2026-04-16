@@ -483,6 +483,7 @@ Rails.application.routes.draw do
                 get :won_lost_by_period
                 get :loss_reasons
                 get :top_performers
+                get :lead_report
               end
             end
           end

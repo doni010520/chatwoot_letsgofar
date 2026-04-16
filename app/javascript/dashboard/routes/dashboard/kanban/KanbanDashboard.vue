@@ -12,7 +12,7 @@
           <svg class="dashboard-header__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
           </svg>
-          Dashboard de Vendas
+          {{ activeTab === 'vendas' ? 'Dashboard de Vendas' : 'Controle de Leads' }}
         </h1>
       </div>
       <div class="dashboard-header__filters">
@@ -28,8 +28,42 @@
       </div>
     </div>
 
-    <!-- Loading -->
-    <div v-if="isLoading" class="dashboard-loading">
+    <!-- Tab Navigation -->
+    <div class="dashboard-tabs">
+      <button
+        class="dashboard-tabs__btn"
+        :class="{ 'dashboard-tabs__btn--active': activeTab === 'vendas' }"
+        @click="switchTab('vendas')"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>
+        </svg>
+        Dashboard de Vendas
+      </button>
+      <button
+        class="dashboard-tabs__btn"
+        :class="{ 'dashboard-tabs__btn--active': activeTab === 'leads' }"
+        @click="switchTab('leads')"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Controle de Leads
+      </button>
+    </div>
+
+    <!-- Leads Tab -->
+    <template v-if="activeTab === 'leads'">
+      <LeadControlDashboard
+        :report="leadReport"
+        :is-loading="isLeadLoading"
+      />
+    </template>
+
+    <!-- Sales Tab - Loading -->
+    <div v-else-if="isLoading" class="dashboard-loading">
       <div class="loading-spinner"></div>
       <span>Carregando dados...</span>
     </div>
@@ -246,9 +280,13 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'dashboard/composables/store';
 import KanbanAPI from 'dashboard/api/kanban';
+import LeadControlDashboard from './LeadControlDashboard.vue';
 
 export default {
   name: 'KanbanDashboard',
+  components: {
+    LeadControlDashboard,
+  },
   setup() {
     const route = useRoute();
     const store = useStore();
@@ -260,6 +298,9 @@ export default {
     const summary = ref(null);
     const lossReasons = ref(null);
     const topPerformers = ref(null);
+    const activeTab = ref('vendas');
+    const leadReport = ref(null);
+    const isLeadLoading = ref(false);
 
     const accountId = computed(() => route.params.accountId);
 
@@ -304,6 +345,39 @@ export default {
         console.error('Erro ao carregar dados:', error);
       } finally {
         isLoading.value = false;
+      }
+
+      // Also reload lead report if it was previously loaded
+      if (leadReport.value || activeTab.value === 'leads') {
+        loadLeadReport();
+      }
+    };
+
+    const loadLeadReport = async () => {
+      if (!selectedPipelineId.value) return;
+
+      isLeadLoading.value = true;
+      const { startDate, endDate } = getDateRange();
+
+      try {
+        const res = await KanbanAPI.getLeadReport(
+          accountId.value,
+          selectedPipelineId.value,
+          startDate,
+          endDate
+        );
+        leadReport.value = res.data;
+      } catch (error) {
+        console.error('Erro ao carregar relatório de leads:', error);
+      } finally {
+        isLeadLoading.value = false;
+      }
+    };
+
+    const switchTab = (tab) => {
+      activeTab.value = tab;
+      if (tab === 'leads' && !leadReport.value) {
+        loadLeadReport();
       }
     };
 
@@ -354,7 +428,11 @@ export default {
       summary,
       lossReasons,
       topPerformers,
+      activeTab,
+      leadReport,
+      isLeadLoading,
       loadData,
+      switchTab,
       formatCurrency,
       getInitials,
       getBarWidth,
@@ -459,6 +537,56 @@ export default {
   outline: none;
   border-color: var(--w-500);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ===== TABS ===== */
+.dashboard-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background-color: var(--white);
+  border-radius: 14px;
+  border: 1px solid var(--s-100);
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.dashboard-tabs__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  background-color: transparent;
+  color: var(--s-500);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  justify-content: center;
+}
+
+.dashboard-tabs__btn:hover {
+  color: var(--s-700);
+  background-color: var(--s-50);
+}
+
+.dashboard-tabs__btn--active {
+  background-color: var(--w-500);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.dashboard-tabs__btn--active:hover {
+  background-color: var(--w-600, #2563eb);
+  color: #fff;
+}
+
+.dashboard-tabs__btn svg {
+  flex-shrink: 0;
 }
 
 /* ===== LOADING ===== */
@@ -990,6 +1118,26 @@ export default {
 
 .dark .dashboard-header__title {
   color: var(--s-100);
+}
+
+.dark .dashboard-tabs {
+  background-color: #1a1d26;
+  border-color: #2d3343;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark .dashboard-tabs__btn {
+  color: #8b95a5;
+}
+
+.dark .dashboard-tabs__btn:hover {
+  color: #c9d1d9;
+  background-color: #252a36;
+}
+
+.dark .dashboard-tabs__btn--active {
+  background-color: var(--w-500);
+  color: #fff;
 }
 
 .dark .dashboard-select {

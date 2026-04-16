@@ -98,6 +98,12 @@ class KanbanAPI extends ApiClient {
     });
   }
 
+  getLeadReport(accountId, pipelineId, startDate, endDate) {
+    return window.axios.get(`/api/v1/accounts/${accountId}/kanban/pipelines/${pipelineId}/reports/lead_report`, {
+      params: { start_date: startDate, end_date: endDate }
+    });
+  }
+
   // Activities
   getActivities(accountId, conversationId) {
     return window.axios.get(`/api/v1/accounts/${accountId}/conversations/${conversationId}/kanban_activities`);

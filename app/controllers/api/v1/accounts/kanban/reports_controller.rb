@@ -91,6 +91,75 @@ class Api::V1::Accounts::Kanban::ReportsController < Api::V1::Accounts::Kanban::
     }
   end
 
+  def lead_report
+    sources = %w[LinkedIn Instagram Jetsales Tráfego\ Pago Lançamento Passivo]
+
+    source_field = find_custom_field('lead_source')
+    responded_field = find_custom_field('responded')
+    call_done_field = find_custom_field('call_done')
+    contract_type_field = find_custom_field('contract_type')
+
+    base = pipeline_conversations
+
+    source_data = sources.map do |source|
+      source_convos = if source_field
+                        base.joins(:kanban_custom_field_values)
+                            .where(kanban_custom_field_values: { kanban_custom_field_id: source_field.id, value: source })
+                      else
+                        base.none
+                      end
+
+      contacted = source_convos.count
+      responded = count_with_field(source_convos, responded_field, 'true')
+      calls = count_with_field(source_convos, call_done_field, 'true')
+      sales = source_convos.where(closed_won: true).count
+
+      {
+        source: source,
+        contacted: contacted,
+        responded: responded,
+        calls: calls,
+        sales: sales
+      }
+    end
+
+    total_contacted = source_data.sum { |s| s[:contacted] }
+    total_responded = source_data.sum { |s| s[:responded] }
+    total_calls = source_data.sum { |s| s[:calls] }
+
+    won_convos = base.where(closed_won: true)
+
+    nova_venda_convos = filter_by_custom_field(won_convos, contract_type_field, 'Nova Venda')
+    renovacao_convos = filter_by_custom_field(won_convos, contract_type_field, 'Renovação')
+
+    total_new_sales = nova_venda_convos.count
+    total_renewals = renovacao_convos.count
+    revenue_new_sales = nova_venda_convos.sum(:deal_value).to_f
+    revenue_renewals = renovacao_convos.sum(:deal_value).to_f
+    revenue_total = revenue_new_sales + revenue_renewals
+
+    conversion_contact_to_call = total_contacted > 0 ? ((total_calls.to_f / total_contacted) * 100).round(1) : 0
+    conversion_call_to_sale = total_calls > 0 ? ((won_convos.count.to_f / total_calls) * 100).round(1) : 0
+
+    render json: {
+      pipeline: { id: @pipeline.id, name: @pipeline.name },
+      period: { start_date: @start_date, end_date: @end_date },
+      sources: source_data,
+      totals: {
+        total_contacted: total_contacted,
+        total_responded: total_responded,
+        total_calls: total_calls,
+        total_new_sales: total_new_sales,
+        total_renewals: total_renewals,
+        revenue_new_sales: revenue_new_sales,
+        revenue_renewals: revenue_renewals,
+        revenue_total: revenue_total,
+        conversion_contact_to_call: conversion_contact_to_call,
+        conversion_call_to_sale: conversion_call_to_sale
+      }
+    }
+  end
+
   def top_performers
     won_conversations = pipeline_conversations.where(closed_won: true)
     won_conversation_ids = won_conversations.pluck(:id)
@@ -175,6 +244,30 @@ class Api::V1::Accounts::Kanban::ReportsController < Api::V1::Accounts::Kanban::
     total = won + lost
     return 0 if total.zero?
     ((won.to_f / total) * 100).round(1)
+  end
+
+  def find_custom_field(field_key)
+    KanbanCustomField.find_by(kanban_pipeline_id: @pipeline.id, field_key: field_key)
+  end
+
+  def count_with_field(scope, field, expected_value)
+    return 0 unless field
+
+    scope.where(
+      id: KanbanCustomFieldValue
+            .where(kanban_custom_field_id: field.id, value: expected_value)
+            .select(:conversation_id)
+    ).count
+  end
+
+  def filter_by_custom_field(scope, field, expected_value)
+    return scope.none unless field
+
+    scope.where(
+      id: KanbanCustomFieldValue
+            .where(kanban_custom_field_id: field.id, value: expected_value)
+            .select(:conversation_id)
+    )
   end
 
   def calculate_stage_conversions(stages)
