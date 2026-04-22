@@ -30,6 +30,8 @@ class ContractActivity < ApplicationRecord
     expired
     cancelled
     reminder_sent
+    completed
+    partially_signed
   ].freeze
 
   # Validações
@@ -51,6 +53,8 @@ class ContractActivity < ApplicationRecord
     when 'expired' then 'clock'
     when 'cancelled' then 'x-square'
     when 'reminder_sent' then 'bell'
+    when 'completed' then 'check-circle'
+    when 'partially_signed' then 'edit-2'
     else 'activity'
     end
   end
@@ -67,6 +71,8 @@ class ContractActivity < ApplicationRecord
     when 'expired' then 'orange'
     when 'cancelled' then 'red'
     when 'reminder_sent' then 'purple'
+    when 'completed' then 'green'
+    when 'partially_signed' then 'teal'
     else 'gray'
     end
   end
@@ -94,6 +100,8 @@ class ContractActivity < ApplicationRecord
     when 'expired' then 'Expirado'
     when 'cancelled' then 'Cancelado'
     when 'reminder_sent' then 'Lembrete enviado'
+    when 'completed' then 'Contrato concluído'
+    when 'partially_signed' then 'Parcialmente assinado'
     else activity_type
     end
   end
