@@ -10,7 +10,13 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
                         .order(created_at: :desc)
 
     # Filtros
-    @contracts = @contracts.where(status: params[:status]) if params[:status].present?
+    if params[:status].present?
+      if params[:status] == 'pending'
+        @contracts = @contracts.where(status: %w[pending partially_signed])
+      else
+        @contracts = @contracts.where(status: params[:status])
+      end
+    end
     @contracts = @contracts.where(contact_id: params[:contact_id]) if params[:contact_id].present?
     @contracts = @contracts.where(created_by_id: params[:created_by_id]) if params[:created_by_id].present?
     

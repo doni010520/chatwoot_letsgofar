@@ -21,15 +21,30 @@
       <div v-else class="dropdown-content">
         <!-- Resumo -->
         <div class="tasks-summary">
-          <div v-if="summary.overdue > 0" class="summary-item summary-item--overdue summary-item--clickable" @click.stop="goToTasksFiltered('overdue')">
+          <div
+            v-if="summary.overdue > 0"
+            class="summary-item summary-item--overdue summary-item--clickable"
+            :class="{ 'summary-item--active': activeFilter === 'overdue' }"
+            @click.stop="toggleFilter('overdue')"
+          >
             <span class="summary-count">{{ summary.overdue }}</span>
             <span class="summary-label">Atrasadas</span>
           </div>
-          <div v-if="summary.due_today > 0" class="summary-item summary-item--today summary-item--clickable" @click.stop="goToTasksFiltered('due_today')">
+          <div
+            v-if="summary.due_today > 0"
+            class="summary-item summary-item--today summary-item--clickable"
+            :class="{ 'summary-item--active': activeFilter === 'due_today' }"
+            @click.stop="toggleFilter('due_today')"
+          >
             <span class="summary-count">{{ summary.due_today }}</span>
             <span class="summary-label">Vence hoje</span>
           </div>
-          <div v-if="summary.due_tomorrow > 0" class="summary-item summary-item--tomorrow summary-item--clickable" @click.stop="goToTasksFiltered('due_tomorrow')">
+          <div
+            v-if="summary.due_tomorrow > 0"
+            class="summary-item summary-item--tomorrow summary-item--clickable"
+            :class="{ 'summary-item--active': activeFilter === 'due_tomorrow' }"
+            @click.stop="toggleFilter('due_tomorrow')"
+          >
             <span class="summary-count">{{ summary.due_tomorrow }}</span>
             <span class="summary-label">Vence amanhã</span>
           </div>
@@ -38,10 +53,19 @@
           </div>
         </div>
 
+        <!-- Barra de filtro ativo -->
+        <div v-if="activeFilter" class="filter-bar">
+          <span class="filter-bar__label">
+            Filtrando: <strong>{{ filterLabel }}</strong>
+            <span class="filter-bar__count">({{ filteredTasks.length }})</span>
+          </span>
+          <button class="filter-bar__clear" @click.stop="clearFilter">Limpar ×</button>
+        </div>
+
         <!-- Lista de tarefas -->
-        <div v-if="tasks.length > 0" class="tasks-list">
+        <div v-if="filteredTasks.length > 0" class="tasks-list">
           <div
-            v-for="task in tasks"
+            v-for="task in filteredTasks"
             :key="task.id"
             class="task-item"
             :class="{ 'task-item--overdue': task.overdue }"
@@ -55,6 +79,9 @@
               {{ formatDueDate(task.due_at) }}
             </div>
           </div>
+        </div>
+        <div v-else-if="activeFilter" class="tasks-empty">
+          Nenhuma tarefa para este filtro.
         </div>
 
         <!-- Link para ver todas -->
@@ -89,6 +116,7 @@ export default {
       },
       tasks: [],
       pollInterval: null,
+      activeFilter: null, // null | 'overdue' | 'due_today' | 'due_tomorrow'
     };
   },
   computed: {
@@ -97,6 +125,40 @@ export default {
     },
     urgentCount() {
       return this.summary.urgent_count || 0;
+    },
+    filteredTasks() {
+      if (!this.activeFilter) return this.tasks;
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      return this.tasks.filter(task => {
+        if (!task.due_at) return false;
+        const due = new Date(task.due_at);
+        const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+
+        if (this.activeFilter === 'overdue') {
+          // Overdue: due date is strictly before today OR the API flagged it
+          return task.overdue === true || dueDay < today;
+        }
+        if (this.activeFilter === 'due_today') {
+          return dueDay.getTime() === today.getTime();
+        }
+        if (this.activeFilter === 'due_tomorrow') {
+          return dueDay.getTime() === tomorrow.getTime();
+        }
+        return true;
+      });
+    },
+    filterLabel() {
+      const labels = {
+        overdue: 'Atrasadas',
+        due_today: 'Vence hoje',
+        due_tomorrow: 'Vence amanhã',
+      };
+      return labels[this.activeFilter] || '';
     },
   },
   watch: {
@@ -139,6 +201,8 @@ export default {
       this.showDropdown = !this.showDropdown;
       if (this.showDropdown) {
         this.fetchTasks();
+      } else {
+        this.activeFilter = null;
       }
     },
     startPolling() {
@@ -184,13 +248,12 @@ export default {
         });
       }
     },
-    goToTasksFiltered(filter) {
-      this.showDropdown = false;
-      this.$router.push({
-        name: 'tasks_list',
-        params: { accountId: this.accountId },
-        query: { filter },
-      });
+    toggleFilter(filter) {
+      // Toggle off if clicking the same filter again
+      this.activeFilter = this.activeFilter === filter ? null : filter;
+    },
+    clearFilter() {
+      this.activeFilter = null;
     },
     goToKanban() {
       this.showDropdown = false;
@@ -337,6 +400,56 @@ export default {
 .summary-item--clickable:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.summary-item--active {
+  outline: 2px solid #1f2937;
+  outline-offset: -2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background-color: #eef2ff;
+  border-bottom: 1px solid #e0e7ff;
+  font-size: 12px;
+  color: #3730a3;
+}
+
+.filter-bar__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-bar__count {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.filter-bar__clear {
+  background: none;
+  border: none;
+  color: #3730a3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.filter-bar__clear:hover {
+  background-color: #e0e7ff;
+}
+
+.tasks-empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 12px;
+  color: #6b7280;
 }
 
 .summary-item--overdue {

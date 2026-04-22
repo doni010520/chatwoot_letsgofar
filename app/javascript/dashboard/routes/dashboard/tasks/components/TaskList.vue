@@ -578,7 +578,7 @@ watch(filters, () => {
                 </th>
                 <!-- Contact -->
                 <th
-                  class="task-table__th task-table__th--sortable"
+                  class="task-table__th task-table__th--sortable task-table__col--contact"
                   @click="handleSort('contact')"
                 >
                   <span>Contato</span>
@@ -622,6 +622,13 @@ watch(filters, () => {
                       :title="task.title"
                     >
                       {{ task.title }}
+                    </span>
+                    <span
+                      v-if="task.description"
+                      class="text-xs text-n-slate-11 line-clamp-1 max-w-[280px]"
+                      :title="task.description"
+                    >
+                      {{ task.description }}
                     </span>
                     <div class="flex items-center gap-2">
                       <span
@@ -715,7 +722,7 @@ watch(filters, () => {
                 </td>
 
                 <!-- Contact -->
-                <td class="task-table__td">
+                <td class="task-table__td task-table__col--contact">
                   <span
                     v-if="task.contact"
                     class="inline-flex items-center gap-1.5 text-xs text-n-slate-11"
@@ -975,7 +982,10 @@ watch(filters, () => {
 .task-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 960px;
+
+  @media (min-width: 768px) {
+    min-width: 760px;
+  }
 
   &__th {
     position: sticky;
@@ -1071,6 +1081,13 @@ watch(filters, () => {
       flex-direction: column;
       align-items: center;
       gap: 8px;
+    }
+  }
+
+  /* Hide Contact column on small screens to keep table usable on mobile */
+  &__col--contact {
+    @media (max-width: 767px) {
+      display: none;
     }
   }
 }
