@@ -160,6 +160,12 @@ class Api::V1::Accounts::ContractsController < Api::V1::Accounts::BaseController
                 type: 'application/pdf',
                 disposition: 'attachment'
     end
+  rescue StandardError => e
+    Rails.logger.error "Erro ao gerar PDF do contrato #{@contract.contract_number}: #{e.class}: #{e.message}\n#{e.backtrace&.first(10)&.join("\n")}"
+    render json: {
+      error: "Erro ao gerar PDF: #{e.message}",
+      details: 'Verifique se o wkhtmltopdf está instalado no servidor'
+    }, status: :internal_server_error
   end
 
   def expiring

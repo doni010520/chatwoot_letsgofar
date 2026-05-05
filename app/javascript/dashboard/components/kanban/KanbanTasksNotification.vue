@@ -127,30 +127,8 @@ export default {
       return this.summary.urgent_count || 0;
     },
     filteredTasks() {
-      if (!this.activeFilter) return this.tasks;
-
-      const now = new Date();
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const tomorrow = new Date(today);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-
-      return this.tasks.filter(task => {
-        if (!task.due_at) return false;
-        const due = new Date(task.due_at);
-        const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate());
-
-        if (this.activeFilter === 'overdue') {
-          // Overdue: due date is strictly before today OR the API flagged it
-          return task.overdue === true || dueDay < today;
-        }
-        if (this.activeFilter === 'due_today') {
-          return dueDay.getTime() === today.getTime();
-        }
-        if (this.activeFilter === 'due_tomorrow') {
-          return dueDay.getTime() === tomorrow.getTime();
-        }
-        return true;
-      });
+      // Tasks come pre-filtered from the backend based on activeFilter
+      return this.tasks;
     },
     filterLabel() {
       const labels = {
@@ -189,8 +167,17 @@ export default {
       if (!this.accountId) return;
       this.loading = true;
       try {
-        const response = await KanbanAPI.getUserTasks(this.accountId, 'week');
-        this.tasks = response.data.slice(0, 10);
+        // Map activeFilter to backend filter param. When no filter active, show this week.
+        const filterMap = {
+          overdue: 'overdue',
+          due_today: 'today',
+          due_tomorrow: 'tomorrow',
+        };
+        const apiFilter = filterMap[this.activeFilter] || 'week';
+        const response = await KanbanAPI.getUserTasks(this.accountId, apiFilter);
+        // Show more tasks when filtering (since user is looking for specific subset)
+        const limit = this.activeFilter ? 50 : 10;
+        this.tasks = response.data.slice(0, limit);
       } catch (error) {
         console.error('Error fetching tasks:', error);
       } finally {
@@ -251,9 +238,11 @@ export default {
     toggleFilter(filter) {
       // Toggle off if clicking the same filter again
       this.activeFilter = this.activeFilter === filter ? null : filter;
+      this.fetchTasks();
     },
     clearFilter() {
       this.activeFilter = null;
+      this.fetchTasks();
     },
     goToKanban() {
       this.showDropdown = false;

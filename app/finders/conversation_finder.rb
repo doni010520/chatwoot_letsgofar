@@ -137,17 +137,23 @@ class ConversationFinder
     search_term = "%#{params[:q]}%"
     allowed_message_types = [Message.message_types[:incoming], Message.message_types[:outgoing]]
 
-    @conversations = @conversations
-                     .left_joins(:messages, :contact)
-                     .where(
-                       '(messages.content ILIKE :search AND messages.message_type IN (:types)) OR ' \
-                       'contacts.name ILIKE :search OR ' \
-                       'contacts.email ILIKE :search OR ' \
-                       'contacts.phone_number ILIKE :search',
-                       search: search_term,
-                       types: allowed_message_types
-                     )
-                     .distinct
+    # Use subqueries instead of joins to avoid cartesian product (which causes
+    # timeouts on conversations with many messages, especially resolved ones).
+    matching_contact_ids = Contact.where(
+      'name ILIKE :search OR email ILIKE :search OR phone_number ILIKE :search',
+      search: search_term
+    ).select(:id)
+
+    matching_conv_ids_via_messages = Message.where(
+      'content ILIKE :search AND message_type IN (:types)',
+      search: search_term, types: allowed_message_types
+    ).select(:conversation_id)
+
+    @conversations = @conversations.where(
+      'contact_id IN (:contact_ids) OR id IN (:msg_conv_ids)',
+      contact_ids: matching_contact_ids,
+      msg_conv_ids: matching_conv_ids_via_messages
+    )
   end
 
   def filter_by_status
