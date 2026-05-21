@@ -156,6 +156,11 @@ const applyVariables = () => {
 
   const fmtDate = v => {
     if (!v) return '-';
+    // Date-only strings (YYYY-MM-DD) must be formatted without UTC parsing to avoid TZ shifting back one day
+    if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) {
+      const [y, m, d] = v.split('-');
+      return `${d}/${m}/${y}`;
+    }
     try { return new Date(v).toLocaleDateString('pt-BR'); } catch { return '-'; }
   };
 

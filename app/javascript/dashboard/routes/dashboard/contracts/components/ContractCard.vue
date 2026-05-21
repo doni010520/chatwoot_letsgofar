@@ -23,6 +23,11 @@ const getStatus = status =>
 
 const formatDate = dateStr => {
   if (!dateStr) return '-';
+  // Date-only strings (YYYY-MM-DD) must be formatted without UTC parsing to avoid TZ shifting back one day
+  if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  }
   return new Date(dateStr).toLocaleDateString('pt-BR');
 };
 </script>
