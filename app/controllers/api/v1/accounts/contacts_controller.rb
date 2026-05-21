@@ -121,12 +121,18 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
 
     return render json: { error: 'pipeline_id and stage_id are required' }, status: :unprocessable_entity if pipeline_id.blank? || stage_id.blank?
 
-    stage = KanbanStage.find_by(id: stage_id)
-    return render json: { error: 'Stage not found' }, status: :not_found unless stage
+    # Scope stage lookup to the current account to prevent cross-account FK violations
+    stage = KanbanStage.joins(:kanban_pipeline)
+                       .where(kanban_pipelines: { account_id: Current.account.id })
+                       .find_by(id: stage_id, kanban_pipeline_id: pipeline_id)
+    return render json: { error: 'Stage not found in this account' }, status: :not_found unless stage
 
     inbox = Current.account.inboxes.find_or_create_by!(channel_type: 'Channel::Api', name: 'CRM Interno') do |new_inbox|
       new_inbox.channel = Channel::Api.create!(account: Current.account)
     end
+
+    # Ensure current user can be assigned to conversations in the CRM inbox
+    InboxMember.find_or_create_by!(inbox: inbox, user: Current.user)
 
     contact_inbox = ContactInbox.find_or_create_by!(contact: @contact, inbox: inbox) do |ci|
       ci.source_id = SecureRandom.uuid
@@ -148,6 +154,9 @@ class Api::V1::Accounts::ContactsController < Api::V1::Accounts::BaseController
       kanban_stage_id: conversation.kanban_stage_id,
       deal_value: conversation.deal_value
     }, status: :ok
+  rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotUnique => e
+    Rails.logger.error("add_to_crm failed for contact #{@contact&.id} stage #{stage_id}: #{e.class} #{e.message}")
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   private

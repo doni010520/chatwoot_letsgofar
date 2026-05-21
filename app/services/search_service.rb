@@ -36,6 +36,8 @@ class SearchService
                                          .where("cast(conversations.display_id as text) ILIKE :search OR contacts.name ILIKE :search OR contacts.email
                             ILIKE :search OR contacts.phone_number ILIKE :search OR contacts.identifier ILIKE :search", search: "%#{search_query}%")
 
+    conversations_query = apply_status_filter(conversations_query)
+
     if current_account.feature_enabled?('advanced_search')
       conversations_query = apply_time_filter(conversations_query,
                                               'conversations.last_activity_at')
@@ -44,6 +46,12 @@ class SearchService
     @conversations = conversations_query.order('conversations.created_at DESC')
                                         .page(params[:page])
                                         .per(15)
+  end
+
+  def apply_status_filter(query)
+    return query if params[:status].blank? || params[:status] == 'all'
+
+    query.where(conversations: { status: params[:status] })
   end
 
   def filter_messages
