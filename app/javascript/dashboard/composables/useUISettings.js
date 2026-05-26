@@ -104,14 +104,6 @@ const fetchSignatureFlagFromUISettings = (channelType, uiSettings) => {
   if (!channelType) return false;
 
   const slugifiedChannel = slugifyChannel(channelType);
-
-  // Only email channels send a real signature. For WhatsApp, SMS, Telegram,
-  // API, etc., the agent name is already shown inline on the bubble (UI label),
-  // so we never append the signature to the outgoing message body.
-  const channelLower = (channelType || '').toLowerCase();
-  const isEmailChannel = channelLower.includes('email');
-  if (!isEmailChannel) return false;
-
   return uiSettings.value[`${slugifiedChannel}_signature_enabled`];
 };
 

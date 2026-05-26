@@ -134,7 +134,7 @@ class Messages::MessageBuilder
       account_id: @conversation.account_id,
       inbox_id: @conversation.inbox_id,
       message_type: message_type,
-      content: @params[:content],
+      content: content_with_agent_prefix,
       private: @private,
       sender: sender,
       content_type: @params[:content_type],
@@ -144,6 +144,41 @@ class Messages::MessageBuilder
       echo_id: @params[:echo_id],
       source_id: @params[:source_id]
     }.merge(external_created_at).merge(automation_rule_id).merge(campaign_id).merge(template_params)
+  end
+
+  # Auto-prefix outgoing messages with "*Agent Name*\n" so the customer knows
+  # who is replying. Only adds the prefix when the previous outgoing message
+  # was sent by a different agent (or there is no previous outgoing message),
+  # so consecutive messages from the same agent are NOT prefixed.
+  def content_with_agent_prefix
+    original_content = @params[:content]
+    return original_content if original_content.blank?
+    return original_content if @private
+    return original_content if @message_type != 'outgoing'
+    return original_content unless prefix_eligible_channel?
+    return original_content unless sender.is_a?(User)
+    return original_content unless last_outgoing_sender_changed?
+
+    agent_name = sender.name.to_s.strip
+    return original_content if agent_name.blank?
+
+    "*#{agent_name}:*\n#{original_content}"
+  end
+
+  def prefix_eligible_channel?
+    # Email handles signatures separately; skip prefix for email channels.
+    @conversation.inbox&.channel_type != 'Channel::Email'
+  end
+
+  def last_outgoing_sender_changed?
+    last_outgoing = @conversation.messages
+                                 .where(message_type: :outgoing, private: false)
+                                 .where.not(sender_type: nil)
+                                 .order(created_at: :desc)
+                                 .first
+    return true if last_outgoing.nil?
+
+    last_outgoing.sender_id != sender.id || last_outgoing.sender_type != sender.class.name
   end
 
   def email_inbox?
