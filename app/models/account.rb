@@ -41,6 +41,7 @@ class Account < ApplicationRecord
         'audio_transcriptions': { 'type': %w[boolean null] },
         'auto_resolve_label': { 'type': %w[string null] },
         'keep_pending_on_bot_failure': { 'type': %w[boolean null] },
+        'auto_agent_prefix_enabled': { 'type': %w[boolean null] },
         'conversation_required_attributes': {
           'type': %w[array null],
           'items': { 'type': 'string' }
@@ -90,6 +91,7 @@ class Account < ApplicationRecord
   store_accessor :settings, :audio_transcriptions, :auto_resolve_label
   store_accessor :settings, :captain_models, :captain_features
   store_accessor :settings, :keep_pending_on_bot_failure
+  store_accessor :settings, :auto_agent_prefix_enabled
 
   has_many :account_users, dependent: :destroy_async
   has_many :agent_bot_inboxes, dependent: :destroy_async

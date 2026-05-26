@@ -44,6 +44,14 @@
         "TITLE": "Account ID",
         "NOTE": "This ID is required if you are building an API based integration"
       },
+      "AUTO_AGENT_PREFIX": {
+        "TITLE": "Identify agent in messages",
+        "NOTE": "When enabled, the agent's name is added in bold at the start of the first message of each reply so the customer knows who is responding. Not repeated on consecutive messages from the same agent.",
+        "PREVIEW": "*Luana:*\nHello, John. How are you?",
+        "ENABLED_SUCCESS": "Agent identification enabled",
+        "DISABLED_SUCCESS": "Agent identification disabled",
+        "ERROR": "Could not update this setting"
+      },
       "AUTO_RESOLVE": {
         "TITLE": "Auto-resolve conversations",
         "NOTE": "This configuration would allow you to automatically resolve the conversation after a certain period of inactivity.",

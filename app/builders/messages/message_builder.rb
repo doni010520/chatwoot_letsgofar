@@ -150,11 +150,14 @@ class Messages::MessageBuilder
   # who is replying. Only adds the prefix when the previous outgoing message
   # was sent by a different agent (or there is no previous outgoing message),
   # so consecutive messages from the same agent are NOT prefixed.
+  #
+  # Controlled by the account-level setting `auto_agent_prefix_enabled`.
   def content_with_agent_prefix
     original_content = @params[:content]
     return original_content if original_content.blank?
     return original_content if @private
     return original_content if @message_type != 'outgoing'
+    return original_content unless auto_agent_prefix_enabled?
     return original_content unless prefix_eligible_channel?
     return original_content unless sender.is_a?(User)
     return original_content unless last_outgoing_sender_changed?
@@ -163,6 +166,11 @@ class Messages::MessageBuilder
     return original_content if agent_name.blank?
 
     "*#{agent_name}:*\n#{original_content}"
+  end
+
+  def auto_agent_prefix_enabled?
+    # Default: disabled. Account admin must explicitly turn it on in Settings.
+    ActiveModel::Type::Boolean.new.cast(@account.auto_agent_prefix_enabled)
   end
 
   def prefix_eligible_channel?
