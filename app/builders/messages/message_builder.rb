@@ -147,25 +147,34 @@ class Messages::MessageBuilder
   end
 
   # Auto-prefix outgoing messages with "*Agent Name*\n" so the customer knows
-  # who is replying. Only adds the prefix when the previous outgoing message
-  # was sent by a different agent (or there is no previous outgoing message),
-  # so consecutive messages from the same agent are NOT prefixed.
+  # who is replying. When account setting auto_agent_prefix_enabled is true,
+  # adds the prefix on every outgoing agent message on non-email channels.
   #
   # Controlled by the account-level setting `auto_agent_prefix_enabled`.
   def content_with_agent_prefix
     original_content = @params[:content]
+    Rails.logger.info "[AgentPrefix] content present? #{original_content.present?}, private? #{@private}, type=#{@message_type}"
+
     return original_content if original_content.blank?
     return original_content if @private
     return original_content if @message_type != 'outgoing'
+
+    Rails.logger.info "[AgentPrefix] setting enabled? #{auto_agent_prefix_enabled?}, raw=#{@account.auto_agent_prefix_enabled.inspect}"
     return original_content unless auto_agent_prefix_enabled?
+
+    Rails.logger.info "[AgentPrefix] channel=#{@conversation.inbox&.channel_type}, eligible? #{prefix_eligible_channel?}"
     return original_content unless prefix_eligible_channel?
+
+    Rails.logger.info "[AgentPrefix] sender class=#{sender.class.name}, is User? #{sender.is_a?(User)}"
     return original_content unless sender.is_a?(User)
-    return original_content unless last_outgoing_sender_changed?
 
     agent_name = sender.name.to_s.strip
+    Rails.logger.info "[AgentPrefix] agent_name=#{agent_name.inspect}"
     return original_content if agent_name.blank?
 
-    "*#{agent_name}:*\n#{original_content}"
+    prefixed = "*#{agent_name}:*\n#{original_content}"
+    Rails.logger.info "[AgentPrefix] PREFIXED OK"
+    prefixed
   end
 
   def auto_agent_prefix_enabled?
@@ -176,17 +185,6 @@ class Messages::MessageBuilder
   def prefix_eligible_channel?
     # Email handles signatures separately; skip prefix for email channels.
     @conversation.inbox&.channel_type != 'Channel::Email'
-  end
-
-  def last_outgoing_sender_changed?
-    last_outgoing = @conversation.messages
-                                 .where(message_type: :outgoing, private: false)
-                                 .where.not(sender_type: nil)
-                                 .order(created_at: :desc)
-                                 .first
-    return true if last_outgoing.nil?
-
-    last_outgoing.sender_id != sender.id || last_outgoing.sender_type != sender.class.name
   end
 
   def email_inbox?
