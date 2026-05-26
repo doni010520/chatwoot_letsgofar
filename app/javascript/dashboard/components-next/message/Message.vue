@@ -254,10 +254,16 @@ const gridTemplate = computed(() => {
       "bubble"
       "meta"
     `,
-    [ORIENTATION.RIGHT]: `
-      "bubble avatar"
-      "meta spacer"
-    `,
+    [ORIENTATION.RIGHT]: senderLabel.value
+      ? `
+        "sender sender"
+        "bubble avatar"
+        "meta spacer"
+      `
+      : `
+        "bubble avatar"
+        "meta spacer"
+      `,
   };
 
   return map[orientation.value];
@@ -478,6 +484,23 @@ const avatarTooltip = computed(() => {
   return `${t('CONVERSATION.SENT_BY')} ${avatarInfo.value.name}`;
 });
 
+/**
+ * Sender label shown above outgoing message bubbles to identify the agent
+ * who sent the message. Visible only inside the Chatwoot UI - it is NOT sent
+ * to the customer in the actual WhatsApp/SMS/etc. message.
+ */
+const senderLabel = computed(() => {
+  // Only show for outgoing agent messages (right-oriented bubbles)
+  if (orientation.value !== ORIENTATION.RIGHT) return '';
+  // Don't show for activity/private/system messages
+  if (props.messageType === MESSAGE_TYPES.ACTIVITY) return '';
+  if (props.private) return '';
+  // Don't show for bots
+  if (!props.sender || props.sender.type === SENDER_TYPES.AGENT_BOT) return '';
+
+  return avatarInfo.value.name || '';
+});
+
 const setupHighlightTimer = () => {
   if (Number(route.query.messageId) !== Number(props.id)) {
     return;
@@ -534,6 +557,12 @@ provideMessageContext({
         gridTemplateAreas: gridTemplate,
       }"
     >
+      <div
+        v-if="senderLabel"
+        class="[grid-area:sender] text-xs font-medium text-n-slate-11 mb-1 ltr:text-right rtl:text-left ltr:pr-1 rtl:pl-1"
+      >
+        {{ senderLabel }}
+      </div>
       <div
         v-if="!shouldGroupWithNext && shouldShowAvatar"
         v-tooltip.left-end="avatarTooltip"

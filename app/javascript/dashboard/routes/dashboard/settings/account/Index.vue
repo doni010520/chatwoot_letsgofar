@@ -15,6 +15,7 @@ import AccountId from './components/AccountId.vue';
 import BuildInfo from './components/BuildInfo.vue';
 import AccountDelete from './components/AccountDelete.vue';
 import AudioTranscription from './components/AudioTranscription.vue';
+import AutoAgentPrefix from './components/AutoAgentPrefix.vue';
 import SectionLayout from './components/SectionLayout.vue';
 
 export default {
@@ -25,6 +26,7 @@ export default {
     BuildInfo,
     AccountDelete,
     AudioTranscription,
+    AutoAgentPrefix,
     SectionLayout,
     WithLabel,
     NextInput,
@@ -231,6 +233,7 @@ export default {
 
       <woot-loading-state v-if="uiFlags.isFetchingItem" />
     </div>
+    <AutoAgentPrefix v-if="!uiFlags.isFetchingItem" />
     <AudioTranscription v-if="showAudioTranscriptionConfig" />
     <AccountId />
     <div v-if="!uiFlags.isFetchingItem && isOnChatwootCloud">
