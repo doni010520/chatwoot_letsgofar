@@ -47,7 +47,7 @@
       "AUTO_AGENT_PREFIX": {
         "TITLE": "Identificar atendente nas mensagens",
         "NOTE": "Quando ativado, o nome do atendente é adicionado em negrito no início da primeira mensagem de cada resposta para que o cliente saiba quem está atendendo. Não repete em mensagens consecutivas do mesmo atendente.",
-        "PREVIEW": "*Luana:*\nOlá, João. Tudo bem?",
+        "PREVIEW": "**Luana:**\nOlá, João. Tudo bem?",
         "ENABLED_SUCCESS": "Identificação do atendente ativada",
         "DISABLED_SUCCESS": "Identificação do atendente desativada",
         "ERROR": "Não foi possível atualizar essa configuração"
