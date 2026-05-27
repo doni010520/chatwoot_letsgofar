@@ -172,7 +172,10 @@ class Messages::MessageBuilder
     Rails.logger.info "[AgentPrefix] agent_name=#{agent_name.inspect}"
     return original_content if agent_name.blank?
 
-    prefixed = "*#{agent_name}:*\n#{original_content}"
+    # **bold** is the markdown standard. Chatwoot converts this to <strong>
+    # which WhatsApp/Telegram/etc. render as their native bold format.
+    # Using single * would render as italic in markdown processors.
+    prefixed = "**#{agent_name}:**\n#{original_content}"
     Rails.logger.info "[AgentPrefix] PREFIXED OK"
     prefixed
   end
