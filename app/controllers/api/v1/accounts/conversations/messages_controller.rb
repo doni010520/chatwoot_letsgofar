@@ -1,5 +1,5 @@
 class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::Conversations::BaseController
-  before_action :ensure_api_inbox, only: :update
+  before_action :ensure_api_inbox, only: :update, unless: :content_edit?
 
   def index
     @messages = message_finder.perform
@@ -14,8 +14,21 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def update
-    Messages::StatusUpdateService.new(message, permitted_params[:status], permitted_params[:external_error]).perform
-    @message = message
+    if content_edit?
+      authorize message, :edit?
+      @message = Messages::EditService.new(
+        message: message,
+        new_content: permitted_params[:content],
+        editor: Current.user
+      ).perform
+    else
+      Messages::StatusUpdateService.new(message, permitted_params[:status], permitted_params[:external_error]).perform
+      @message = message
+    end
+  rescue ArgumentError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  rescue Pundit::NotAuthorizedError
+    render json: { error: 'Você não pode editar esta mensagem (apenas autor ou admin, dentro de 15 minutos do envio).' }, status: :forbidden
   end
 
   def destroy
@@ -65,7 +78,11 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def permitted_params
-    params.permit(:id, :target_language, :status, :external_error)
+    params.permit(:id, :target_language, :status, :external_error, :content)
+  end
+
+  def content_edit?
+    request.put? || request.patch? ? params[:content].present? : false
   end
 
   def already_translated_content_available?

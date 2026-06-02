@@ -373,6 +373,19 @@ const contextMenuEnabledOptions = computed(() => {
     props.status === MESSAGE_STATUS.FAILED ||
     props.status === MESSAGE_STATUS.PROGRESS;
 
+  // Edit: outgoing text messages only, not deleted/failed/private,
+  // within 15-minute window (WhatsApp limit). Server still revalidates ownership.
+  const EDIT_WINDOW_MS = 15 * 60 * 1000;
+  const messageAgeMs = props.createdAt ? Date.now() - props.createdAt * 1000 : Infinity;
+  const isWithinEditWindow = messageAgeMs >= 0 && messageAgeMs <= EDIT_WINDOW_MS;
+  const canEdit =
+    isOutgoing &&
+    hasText &&
+    !props.private &&
+    !isFailedOrProcessing &&
+    !isMessageDeleted.value &&
+    isWithinEditWindow;
+
   return {
     copy: hasText,
     delete:
@@ -386,6 +399,7 @@ const contextMenuEnabledOptions = computed(() => {
       !props.private &&
       props.inboxSupportsReplyTo.outgoing &&
       !isFailedOrProcessing,
+    edit: canEdit,
   };
 });
 
@@ -435,6 +449,14 @@ function handleReplyTo() {
 
   LocalStorage.updateJsonStore(replyStorageKey, conversationId, replyTo);
   emitter.emit(BUS_EVENTS.TOGGLE_REPLY_TO_MESSAGE, props);
+}
+
+function handleEdit() {
+  emitter.emit(BUS_EVENTS.OPEN_EDIT_MESSAGE_MODAL, {
+    id: props.id,
+    conversationId: props.conversationId,
+    content: props.content,
+  });
 }
 
 const avatarInfo = computed(() => {
@@ -600,6 +622,7 @@ provideMessageContext({
         @open="openContextMenu"
         @close="closeContextMenu"
         @reply-to="handleReplyTo"
+        @edit="handleEdit"
       />
     </div>
   </div>
