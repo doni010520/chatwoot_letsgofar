@@ -146,38 +146,50 @@ class Messages::MessageBuilder
     }.merge(external_created_at).merge(automation_rule_id).merge(campaign_id).merge(template_params)
   end
 
-  # Auto-prefix outgoing messages with "*Agent Name*\n" so the customer knows
-  # who is replying. When account setting auto_agent_prefix_enabled is true,
-  # adds the prefix on every outgoing agent message on non-email channels.
+  # Auto-prefix outgoing messages with "**Agent Name:**\n" so the customer
+  # knows who is replying. Only applies to messages typed by the agent in
+  # the Chatwoot UI — NOT to:
+  #   - Messages mirrored from the agent's phone (n8n creates them with
+  #     source_id already populated)
+  #   - Bot/automation messages
+  #   - Campaign/template messages
+  #   - Echoes (echo_id present)
+  #   - Private notes, incoming messages, or email channels
   #
   # Controlled by the account-level setting `auto_agent_prefix_enabled`.
   def content_with_agent_prefix
     original_content = @params[:content]
-    Rails.logger.info "[AgentPrefix] content present? #{original_content.present?}, private? #{@private}, type=#{@message_type}"
-
     return original_content if original_content.blank?
     return original_content if @private
     return original_content if @message_type != 'outgoing'
-
-    Rails.logger.info "[AgentPrefix] setting enabled? #{auto_agent_prefix_enabled?}, raw=#{@account.auto_agent_prefix_enabled.inspect}"
     return original_content unless auto_agent_prefix_enabled?
-
-    Rails.logger.info "[AgentPrefix] channel=#{@conversation.inbox&.channel_type}, eligible? #{prefix_eligible_channel?}"
     return original_content unless prefix_eligible_channel?
-
-    Rails.logger.info "[AgentPrefix] sender class=#{sender.class.name}, is User? #{sender.is_a?(User)}"
     return original_content unless sender.is_a?(User)
+    return original_content if skip_prefix_for_external_source?
 
     agent_name = sender.name.to_s.strip
-    Rails.logger.info "[AgentPrefix] agent_name=#{agent_name.inspect}"
     return original_content if agent_name.blank?
 
-    # **bold** is the markdown standard. Chatwoot converts this to <strong>
-    # which WhatsApp/Telegram/etc. render as their native bold format.
-    # Using single * would render as italic in markdown processors.
-    prefixed = "**#{agent_name}:**\n#{original_content}"
-    Rails.logger.info "[AgentPrefix] PREFIXED OK"
-    prefixed
+    # Avoid double-prefix when content already starts with the agent's name in bold
+    return original_content if original_content.lstrip.start_with?("**#{agent_name}:**")
+
+    # **bold** (markdown standard) → Chatwoot serializes to <strong> →
+    # WhatsApp/Telegram render as native bold (*text*).
+    "**#{agent_name}:**\n#{original_content}"
+  end
+
+  # Returns true when the message is being created from an external source
+  # (n8n mirroring an outgoing message from the agent's phone, an automation,
+  # an AgentBot, a campaign send, or any flow that already knows the external
+  # message id). In all these cases the prefix is undesired.
+  def skip_prefix_for_external_source?
+    return true if @params[:source_id].present?
+    return true if @params[:echo_id].present?
+    return true if @automation_rule.present?
+    return true if @params[:campaign_id].present?
+    return true if @params[:sender_type] == 'AgentBot'
+
+    false
   end
 
   def auto_agent_prefix_enabled?
