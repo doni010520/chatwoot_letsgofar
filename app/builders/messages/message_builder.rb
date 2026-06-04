@@ -27,6 +27,7 @@ class Messages::MessageBuilder
     # When the message has no quoted content, it will just be rendered as a regular message
     # The frontend is equipped to handle this case
     process_email_content
+    mark_external_origin_if_mirrored
     @message.save!
     @message
   end
@@ -183,6 +184,17 @@ class Messages::MessageBuilder
   # an AgentBot, a campaign send, or any flow that already knows the external
   # message id). In all these cases the prefix is undesired.
   def skip_prefix_for_external_source?
+    external_origin?
+  end
+
+  # True when the message was NOT typed in the Chatwoot UI:
+  #   - source_id present at creation = mirrored from agent's phone or
+  #     created by an external automation that already knows the external id
+  #   - echo_id present = ack of external send
+  #   - automation_rule = Chatwoot automation
+  #   - campaign_id = campaign send
+  #   - AgentBot sender = bot reply
+  def external_origin?
     return true if @params[:source_id].present?
     return true if @params[:echo_id].present?
     return true if @automation_rule.present?
@@ -190,6 +202,18 @@ class Messages::MessageBuilder
     return true if @params[:sender_type] == 'AgentBot'
 
     false
+  end
+
+  # Tag mirrored/external-origin messages with a flag the frontend can use
+  # to suppress the agent name label on the bubble (so an outgoing message
+  # mirrored from the phone of agent X doesn't appear as "Gabriel" — the
+  # owner of the n8n API token — in the UI).
+  def mark_external_origin_if_mirrored
+    return unless external_origin?
+    return if @message_type != 'outgoing'
+
+    @message.additional_attributes ||= {}
+    @message.additional_attributes['external_origin'] = true
   end
 
   def auto_agent_prefix_enabled?
