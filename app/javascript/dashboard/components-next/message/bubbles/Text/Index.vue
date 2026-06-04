@@ -36,6 +36,10 @@ const isEmpty = computed(() => {
   return !content.value && !attachments.value?.length;
 });
 
+const wasEdited = computed(() => {
+  return !!contentAttributes.value?.edited;
+});
+
 const handleSeeOriginal = () => {
   renderOriginal.value = !renderOriginal.value;
 };
@@ -48,6 +52,13 @@ const handleSeeOriginal = () => {
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>
       <FormattedContent v-if="renderContent" :content="renderContent" />
+      <span
+        v-if="wasEdited"
+        class="text-xs italic opacity-70 -mt-1"
+        :title="$t('CONVERSATION.MESSAGE_EDITED_TOOLTIP') || 'Mensagem editada'"
+      >
+        ({{ $t('CONVERSATION.MESSAGE_EDITED') || 'editada' }})
+      </span>
       <TranslationToggle
         v-if="hasTranslations"
         class="-mt-3"

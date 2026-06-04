@@ -262,9 +262,12 @@
       "REMOVE": "Remove",
       "ASSIGN": "Assign"
     },
+    "MESSAGE_EDITED": "edited",
+    "MESSAGE_EDITED_TOOLTIP": "This message was edited after sending",
     "CONTEXT_MENU": {
       "COPY": "Copy",
       "REPLY_TO": "Reply to this message",
+      "EDIT": "Edit message",
       "DELETE": "Delete",
       "CREATE_A_CANNED_RESPONSE": "Add to canned responses",
       "TRANSLATE": "Translate",
