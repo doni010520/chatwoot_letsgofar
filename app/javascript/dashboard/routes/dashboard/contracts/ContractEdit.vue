@@ -10,6 +10,7 @@ import ContractEditor from './components/ContractEditor.vue';
 import ContractSigners from './components/ContractSigners.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import { formatContractDate, todayBR } from './dateHelpers';
 
 const route = useRoute();
 const router = useRouter();
@@ -73,10 +74,9 @@ const formatCurrency = (val) => {
   return parseFloat(val).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 };
 
-const formatDate = (val) => {
-  if (!val) return '-';
-  return new Date(val).toLocaleDateString('pt-BR');
-};
+// Usa formatContractDate para evitar deslocamento de 1 dia (bug timezone)
+// quando a data vem como "YYYY-MM-DD" do input.
+const formatDate = val => formatContractDate(val, '-');
 
 // Remove formatação (apenas dígitos)
 const unformat = (v) => {
@@ -368,7 +368,7 @@ const applyVariables = () => {
       installment_due_day: contractData.installment_due_day || 10,
       plan_start_date: formatDate(contractData.plan_start_date),
       plan_end_date: formatDate(contractData.plan_end_date),
-      contract_date: new Date().toLocaleDateString('pt-BR'),
+      contract_date: todayBR(),
     };
 
     Object.entries(variables).forEach(([key, value]) => {
