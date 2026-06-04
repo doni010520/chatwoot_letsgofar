@@ -11,6 +11,7 @@ import ContractEditor from './components/ContractEditor.vue';
 import ContractSigners from './components/ContractSigners.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
+import { formatContractDate, todayBR } from './dateHelpers';
 
 const router = useRouter();
 const route = useRoute();
@@ -154,10 +155,9 @@ const applyVariables = () => {
     return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  const fmtDate = v => {
-    if (!v) return '-';
-    try { return new Date(v).toLocaleDateString('pt-BR'); } catch { return '-'; }
-  };
+  // Usa formatContractDate para evitar deslocamento de 1 dia (bug timezone)
+  // quando a data vem como "YYYY-MM-DD" do input.
+  const fmtDate = v => formatContractDate(v, '-');
 
   const variables = {
     // Contratante - padrão
@@ -197,7 +197,7 @@ const applyVariables = () => {
     plan_start_date: fmtDate(contractData.plan_start_date),
     plan_end_date: fmtDate(contractData.plan_end_date),
     first_installment_date: fmtDate(contractData.plan_start_date),
-    contract_date: new Date().toLocaleDateString('pt-BR'),
+    contract_date: todayBR(),
   };
 
   Object.entries(variables).forEach(([key, value]) => {

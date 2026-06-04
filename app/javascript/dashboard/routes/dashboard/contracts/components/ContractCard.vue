@@ -1,4 +1,6 @@
 <script setup>
+import { formatContractDate } from '../dateHelpers';
+
 defineProps({
   contract: {
     type: Object,
@@ -21,10 +23,9 @@ const statusConfig = {
 const getStatus = status =>
   statusConfig[status] || { label: status, class: 'bg-n-slate-3 text-n-slate-11' };
 
-const formatDate = dateStr => {
-  if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString('pt-BR');
-};
+// Usa formatContractDate para evitar deslocamento de 1 dia (bug timezone)
+// quando a data vem como "YYYY-MM-DD" do input.
+const formatDate = dateStr => formatContractDate(dateStr, '-');
 </script>
 
 <template>
