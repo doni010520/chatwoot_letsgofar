@@ -132,6 +132,7 @@ const props = defineProps({
   senderId: { type: Number, default: null },
   senderType: { type: String, default: null },
   sourceId: { type: String, default: '' }, // eslint-disable-line vue/no-unused-properties
+  additionalAttributes: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['retry']);
@@ -519,6 +520,10 @@ const senderLabel = computed(() => {
   if (props.private) return '';
   // Don't show for bots
   if (!props.sender || props.sender.type === SENDER_TYPES.AGENT_BOT) return '';
+  // Don't show for messages that originated outside the Chatwoot UI
+  // (mirrored from the agent's phone, automation, n8n, etc.) — in those
+  // cases the recorded sender is the API token owner, not the real author.
+  if (props.additionalAttributes?.external_origin === true) return '';
 
   return avatarInfo.value.name || '';
 });
