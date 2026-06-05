@@ -523,7 +523,14 @@ const senderLabel = computed(() => {
   // Don't show for messages that originated outside the Chatwoot UI
   // (mirrored from the agent's phone, automation, n8n, etc.) — in those
   // cases the recorded sender is the API token owner, not the real author.
-  if (props.additionalAttributes?.external_origin === true) return '';
+  //
+  // NOTE: MessageList applies useCamelCase(deep) on the message, which
+  // camelizes nested keys too, so `external_origin` becomes `externalOrigin`.
+  // We check both to be robust against the source path (REST/websocket/store).
+  const attrs = props.additionalAttributes || {};
+  if (attrs.externalOrigin === true || attrs.external_origin === true) {
+    return '';
+  }
 
   return avatarInfo.value.name || '';
 });
