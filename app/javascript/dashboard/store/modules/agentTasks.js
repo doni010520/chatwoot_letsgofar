@@ -300,6 +300,17 @@ const actions = {
     }
   },
 
+  async updateItem({ commit }, { taskId, itemId, data }) {
+    try {
+      const response = await AgentTasksAPI.updateItem(taskId, itemId, data);
+      commit('UPDATE_TASK_ITEM', { taskId, item: response.data });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating item:', error);
+      throw error;
+    }
+  },
+
   async deleteItem({ commit }, { taskId, itemId }) {
     try {
       await AgentTasksAPI.deleteItem(taskId, itemId);
