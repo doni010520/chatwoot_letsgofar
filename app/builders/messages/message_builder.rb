@@ -204,16 +204,35 @@ class Messages::MessageBuilder
     false
   end
 
-  # Tag mirrored/external-origin messages with a flag the frontend can use
-  # to suppress the agent name label on the bubble (so an outgoing message
-  # mirrored from the phone of agent X doesn't appear as "Gabriel" — the
-  # owner of the n8n API token — in the UI).
+  # Tag mirrored/external-origin messages with flags the frontend can use:
+  #
+  #   external_origin  — always true for mirrored outgoing messages.
+  #                      Used by content_with_agent_prefix to skip the prefix.
+  #
+  #   sender_is_fallback — true when the API token owner does NOT match the
+  #                        conversation's assigned agent (or no assignee).
+  #                        This means the sender field is likely a fallback
+  #                        (e.g. n8n used the admin token because it could
+  #                        not identify the real author — typical in group
+  #                        conversations). The frontend hides the sender
+  #                        label in this case.
+  #
+  #                        When token owner == assignee, the sender IS the
+  #                        correct agent and the label should be shown.
   def mark_external_origin_if_mirrored
     return unless external_origin?
     return if @message_type != 'outgoing'
 
     @message.additional_attributes ||= {}
     @message.additional_attributes['external_origin'] = true
+
+    # Compare the API token user with the conversation assignee.
+    # Match   → correct agent's token was used → sender is trustworthy.
+    # No match / no assignee → sender is likely a fallback → hide label.
+    assignee = @conversation.assignee
+    unless assignee.present? && assignee.id == @user.id
+      @message.additional_attributes['sender_is_fallback'] = true
+    end
   end
 
   def auto_agent_prefix_enabled?

@@ -520,15 +520,20 @@ const senderLabel = computed(() => {
   if (props.private) return '';
   // Don't show for bots
   if (!props.sender || props.sender.type === SENDER_TYPES.AGENT_BOT) return '';
-  // Don't show for messages that originated outside the Chatwoot UI
-  // (mirrored from the agent's phone, automation, n8n, etc.) — in those
-  // cases the recorded sender is the API token owner, not the real author.
+  // For messages mirrored from the agent's phone (external_origin), only
+  // hide the sender label when the backend flagged the sender as a fallback
+  // (sender_is_fallback = true). This happens when the API token owner
+  // doesn't match the conversation's assigned agent — meaning the sender
+  // field is probably wrong (e.g. "Gabriel" instead of the real author).
+  //
+  // When the correct agent's token was used, sender_is_fallback is absent
+  // and the label is shown normally (e.g. "Ianka").
   //
   // NOTE: MessageList applies useCamelCase(deep) on the message, which
-  // camelizes nested keys too, so `external_origin` becomes `externalOrigin`.
-  // We check both to be robust against the source path (REST/websocket/store).
+  // camelizes nested keys too, so `sender_is_fallback` becomes
+  // `senderIsFallback`. We check both to be robust.
   const attrs = props.additionalAttributes || {};
-  if (attrs.externalOrigin === true || attrs.external_origin === true) {
+  if (attrs.senderIsFallback === true || attrs.sender_is_fallback === true) {
     return '';
   }
 
