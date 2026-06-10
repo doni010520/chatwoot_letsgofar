@@ -330,12 +330,15 @@ export default {
       );
     },
     isSignatureEnabledForInbox() {
-      return !this.isPrivate && this.sendWithSignature;
+      return false;
     },
     isSignatureAvailable() {
-      return !!this.messageSignature;
+      return false;
     },
     sendWithSignature() {
+      return false;
+    },
+    agentPrefixEnabled() {
       return this.fetchSignatureFlagFromUISettings(this.channelType);
     },
     conversationId() {
@@ -959,6 +962,11 @@ export default {
     getMultipleMessagesPayload(message) {
       const multipleMessagePayload = [];
 
+      const contentAttributes = {};
+      if (!this.agentPrefixEnabled) {
+        contentAttributes.skip_agent_prefix = true;
+      }
+
       if (this.attachedFiles && this.attachedFiles.length) {
         let caption = this.isAnInstagramChannel ? '' : message;
         this.attachedFiles.forEach(attachment => {
@@ -971,6 +979,7 @@ export default {
             private: false,
             message: caption,
             sender: this.sender,
+            contentAttributes,
           };
 
           attachmentPayload = this.setReplyToInPayload(attachmentPayload);
@@ -990,6 +999,7 @@ export default {
           message,
           private: false,
           sender: this.sender,
+          contentAttributes,
         };
 
         messagePayload = this.setReplyToInPayload(messagePayload);
@@ -1002,11 +1012,17 @@ export default {
     getMessagePayload(message) {
       const messageWithQuote = this.getMessageWithQuotedEmailText(message);
 
+      const contentAttributes = {};
+      if (!this.agentPrefixEnabled && !this.isPrivate) {
+        contentAttributes.skip_agent_prefix = true;
+      }
+
       let messagePayload = {
         conversationId: this.currentChat.id,
         message: messageWithQuote,
         private: this.isPrivate,
         sender: this.sender,
+        contentAttributes,
       };
       messagePayload = this.setReplyToInPayload(messagePayload);
 
@@ -1189,8 +1205,7 @@ export default {
           :min-height="4"
           enable-variables
           :variables="messageVariables"
-          :signature="messageSignature"
-          allow-signature
+          :signature="''"
           :channel-type="channelType"
           :medium="inbox.medium"
           @typing-off="onTypingOff"

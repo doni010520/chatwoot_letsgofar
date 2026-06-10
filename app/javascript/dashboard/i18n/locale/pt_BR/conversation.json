@@ -180,9 +180,9 @@
       }
     },
     "FOOTER": {
-      "MESSAGE_SIGN_TOOLTIP": "Assinatura de mensagem",
-      "ENABLE_SIGN_TOOLTIP": "Ativar assinatura",
-      "DISABLE_SIGN_TOOLTIP": "Desativar assinatura",
+      "MESSAGE_SIGN_TOOLTIP": "Assinar com seu nome",
+      "ENABLE_SIGN_TOOLTIP": "Assinar com seu nome",
+      "DISABLE_SIGN_TOOLTIP": "Não assinar com seu nome",
       "MSG_INPUT": "Shift + enter para nova linha. Digite '/' para selecionar uma Resposta Pronta.",
       "PRIVATE_MSG_INPUT": "A mensagem será visível apenas para agentes",
       "MESSAGE_SIGNATURE_NOT_CONFIGURED": "A assinatura da mensagem não está configurada. Por favor, configure-a nas configurações do perfil.",

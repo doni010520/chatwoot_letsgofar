@@ -220,14 +220,14 @@ export default {
           return 'i-ph-stop';
       }
     },
-    showMessageSignatureButton() {
+    showAgentPrefixButton() {
       return !this.isOnPrivateNote;
     },
-    sendWithSignature() {
+    agentPrefixEnabled() {
       return this.fetchSignatureFlagFromUISettings(this.channelType);
     },
-    signatureToggleTooltip() {
-      return this.sendWithSignature
+    agentPrefixTooltip() {
+      return this.agentPrefixEnabled
         ? this.$t('CONVERSATION.FOOTER.DISABLE_SIGN_TOOLTIP')
         : this.$t('CONVERSATION.FOOTER.ENABLE_SIGN_TOOLTIP');
     },
@@ -247,8 +247,8 @@ export default {
     ActiveStorage.start();
   },
   methods: {
-    toggleMessageSignature() {
-      this.setSignatureFlagForInbox(this.channelType, !this.sendWithSignature);
+    toggleAgentPrefix() {
+      this.setSignatureFlagForInbox(this.channelType, !this.agentPrefixEnabled);
     },
     replaceText(text) {
       this.$emit('replaceText', text);
@@ -314,13 +314,13 @@ export default {
         @click="toggleAudioRecorderPlayPause"
       />
       <NextButton
-        v-if="showMessageSignatureButton"
-        v-tooltip.top-end="signatureToggleTooltip"
-        icon="i-ph-signature"
-        slate
-        faded
+        v-if="showAgentPrefixButton"
+        v-tooltip.top-end="agentPrefixTooltip"
+        icon="i-ph-user-circle"
+        :variant="agentPrefixEnabled ? 'solid' : 'faded'"
+        color="slate"
         sm
-        @click="toggleMessageSignature"
+        @click="toggleAgentPrefix"
       />
       <NextButton
         v-if="showQuotedReplyToggle"
