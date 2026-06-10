@@ -6,8 +6,6 @@ import Editor from 'dashboard/components-next/Editor/Editor.vue';
 
 const props = defineProps({
   hasErrors: { type: Boolean, default: false },
-  sendWithSignature: { type: Boolean, default: false },
-  messageSignature: { type: String, default: '' },
   channelType: { type: String, default: '' },
   medium: { type: String, default: '' },
 });
@@ -38,9 +36,7 @@ const modelValue = defineModel({
       "
       enable-variables
       :show-character-count="false"
-      :signature="messageSignature"
-      allow-signature
-      :send-with-signature="sendWithSignature"
+      :signature="''"
       :channel-type="channelType"
       :medium="medium"
     />

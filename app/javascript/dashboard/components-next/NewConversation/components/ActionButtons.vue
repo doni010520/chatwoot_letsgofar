@@ -1,5 +1,5 @@
 <script setup>
-import { defineAsyncComponent, ref, computed, watch, nextTick } from 'vue';
+import { defineAsyncComponent, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useFileUpload } from 'dashboard/composables/useFileUpload';
@@ -27,7 +27,6 @@ const props = defineProps({
   hasSelectedInbox: { type: Boolean, default: false },
   hasNoInbox: { type: Boolean, default: false },
   isDropdownActive: { type: Boolean, default: false },
-  messageSignature: { type: String, default: '' },
   inboxId: { type: Number, default: null },
 });
 
@@ -37,8 +36,6 @@ const emit = defineEmits([
   'sendWhatsappMessage',
   'sendTwilioMessage',
   'insertEmoji',
-  'addSignature',
-  'removeSignature',
   'attachFile',
 ]);
 
@@ -63,7 +60,7 @@ const {
   isEditorHotKeyEnabled,
 } = useUISettings();
 
-const sendWithSignature = computed(() => {
+const agentPrefixEnabled = computed(() => {
   return fetchSignatureFlagFromUISettings(props.channelType);
 });
 
@@ -83,38 +80,15 @@ const isRegularMessageMode = computed(() => {
 
 const isVoiceInbox = computed(() => props.channelType === INBOX_TYPES.VOICE);
 
-const shouldShowSignatureButton = computed(() => {
+const showAgentPrefixButton = computed(() => {
   return (
     props.hasSelectedInbox && isRegularMessageMode.value && !isVoiceInbox.value
   );
 });
 
-const setSignature = () => {
-  if (props.messageSignature) {
-    if (sendWithSignature.value) {
-      emit('addSignature', props.messageSignature);
-    } else {
-      emit('removeSignature', props.messageSignature);
-    }
-  }
+const toggleAgentPrefix = () => {
+  setSignatureFlagForInbox(props.channelType, !agentPrefixEnabled.value);
 };
-
-const toggleMessageSignature = () => {
-  setSignatureFlagForInbox(props.channelType, !sendWithSignature.value);
-};
-
-// Added this watch to dynamically set signature on target inbox change.
-// Only targetInbox has value and is Advance Editor(used by isEmailOrWebWidgetInbox)
-// Set the signature only if the inbox based flag is true
-watch(
-  () => props.hasSelectedInbox,
-  newValue => {
-    nextTick(() => {
-      if (newValue && !isVoiceInbox.value) setSignature();
-    });
-  },
-  { immediate: true }
-);
 
 const onClickInsertEmoji = emoji => {
   emit('insertEmoji', emoji);
@@ -247,12 +221,16 @@ useEventListener(document, 'paste', onPaste);
         />
       </FileUpload>
       <Button
-        v-if="shouldShowSignatureButton"
-        icon="i-lucide-signature"
+        v-if="showAgentPrefixButton"
+        v-tooltip.top-end="agentPrefixEnabled
+          ? t('CONVERSATION.FOOTER.DISABLE_SIGN_TOOLTIP')
+          : t('CONVERSATION.FOOTER.ENABLE_SIGN_TOOLTIP')"
+        icon="i-ph-user-circle"
+        :variant="agentPrefixEnabled ? 'solid' : 'faded'"
         color="slate"
         size="sm"
         class="!w-10"
-        @click="toggleMessageSignature"
+        @click="toggleAgentPrefix"
       />
     </div>
 

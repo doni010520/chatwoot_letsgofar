@@ -236,7 +236,8 @@ class Messages::MessageBuilder
   end
 
   def auto_agent_prefix_enabled?
-    # Default: disabled. Account admin must explicitly turn it on in Settings.
+    return false if content_attributes&.dig(:skip_agent_prefix)
+
     ActiveModel::Type::Boolean.new.cast(@account.auto_agent_prefix_enabled)
   end
 
