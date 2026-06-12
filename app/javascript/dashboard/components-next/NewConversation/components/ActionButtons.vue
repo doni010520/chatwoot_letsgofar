@@ -227,7 +227,7 @@ useEventListener(document, 'paste', onPaste);
           : t('CONVERSATION.FOOTER.ENABLE_SIGN_TOOLTIP')"
         icon="i-ph-user-circle"
         :variant="agentPrefixEnabled ? 'solid' : 'faded'"
-        color="slate"
+        :color="agentPrefixEnabled ? 'blue' : 'slate'"
         size="sm"
         class="!w-10"
         @click="toggleAgentPrefix"

@@ -238,7 +238,7 @@ class Messages::MessageBuilder
   def auto_agent_prefix_enabled?
     return false if content_attributes&.dig(:skip_agent_prefix)
 
-    ActiveModel::Type::Boolean.new.cast(@account.auto_agent_prefix_enabled)
+    true
   end
 
   def prefix_eligible_channel?

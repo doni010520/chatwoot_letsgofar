@@ -101,10 +101,11 @@ const setQuotedReplyFlagForInbox = (channelType, value, updateUISettings) => {
  * @returns {boolean} The value of the signature enabled flag.
  */
 const fetchSignatureFlagFromUISettings = (channelType, uiSettings) => {
-  if (!channelType) return false;
+  if (!channelType) return true;
 
   const slugifiedChannel = slugifyChannel(channelType);
-  return uiSettings.value[`${slugifiedChannel}_signature_enabled`];
+  const val = uiSettings.value[`${slugifiedChannel}_signature_enabled`];
+  return val === undefined ? true : val;
 };
 
 const fetchQuotedReplyFlagFromUISettings = (channelType, uiSettings) => {
