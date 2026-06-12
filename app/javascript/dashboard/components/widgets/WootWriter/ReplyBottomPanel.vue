@@ -318,7 +318,7 @@ export default {
         v-tooltip.top-end="agentPrefixTooltip"
         icon="i-ph-user-circle"
         :variant="agentPrefixEnabled ? 'solid' : 'faded'"
-        color="slate"
+        :color="agentPrefixEnabled ? 'blue' : 'slate'"
         sm
         @click="toggleAgentPrefix"
       />
