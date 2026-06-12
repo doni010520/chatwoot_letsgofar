@@ -190,13 +190,15 @@ class Messages::MessageBuilder
   # True when the message was NOT typed in the Chatwoot UI:
   #   - source_id present at creation = mirrored from agent's phone or
   #     created by an external automation that already knows the external id
-  #   - echo_id present = ack of external send
   #   - automation_rule = Chatwoot automation
   #   - campaign_id = campaign send
   #   - AgentBot sender = bot reply
+  #
+  # NOTE: echo_id is intentionally NOT checked here. The Chatwoot editor sends
+  # a client-generated UUID as echo_id on every message, so checking it would
+  # tag ALL editor messages as external_origin and skip the prefix.
   def external_origin?
     return true if @params[:source_id].present?
-    return true if @params[:echo_id].present?
     return true if @automation_rule.present?
     return true if @params[:campaign_id].present?
     return true if @params[:sender_type] == 'AgentBot'
