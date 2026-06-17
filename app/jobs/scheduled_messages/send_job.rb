@@ -28,17 +28,19 @@ class ScheduledMessages::SendJob < ApplicationJob
   def send_message(message)
     conversation = message.conversation || find_or_create_conversation(message)
 
-    # Coletar signed_ids dos arquivos anexados para enviar como attachments
-    attachment_signed_ids = message.files.map { |file| file.blob.signed_id }
-
     builder_params = {
       content: message.content,
       message_type: :outgoing,
       private: false
     }
 
-    # Adicionar attachments se houver arquivos
-    builder_params[:attachments] = attachment_signed_ids if attachment_signed_ids.present?
+    # Passar os blobs DIRETAMENTE (não signed_ids). O round-trip por
+    # signed_id falhava silenciosamente quando o Sidekiq estava com
+    # SECRET_KEY_BASE divergente da web. O process_attachments aceita
+    # blobs porque ActiveStorage's file= writer resolve Blob, signed_id
+    # ou arquivo enviado.
+    blobs = message.files.map(&:blob)
+    builder_params[:attachments] = blobs if blobs.any?
 
     Messages::MessageBuilder.new(
       message.user,
