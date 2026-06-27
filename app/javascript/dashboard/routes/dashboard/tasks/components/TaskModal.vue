@@ -48,8 +48,9 @@ const formData = ref({
   due_date: '',
   due_time: '',
   recurrence_type: 'none',
-  recurrence_config: { days: [] }, 
+  recurrence_config: { days: [] },
   assigned_to_id: null,
+  assigned_to_ids: [],
   contact_id: null,
   conversation_id: null,
   kanban_pipeline_id: null,
@@ -342,18 +343,25 @@ const handleSubmit = async () => {
       
       emit('updated');
     } else {
-      // CRIAR TAREFA PRIMEIRO
-      const newTask = await store.dispatch('agentTasks/createTask', taskData);
-      
-      // DEPOIS FAZER UPLOAD DOS ARQUIVOS COM O ID DA NOVA TAREFA
-      if (filesToUpload.value.length > 0 && newTask?.id) {
-        await store.dispatch('agentTasks/uploadFiles', {
-          taskId: newTask.id,
-          files: filesToUpload.value,
-        });
+      // CRIAR TAREFA(S) PRIMEIRO — pode ser uma ou várias (multi-responsável)
+      const created = await store.dispatch('agentTasks/createTask', taskData);
+      const createdTasks = Array.isArray(created) ? created : [created];
+
+      // DEPOIS FAZER UPLOAD DOS ARQUIVOS PARA CADA TAREFA CRIADA
+      if (filesToUpload.value.length > 0) {
+        await Promise.all(
+          createdTasks
+            .filter(task => task?.id)
+            .map(task =>
+              store.dispatch('agentTasks/uploadFiles', {
+                taskId: task.id,
+                files: filesToUpload.value,
+              })
+            )
+        );
       }
-      
-      emit('created', newTask);
+
+      emit('created', created);
     }
   } catch (error) {
     console.error('Error saving task:', error);
@@ -439,9 +447,11 @@ onMounted(() => {
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-n-slate-12 mb-1">
-              Responsável
+              {{ isEditing ? 'Responsável' : 'Responsáveis' }}
             </label>
+            <!-- Edição: uma tarefa = um responsável -->
             <select
+              v-if="isEditing"
               v-model="formData.assigned_to_id"
               class="w-full px-3 py-2 rounded-lg border border-n-weak bg-n-background text-sm text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand"
             >
@@ -450,6 +460,31 @@ onMounted(() => {
                 {{ agent.name }}
               </option>
             </select>
+            <!-- Criação: marque um ou mais; cada pessoa recebe a tarefa no painel dela -->
+            <template v-else>
+              <div class="max-h-32 overflow-y-auto rounded-lg border border-n-weak bg-n-background p-2 space-y-1">
+                <label
+                  v-for="agent in agents"
+                  :key="agent.id"
+                  class="flex items-center gap-2 text-sm text-n-slate-12 cursor-pointer"
+                >
+                  <input
+                    v-model="formData.assigned_to_ids"
+                    type="checkbox"
+                    :value="agent.id"
+                    class="rounded border-n-weak text-n-brand focus:ring-n-brand"
+                  />
+                  <span>{{ agent.name }}</span>
+                </label>
+                <p v-if="agents.length === 0" class="text-xs text-n-slate-10">
+                  Nenhum agente disponível.
+                </p>
+              </div>
+              <p class="mt-1 text-xs text-n-slate-10">
+                Selecione uma ou mais pessoas. Cada uma recebe uma cópia
+                independente da tarefa no painel dela.
+              </p>
+            </template>
           </div>
 
           <div>

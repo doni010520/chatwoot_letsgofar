@@ -15,18 +15,12 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
   end
 
   def create
-    @agent_task = Current.account.agent_tasks.new(agent_task_params)
-    @agent_task.created_by = Current.user
+    assignee_ids = requested_assignee_ids
 
-    if @agent_task.save
-      Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_CREATED, Time.zone.now, agent_task: @agent_task)
-      if @agent_task.assigned_to_id.present?
-        Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_ASSIGNED, Time.zone.now, agent_task: @agent_task)
-      end
-      
-      render :show, status: :created
+    if assignee_ids.size > 1
+      create_for_multiple_assignees(assignee_ids)
     else
-      render json: { errors: @agent_task.errors.full_messages }, status: :unprocessable_entity
+      create_single_task(assignee_ids.first)
     end
   end
 
@@ -155,6 +149,57 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
     authorize @agent_task
   end
 
+  # Cria UMA tarefa (fluxo original: zero ou um responsável)
+  def create_single_task(assignee_id)
+    @agent_task = build_agent_task(assignee_id)
+
+    if @agent_task.save
+      dispatch_creation_events(@agent_task)
+      render :show, status: :created
+    else
+      render json: { errors: @agent_task.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  # Cria N tarefas independentes (uma por responsável) de forma atômica:
+  # ou todas são criadas, ou nenhuma.
+  def create_for_multiple_assignees(assignee_ids)
+    @agent_tasks = ActiveRecord::Base.transaction do
+      assignee_ids.map do |assignee_id|
+        task = build_agent_task(assignee_id)
+        task.save!
+        task
+      end
+    end
+
+    @agent_tasks.each { |task| dispatch_creation_events(task) }
+    render :collection, status: :created
+  rescue ActiveRecord::RecordInvalid => e
+    render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+  end
+
+  def build_agent_task(assignee_id)
+    task = Current.account.agent_tasks.new(agent_task_params.except(:assigned_to_ids))
+    task.created_by = Current.user
+    task.assigned_to_id = assignee_id.presence
+    task
+  end
+
+  def dispatch_creation_events(task)
+    Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_CREATED, Time.zone.now, agent_task: task)
+    return if task.assigned_to_id.blank?
+
+    Rails.configuration.dispatcher.dispatch(Events::Types::AGENT_TASK_ASSIGNED, Time.zone.now, agent_task: task)
+  end
+
+  # Lista de responsáveis solicitada. Usa assigned_to_ids (multi) quando
+  # presente; senão cai no assigned_to_id (single) para retrocompatibilidade.
+  def requested_assignee_ids
+    raw = params.dig(:agent_task, :assigned_to_ids)
+    raw = [params.dig(:agent_task, :assigned_to_id)] if raw.blank?
+    Array(raw).map { |id| id.to_s.presence }.compact.uniq
+  end
+
   def agent_task_params
     params.require(:agent_task).permit(
       :title,
@@ -169,6 +214,7 @@ class Api::V1::Accounts::AgentTasksController < Api::V1::Accounts::BaseControlle
       :contact_id,
       :conversation_id,
       :kanban_pipeline_id,
+      assigned_to_ids: [],
       label_ids: [],
       recurrence_config: {},
       items_attributes: [:id, :title, :completed, :position, :_destroy],

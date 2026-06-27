@@ -174,7 +174,12 @@ const actions = {
     commit('SET_UI_FLAG', { isCreating: true });
     try {
       const response = await AgentTasksAPI.create(taskData);
-      commit('ADD_TASK', response.data);
+      // A resposta pode ser uma tarefa (objeto) ou várias (array),
+      // quando criada para múltiplos responsáveis de uma vez.
+      const createdTasks = Array.isArray(response.data)
+        ? response.data
+        : [response.data];
+      createdTasks.forEach(task => commit('ADD_TASK', task));
       dispatch('fetchStats');
       return response.data;
     } catch (error) {
