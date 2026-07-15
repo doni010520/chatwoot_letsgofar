@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useStore } from 'vuex';
+import ContactAPI from 'dashboard/api/contacts';
 
 const store = useStore();
 
@@ -12,6 +13,60 @@ const fileName = ref('');
 const contactCount = ref(0);
 let selectedFile = null;
 let pollTimer = null;
+
+// Fonte dos contatos: 'csv' (upload) ou 'contacts' (contatos salvos)
+const sourceMode = ref('csv');
+const contacts = ref([]);
+const contactQuery = ref('');
+const contactPage = ref(1);
+const contactsTotal = ref(0);
+const isLoadingContacts = ref(false);
+const selectedContactIds = ref([]);
+let contactSearchTimer = null;
+
+const fetchContacts = async (reset = true) => {
+  if (reset) {
+    contactPage.value = 1;
+    contacts.value = [];
+  }
+  isLoadingContacts.value = true;
+  try {
+    const q = contactQuery.value.trim();
+    const resp = q
+      ? await ContactAPI.search(q, contactPage.value, 'name', '')
+      : await ContactAPI.get(contactPage.value, 'name', '');
+    const payload = resp.data?.payload || [];
+    contacts.value = reset ? payload : [...contacts.value, ...payload];
+    const meta = resp.data?.meta || {};
+    contactsTotal.value = meta.count ?? meta.total_count ?? contacts.value.length;
+  } catch (error) {
+    console.error('Erro ao carregar contatos:', error);
+  } finally {
+    isLoadingContacts.value = false;
+  }
+};
+
+const loadMoreContacts = () => {
+  contactPage.value += 1;
+  fetchContacts(false);
+};
+
+const onContactSearchInput = () => {
+  clearTimeout(contactSearchTimer);
+  contactSearchTimer = setTimeout(() => fetchContacts(true), 300);
+};
+
+const isContactSelected = id => selectedContactIds.value.includes(id);
+const toggleContact = id => {
+  const i = selectedContactIds.value.indexOf(id);
+  if (i > -1) selectedContactIds.value.splice(i, 1);
+  else selectedContactIds.value.push(id);
+};
+
+const chooseSource = mode => {
+  sourceMode.value = mode;
+  if (mode === 'contacts' && contacts.value.length === 0) fetchContacts(true);
+};
 
 const broadcasts = computed(() => store.getters['broadcasts/getBroadcasts']);
 const current = computed(() => store.getters['broadcasts/getCurrent']);
@@ -53,6 +108,10 @@ const goNew = () => {
   fileName.value = '';
   contactCount.value = 0;
   selectedFile = null;
+  sourceMode.value = 'csv';
+  contactQuery.value = '';
+  contacts.value = [];
+  selectedContactIds.value = [];
   form.value = {
     title: '',
     message_template: '',
@@ -97,8 +156,12 @@ const handleCreate = async () => {
     errorMsg.value = 'Preencha o nome e a mensagem.';
     return;
   }
-  if (!selectedFile) {
+  if (sourceMode.value === 'csv' && !selectedFile) {
     errorMsg.value = 'Envie a planilha CSV de contatos.';
+    return;
+  }
+  if (sourceMode.value === 'contacts' && selectedContactIds.value.length === 0) {
+    errorMsg.value = 'Selecione ao menos um contato salvo.';
     return;
   }
   isSaving.value = true;
@@ -113,10 +176,17 @@ const handleCreate = async () => {
       daily_cap: form.value.daily_cap,
     };
     const created = await store.dispatch('broadcasts/create', payload);
-    await store.dispatch('broadcasts/uploadContacts', {
-      id: created.id,
-      file: selectedFile,
-    });
+    if (sourceMode.value === 'csv') {
+      await store.dispatch('broadcasts/uploadContacts', {
+        id: created.id,
+        file: selectedFile,
+      });
+    } else {
+      await store.dispatch('broadcasts/addContacts', {
+        id: created.id,
+        contactIds: selectedContactIds.value,
+      });
+    }
     selectedId.value = created.id;
     await store.dispatch('broadcasts/show', created.id);
     view.value = 'detail';
@@ -276,10 +346,11 @@ onBeforeUnmount(stopPolling);
       </section>
 
       <!-- Seção: Contatos -->
-      <section class="p-5 space-y-3 border rounded-xl border-n-weak">
+      <section class="p-5 space-y-4 border rounded-xl border-n-weak">
         <div class="flex items-center justify-between">
           <h3 class="text-sm font-semibold text-n-slate-12">Contatos</h3>
           <button
+            v-if="sourceMode === 'csv'"
             type="button"
             class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition border rounded-lg border-n-weak text-n-slate-11 hover:bg-n-slate-2 hover:text-n-slate-12"
             @click="downloadTemplate"
@@ -289,7 +360,29 @@ onBeforeUnmount(stopPolling);
           </button>
         </div>
 
+        <!-- Seletor de fonte -->
+        <div class="inline-flex p-1 rounded-lg bg-n-slate-2">
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium rounded-md transition"
+            :class="sourceMode === 'csv' ? 'bg-n-background text-n-slate-12 shadow-sm' : 'text-n-slate-11'"
+            @click="chooseSource('csv')"
+          >
+            Enviar planilha (CSV)
+          </button>
+          <button
+            type="button"
+            class="px-3 py-1.5 text-xs font-medium rounded-md transition"
+            :class="sourceMode === 'contacts' ? 'bg-n-background text-n-slate-12 shadow-sm' : 'text-n-slate-11'"
+            @click="chooseSource('contacts')"
+          >
+            Contatos salvos
+          </button>
+        </div>
+
+        <!-- Fonte: CSV -->
         <label
+          v-if="sourceMode === 'csv'"
           class="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center transition border border-dashed cursor-pointer rounded-xl"
           :class="fileName ? 'border-n-brand bg-n-brand/5' : 'border-n-weak hover:border-n-brand hover:bg-n-slate-2'"
         >
@@ -310,6 +403,69 @@ onBeforeUnmount(stopPolling);
           </template>
           <input type="file" accept=".csv,text/csv" class="hidden" @change="onFileChange" />
         </label>
+
+        <!-- Fonte: contatos salvos -->
+        <div v-else class="space-y-2">
+          <div class="relative">
+            <span class="absolute w-4 h-4 -translate-y-1/2 i-lucide-search left-3 top-1/2 text-n-slate-10" />
+            <input
+              v-model="contactQuery"
+              type="text"
+              placeholder="Buscar contato por nome..."
+              class="w-full py-2 pl-9 pr-3 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition"
+              @input="onContactSearchInput"
+            />
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-n-slate-10">
+            <span>{{ selectedContactIds.length }} selecionado(s)</span>
+            <button
+              v-if="selectedContactIds.length"
+              type="button"
+              class="underline hover:text-n-slate-12"
+              @click="selectedContactIds = []"
+            >
+              limpar seleção
+            </button>
+          </div>
+
+          <div class="overflow-auto border divide-y rounded-lg max-h-72 border-n-weak divide-n-weak">
+            <label
+              v-for="c in contacts"
+              :key="c.id"
+              class="flex items-center gap-3 px-3 py-2 transition cursor-pointer hover:bg-n-slate-2"
+              :class="{ 'opacity-50 cursor-not-allowed': !c.phone_number }"
+            >
+              <input
+                type="checkbox"
+                :checked="isContactSelected(c.id)"
+                :disabled="!c.phone_number"
+                class="rounded border-n-weak text-n-brand focus:ring-n-brand"
+                @change="toggleContact(c.id)"
+              />
+              <div class="min-w-0">
+                <div class="text-sm truncate text-n-slate-12">{{ c.name || 'Sem nome' }}</div>
+                <div class="text-xs text-n-slate-10">{{ c.phone_number || 'sem telefone' }}</div>
+              </div>
+            </label>
+
+            <div v-if="!contacts.length && !isLoadingContacts" class="px-3 py-6 text-sm text-center text-n-slate-10">
+              Nenhum contato encontrado.
+            </div>
+            <div v-if="isLoadingContacts" class="px-3 py-4 text-xs text-center text-n-slate-10">
+              Carregando...
+            </div>
+            <button
+              v-if="contacts.length && contacts.length < contactsTotal"
+              type="button"
+              class="w-full px-3 py-2 text-xs font-medium transition text-n-brand hover:bg-n-slate-2"
+              @click="loadMoreContacts"
+            >
+              Carregar mais ({{ contacts.length }}/{{ contactsTotal }})
+            </button>
+          </div>
+          <p class="text-xs text-n-slate-10">Contatos sem telefone não podem ser selecionados.</p>
+        </div>
       </section>
 
       <!-- Seção: Ritmo e limites -->

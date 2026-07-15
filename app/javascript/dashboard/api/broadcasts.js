@@ -21,6 +21,10 @@ class BroadcastsAPI extends ApiClient {
     });
   }
 
+  addContacts(id, contactIds) {
+    return axios.post(`${this.url}/${id}/add_contacts`, { contact_ids: contactIds });
+  }
+
   start(id) {
     return axios.post(`${this.url}/${id}/start`);
   }

@@ -65,6 +65,13 @@ export const actions = {
     return data;
   },
 
+  async addContacts({ commit }, { id, contactIds }) {
+    const { data } = await BroadcastsAPI.addContacts(id, contactIds);
+    commit('SET_CURRENT', data);
+    commit('UPSERT', data);
+    return data;
+  },
+
   async start({ commit }, id) {
     const { data } = await BroadcastsAPI.start(id);
     commit('SET_CURRENT', data);

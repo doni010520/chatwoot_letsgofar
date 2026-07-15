@@ -57,6 +57,32 @@ class Api::V1::Accounts::BroadcastsController < Api::V1::Accounts::BaseControlle
     render :show
   end
 
+  # Cria os destinatários a partir de contatos JÁ salvos no Chatwoot
+  # (alternativa ao upload de CSV).
+  def add_contacts
+    ids = Array(params[:contact_ids]).map(&:to_i).uniq
+    return render json: { error: 'Selecione ao menos um contato' }, status: :unprocessable_entity if ids.empty?
+
+    contacts = Current.account.contacts.where(id: ids).where.not(phone_number: [nil, ''])
+    if contacts.empty?
+      return render json: { error: 'Nenhum contato válido (com telefone) selecionado' }, status: :unprocessable_entity
+    end
+
+    @broadcast.transaction do
+      @broadcast.broadcast_recipients.delete_all
+      contacts.each_with_index do |contact, index|
+        @broadcast.broadcast_recipients.create!(
+          account: Current.account,
+          phone: contact.phone_number.to_s.delete('+'),
+          name: contact.name,
+          position: index
+        )
+      end
+    end
+    @broadcast.recompute_counts!
+    render :show
+  end
+
   def start
     if @broadcast.broadcast_recipients.pending.none?
       return render json: { error: 'Adicione contatos pendentes antes de iniciar' }, status: :unprocessable_entity

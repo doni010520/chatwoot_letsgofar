@@ -412,6 +412,7 @@ Rails.application.routes.draw do
           resources :broadcasts, only: [:index, :show, :create, :update, :destroy] do
             member do
               post :upload_contacts
+              post :add_contacts
               post :start
               post :pause
               post :cancel
