@@ -392,6 +392,13 @@ const menuItems = computed(() => {
       activeOn: ['tasks_list', 'tasks_calendar', 'tasks_kanban', 'tasks_dashboard'],
     },
     {
+      name: 'Broadcasts',
+      label: 'Disparos',
+      icon: 'i-lucide-send',
+      to: accountScopedRoute('broadcasts_list'),
+      activeOn: ['broadcasts_list'],
+    },
+    {
       name: 'Contracts',
       label: 'Contratos',
       icon: 'i-lucide-file-signature',
