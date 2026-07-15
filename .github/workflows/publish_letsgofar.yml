@@ -7,7 +7,7 @@ name: Publish Let's Go Far image (GHCR)
 on:
   push:
     branches: [develop]
-    tags: ['v*.*.*']
+    tags: ['lgf-v*']
   workflow_dispatch:
 
 permissions:
@@ -44,9 +44,8 @@ jobs:
           tags: |
             type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
             type=raw,value=develop-{{date 'YYYYMMDD'}}-{{sha}},enable=${{ github.ref == 'refs/heads/develop' }}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=match,pattern=lgf-v(.*),group=1
+            type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/lgf-v') }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
