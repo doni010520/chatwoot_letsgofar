@@ -221,84 +221,115 @@ onBeforeUnmount(stopPolling);
     </div>
 
     <!-- NOVO -->
-    <div v-else-if="view === 'new'" class="max-w-2xl p-6 space-y-4">
-      <div>
-        <label class="block mb-1 text-sm font-medium text-n-slate-12">Nome do disparo</label>
-        <input
-          v-model="form.title"
-          type="text"
-          placeholder="Ex.: Retomada agosto"
-          class="w-full px-3 py-2 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12"
-        />
-      </div>
+    <div v-else-if="view === 'new'" class="w-full max-w-2xl px-6 py-6 mx-auto space-y-5">
+      <!-- Seção: Conteúdo -->
+      <section class="p-5 space-y-5 border rounded-xl border-n-weak">
+        <h3 class="text-sm font-semibold text-n-slate-12">Conteúdo</h3>
 
-      <div>
-        <label class="block mb-1 text-sm font-medium text-n-slate-12">Mensagem</label>
-        <div class="flex flex-wrap gap-1 mb-1">
+        <div>
+          <label class="block mb-1.5 text-sm font-medium text-n-slate-12">Nome do disparo</label>
+          <input
+            v-model="form.title"
+            type="text"
+            placeholder="Ex.: Retomada agosto"
+            class="w-full px-3.5 py-2.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition"
+          />
+        </div>
+
+        <div>
+          <label class="block mb-1.5 text-sm font-medium text-n-slate-12">Mensagem</label>
+          <div class="flex flex-wrap items-center gap-1.5 mb-2">
+            <span class="mr-1 text-xs text-n-slate-10">Inserir variável:</span>
+            <button
+              v-for="tk in ['{primeiro_nome}', '{nome}', '{merge1}', '{merge2}']"
+              :key="tk"
+              type="button"
+              class="px-2.5 py-1 font-mono text-xs font-medium transition border rounded-md border-n-weak text-n-slate-11 bg-n-slate-2 hover:text-n-brand hover:border-n-brand/50"
+              @click="insertVar(tk)"
+            >
+              {{ tk }}
+            </button>
+          </div>
+          <div class="relative rounded-lg border border-n-weak bg-n-background focus-within:ring-2 focus-within:ring-n-brand focus-within:border-n-brand transition">
+            <textarea
+              ref="messageRef"
+              v-model="form.message_template"
+              rows="7"
+              placeholder="Oi {primeiro_nome}! {Tudo bem?|Como você está?} Aqui é a Luana, da Let's Go Far..."
+              class="w-full px-4 py-3 text-sm leading-relaxed bg-transparent resize-y text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none"
+            />
+          </div>
+          <p class="mt-2 text-xs leading-relaxed text-n-slate-10">
+            Use <code class="px-1 py-0.5 rounded bg-n-slate-3 text-n-slate-11">{primeiro_nome}</code> para o nome. Para variar sem mudar o sentido, escreva alternativas entre chaves separadas por barra —
+            <code class="px-1 py-0.5 rounded bg-n-slate-3 text-n-slate-11">{Oi|Olá}</code> — e cada contato recebe uma combinação.
+          </p>
+        </div>
+      </section>
+
+      <!-- Seção: Contatos -->
+      <section class="p-5 space-y-3 border rounded-xl border-n-weak">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-n-slate-12">Contatos</h3>
           <button
-            v-for="tk in ['{primeiro_nome}', '{nome}', '{merge1}', '{merge2}']"
-            :key="tk"
             type="button"
-            class="px-2 py-0.5 text-xs rounded border border-n-weak text-n-slate-11 hover:bg-n-slate-2"
-            @click="insertVar(tk)"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition border rounded-lg border-n-weak text-n-slate-11 hover:bg-n-slate-2 hover:text-n-slate-12"
+            @click="downloadTemplate"
           >
-            {{ tk }}
+            <span class="w-4 h-4 i-lucide-download" />
+            Baixar modelo
           </button>
         </div>
-        <textarea
-          ref="messageRef"
-          v-model="form.message_template"
-          rows="6"
-          placeholder="Oi {primeiro_nome}! {Tudo bem?|Como você está?} Aqui é a Luana, da Let's Go Far..."
-          class="w-full px-3 py-2 text-sm border rounded-lg resize-none border-n-weak bg-n-background text-n-slate-12"
-        />
-        <p class="mt-1 text-xs text-n-slate-10">
-          Use <code>{primeiro_nome}</code> para o nome. Para variar sem mudar o sentido, escreva alternativas entre chaves separadas por barra: <code>{Oi|Olá}</code> — cada contato recebe uma combinação.
-        </p>
-      </div>
 
-      <div>
-        <label class="block mb-1 text-sm font-medium text-n-slate-12">Planilha de contatos (CSV)</label>
-        <div class="flex items-center gap-3">
-          <input type="file" accept=".csv,text/csv" class="text-sm text-n-slate-11" @change="onFileChange" />
-          <button type="button" class="text-xs underline text-n-brand" @click="downloadTemplate">
-            baixar modelo
-          </button>
-        </div>
-        <p v-if="fileName" class="mt-1 text-xs text-n-slate-11">Selecionado: {{ fileName }}</p>
-        <p class="mt-1 text-xs text-n-slate-10">
-          Colunas: <code>telefone</code> (com DDI 55), <code>nome</code>, e opcionalmente <code>merge1</code>, <code>merge2</code>.
-        </p>
-      </div>
+        <label
+          class="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center transition border border-dashed cursor-pointer rounded-xl border-n-weak hover:border-n-brand hover:bg-n-slate-2"
+        >
+          <span class="w-6 h-6 i-lucide-upload text-n-slate-10" />
+          <span class="text-sm font-medium text-n-slate-11">
+            {{ fileName || 'Clique para enviar a planilha CSV' }}
+          </span>
+          <span class="text-xs text-n-slate-10">
+            Colunas: telefone (com DDI 55), nome, e opcionalmente merge1, merge2
+          </span>
+          <input type="file" accept=".csv,text/csv" class="hidden" @change="onFileChange" />
+        </label>
+      </section>
 
-      <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <!-- Seção: Ritmo e limites -->
+      <section class="p-5 space-y-4 border rounded-xl border-n-weak">
         <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">Intervalo mín. (min)</label>
-          <input v-model.number="form.min_minutes" type="number" min="1" class="w-full px-2 py-1.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12" />
+          <h3 class="text-sm font-semibold text-n-slate-12">Ritmo e limites</h3>
+          <p class="mt-0.5 text-xs text-n-slate-10">Espaçamento entre mensagens e janela de envio (proteção anti-bloqueio).</p>
         </div>
-        <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">Intervalo máx. (min)</label>
-          <input v-model.number="form.max_minutes" type="number" min="1" class="w-full px-2 py-1.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12" />
-        </div>
-        <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">Janela (início-fim)</label>
-          <div class="flex items-center gap-1">
-            <input v-model.number="form.send_window_start" type="number" min="0" max="23" class="w-full px-2 py-1.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12" />
-            <input v-model.number="form.send_window_end" type="number" min="0" max="23" class="w-full px-2 py-1.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12" />
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div>
+            <label class="block mb-1.5 text-xs font-medium text-n-slate-11">Intervalo mín. (min)</label>
+            <input v-model.number="form.min_minutes" type="number" min="1" class="w-full px-3 py-2 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition" />
+          </div>
+          <div>
+            <label class="block mb-1.5 text-xs font-medium text-n-slate-11">Intervalo máx. (min)</label>
+            <input v-model.number="form.max_minutes" type="number" min="1" class="w-full px-3 py-2 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition" />
+          </div>
+          <div>
+            <label class="block mb-1.5 text-xs font-medium text-n-slate-11">Janela (início–fim)</label>
+            <div class="flex items-center gap-1.5">
+              <input v-model.number="form.send_window_start" type="number" min="0" max="23" class="w-full px-3 py-2 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition" />
+              <span class="text-n-slate-10">–</span>
+              <input v-model.number="form.send_window_end" type="number" min="0" max="23" class="w-full px-3 py-2 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition" />
+            </div>
+          </div>
+          <div>
+            <label class="block mb-1.5 text-xs font-medium text-n-slate-11">Teto por dia</label>
+            <input v-model.number="form.daily_cap" type="number" min="1" class="w-full px-3 py-2 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition" />
           </div>
         </div>
-        <div>
-          <label class="block mb-1 text-xs font-medium text-n-slate-11">Teto por dia</label>
-          <input v-model.number="form.daily_cap" type="number" min="1" class="w-full px-2 py-1.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12" />
-        </div>
-      </div>
+      </section>
 
       <p v-if="errorMsg" class="text-sm text-ruby-11">{{ errorMsg }}</p>
 
-      <div class="flex justify-end gap-2 pt-2">
-        <button class="px-4 py-2 text-sm rounded-lg text-n-slate-11 hover:bg-n-slate-2" @click="backToList">Cancelar</button>
+      <div class="flex justify-end gap-2">
+        <button class="px-4 py-2 text-sm font-medium rounded-lg text-n-slate-11 hover:bg-n-slate-2 transition" @click="backToList">Cancelar</button>
         <button
-          class="px-4 py-2 text-sm font-medium text-white rounded-lg bg-n-brand hover:opacity-90 disabled:opacity-50"
+          class="px-5 py-2 text-sm font-medium text-white transition rounded-lg bg-n-brand hover:opacity-90 disabled:opacity-50"
           :disabled="isSaving"
           @click="handleCreate"
         >
