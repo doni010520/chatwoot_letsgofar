@@ -9,6 +9,7 @@ const selectedId = ref(null);
 const isSaving = ref(false);
 const errorMsg = ref('');
 const fileName = ref('');
+const contactCount = ref(0);
 let selectedFile = null;
 let pollTimer = null;
 
@@ -50,6 +51,7 @@ const fetchAll = () => store.dispatch('broadcasts/fetch');
 const goNew = () => {
   errorMsg.value = '';
   fileName.value = '';
+  contactCount.value = 0;
   selectedFile = null;
   form.value = {
     title: '',
@@ -65,10 +67,17 @@ const goNew = () => {
 
 const onFileChange = event => {
   const file = event.target.files?.[0];
-  if (file) {
-    selectedFile = file;
-    fileName.value = file.name;
-  }
+  if (!file) return;
+  selectedFile = file;
+  fileName.value = file.name;
+  contactCount.value = 0;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const text = String(e.target?.result || '');
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+    contactCount.value = Math.max(0, lines.length - 1); // desconta o cabeçalho
+  };
+  reader.readAsText(file);
 };
 
 const downloadTemplate = () => {
@@ -281,15 +290,24 @@ onBeforeUnmount(stopPolling);
         </div>
 
         <label
-          class="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center transition border border-dashed cursor-pointer rounded-xl border-n-weak hover:border-n-brand hover:bg-n-slate-2"
+          class="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center transition border border-dashed cursor-pointer rounded-xl"
+          :class="fileName ? 'border-n-brand bg-n-brand/5' : 'border-n-weak hover:border-n-brand hover:bg-n-slate-2'"
         >
-          <span class="w-6 h-6 i-lucide-upload text-n-slate-10" />
-          <span class="text-sm font-medium text-n-slate-11">
-            {{ fileName || 'Clique para enviar a planilha CSV' }}
-          </span>
-          <span class="text-xs text-n-slate-10">
-            Colunas: telefone (com DDI 55), nome, e opcionalmente merge1, merge2
-          </span>
+          <template v-if="fileName">
+            <span class="w-7 h-7 i-lucide-circle-check-big text-n-brand" />
+            <span class="text-sm font-medium text-n-slate-12">{{ fileName }}</span>
+            <span class="text-xs font-medium text-n-brand">
+              {{ contactCount }} {{ contactCount === 1 ? 'contato detectado' : 'contatos detectados' }}
+            </span>
+            <span class="text-xs underline text-n-slate-10">trocar arquivo</span>
+          </template>
+          <template v-else>
+            <span class="w-6 h-6 i-lucide-upload text-n-slate-10" />
+            <span class="text-sm font-medium text-n-slate-11">Clique para enviar a planilha CSV</span>
+            <span class="text-xs text-n-slate-10">
+              Colunas: telefone (com DDI 55), nome, e opcionalmente merge1, merge2
+            </span>
+          </template>
           <input type="file" accept=".csv,text/csv" class="hidden" @change="onFileChange" />
         </label>
       </section>
@@ -326,15 +344,22 @@ onBeforeUnmount(stopPolling);
 
       <p v-if="errorMsg" class="text-sm text-ruby-11">{{ errorMsg }}</p>
 
-      <div class="flex justify-end gap-2">
-        <button class="px-4 py-2 text-sm font-medium rounded-lg text-n-slate-11 hover:bg-n-slate-2 transition" @click="backToList">Cancelar</button>
-        <button
-          class="px-5 py-2 text-sm font-medium text-white transition rounded-lg bg-n-brand hover:opacity-90 disabled:opacity-50"
-          :disabled="isSaving"
-          @click="handleCreate"
-        >
-          {{ isSaving ? 'Salvando...' : 'Criar rascunho' }}
-        </button>
+      <div class="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-xs text-n-slate-10">
+          <span class="w-3.5 h-3.5 i-lucide-info align-text-bottom inline-block mr-1" />
+          O envio começa na próxima etapa, depois de você revisar a lista.
+        </p>
+        <div class="flex justify-end gap-2">
+          <button class="px-4 py-2 text-sm font-medium rounded-lg text-n-slate-11 hover:bg-n-slate-2 transition" @click="backToList">Cancelar</button>
+          <button
+            class="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-medium text-white transition rounded-lg bg-n-brand hover:opacity-90 disabled:opacity-50"
+            :disabled="isSaving"
+            @click="handleCreate"
+          >
+            <span>{{ isSaving ? 'Salvando...' : 'Continuar' }}</span>
+            <span v-if="!isSaving" class="w-4 h-4 i-lucide-arrow-right" />
+          </button>
+        </div>
       </div>
     </div>
 
@@ -363,13 +388,19 @@ onBeforeUnmount(stopPolling);
       <p v-if="errorMsg" class="text-sm text-ruby-11">{{ errorMsg }}</p>
 
       <!-- ações -->
+      <p v-if="current.status === 'draft'" class="text-xs text-n-slate-10">
+        <span class="w-3.5 h-3.5 i-lucide-info align-text-bottom inline-block mr-1" />
+        Revise a mensagem e os contatos abaixo. Quando estiver pronto, clique em
+        <strong class="text-n-slate-12">Iniciar disparo</strong> para começar o envio.
+      </p>
       <div class="flex gap-2">
         <button
           v-if="['draft', 'paused'].includes(current.status)"
-          class="px-4 py-2 text-sm font-medium text-white rounded-lg bg-n-brand hover:opacity-90"
+          class="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-medium text-white rounded-lg bg-n-brand hover:opacity-90 transition"
           @click="handleStart"
         >
-          {{ current.status === 'paused' ? 'Retomar' : 'Iniciar disparo' }}
+          <span class="w-4 h-4 i-lucide-send" />
+          {{ current.status === 'paused' ? 'Retomar envio' : 'Iniciar disparo' }}
         </button>
         <button
           v-if="current.status === 'running'"
