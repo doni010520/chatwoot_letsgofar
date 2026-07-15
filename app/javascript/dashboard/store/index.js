@@ -38,6 +38,7 @@ import inboxes from './modules/inboxes';
 import inboxMembers from './modules/inboxMembers';
 import integrations from './modules/integrations';
 import kanban from './modules/kanban'; // KANBAN
+import broadcasts from './modules/broadcasts'; // DISPAROS
 import labels from './modules/labels';
 import macros from './modules/macros';
 import notifications from './modules/notifications';
@@ -105,6 +106,7 @@ export default createStore({
     inboxMembers,
     integrations,
     kanban, // KANBAN
+    broadcasts, // DISPAROS
     labels,
     macros,
     notifications,

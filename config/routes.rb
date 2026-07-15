@@ -408,6 +408,16 @@ Rails.application.routes.draw do
             end
           end
 
+          # Disparos (broadcast de mensagens em massa)
+          resources :broadcasts, only: [:index, :show, :create, :update, :destroy] do
+            member do
+              post :upload_contacts
+              post :start
+              post :pause
+              post :cancel
+            end
+          end
+
           # Contracts (Assinatura de Contratos)
           resources :contracts do
             collection do
