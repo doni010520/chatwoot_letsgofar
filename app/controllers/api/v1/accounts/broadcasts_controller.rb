@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Api::V1::Accounts::BroadcastsController < Api::V1::Accounts::BaseController
-  before_action :set_broadcast, only: [:show, :update, :destroy, :upload_contacts, :start, :pause, :cancel]
+  before_action :set_broadcast, only: [:show, :update, :destroy, :upload_contacts, :add_contacts, :start, :pause, :cancel]
 
   def index
     @broadcasts = Current.account.broadcast_campaigns.ordered
