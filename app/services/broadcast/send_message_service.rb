@@ -16,6 +16,7 @@ module Broadcast
 
       content = Broadcast::MessagePersonalizer.new(@campaign.message_template, @recipient).call
       conversation = ensure_conversation
+      assign_conversation(conversation)
 
       Messages::MessageBuilder.new(
         @campaign.user,
@@ -85,6 +86,15 @@ module Broadcast
     def ensure_conversation
       contact_inbox.conversations.order(:id).last ||
         ConversationBuilder.new(params: ActionController::Parameters.new({}), contact_inbox: contact_inbox).perform
+    end
+
+    # Atribui a conversa ao responsável do disparo (ou a quem criou, por padrão).
+    def assign_conversation(conversation)
+      assignee_id = @campaign.assignee_id || @campaign.user_id
+      return if assignee_id.blank?
+      return if conversation.assignee_id == assignee_id
+
+      conversation.update!(assignee_id: assignee_id)
     end
   end
 end

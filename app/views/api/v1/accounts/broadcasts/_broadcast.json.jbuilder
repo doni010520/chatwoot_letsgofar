@@ -5,6 +5,7 @@ json.title broadcast.title
 json.message_template broadcast.message_template
 json.status broadcast.status
 json.inbox_id broadcast.inbox_id
+json.assignee_id broadcast.assignee_id
 json.min_interval broadcast.min_interval
 json.max_interval broadcast.max_interval
 json.send_window_start broadcast.send_window_start

@@ -70,10 +70,13 @@ const chooseSource = mode => {
 
 const broadcasts = computed(() => store.getters['broadcasts/getBroadcasts']);
 const current = computed(() => store.getters['broadcasts/getCurrent']);
+const agents = computed(() => store.getters['agents/getAgents'] || []);
+const currentUserId = computed(() => store.getters['getCurrentUserID']);
 
 const form = ref({
   title: '',
   message_template: '',
+  assignee_id: null,
   min_minutes: 5,
   max_minutes: 6,
   send_window_start: 9,
@@ -115,6 +118,7 @@ const goNew = () => {
   form.value = {
     title: '',
     message_template: '',
+    assignee_id: currentUserId.value,
     min_minutes: 5,
     max_minutes: 6,
     send_window_start: 9,
@@ -169,6 +173,7 @@ const handleCreate = async () => {
     const payload = {
       title: form.value.title,
       message_template: form.value.message_template,
+      assignee_id: form.value.assignee_id,
       min_interval: Math.round(form.value.min_minutes * 60),
       max_interval: Math.round(form.value.max_minutes * 60),
       send_window_start: form.value.send_window_start,
@@ -243,7 +248,10 @@ const stopPolling = () => {
   pollTimer = null;
 };
 
-onMounted(fetchAll);
+onMounted(() => {
+  fetchAll();
+  store.dispatch('agents/get');
+});
 onBeforeUnmount(stopPolling);
 </script>
 
@@ -313,6 +321,18 @@ onBeforeUnmount(stopPolling);
             placeholder="Ex.: Retomada agosto"
             class="w-full px-3.5 py-2.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 placeholder:text-n-slate-10 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition"
           />
+        </div>
+
+        <div>
+          <label class="block mb-1.5 text-sm font-medium text-n-slate-12">Atribuir conversas a</label>
+          <select
+            v-model="form.assignee_id"
+            class="w-full px-3.5 py-2.5 text-sm border rounded-lg border-n-weak bg-n-background text-n-slate-12 focus:outline-none focus:ring-2 focus:ring-n-brand focus:border-n-brand transition"
+          >
+            <option :value="null">Ninguém (não atribuir)</option>
+            <option v-for="a in agents" :key="a.id" :value="a.id">{{ a.name }}</option>
+          </select>
+          <p class="mt-1 text-xs text-n-slate-10">As conversas criadas pelo disparo vão para essa pessoa. Padrão: você.</p>
         </div>
 
         <div>

@@ -12,6 +12,7 @@ class Api::V1::Accounts::BroadcastsController < Api::V1::Accounts::BaseControlle
   def create
     @broadcast = Current.account.broadcast_campaigns.new(broadcast_params)
     @broadcast.user = Current.user
+    @broadcast.assignee_id ||= Current.user.id # por padrão, quem criou recebe as conversas
     @broadcast.inbox ||= default_api_inbox
 
     if @broadcast.save
@@ -119,7 +120,7 @@ class Api::V1::Accounts::BroadcastsController < Api::V1::Accounts::BaseControlle
 
   def broadcast_params
     params.require(:broadcast).permit(
-      :title, :message_template, :inbox_id, :min_interval, :max_interval,
+      :title, :message_template, :inbox_id, :assignee_id, :min_interval, :max_interval,
       :send_window_start, :send_window_end, :daily_cap
     )
   end
