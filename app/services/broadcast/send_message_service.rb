@@ -44,13 +44,42 @@ module Broadcast
     end
 
     def contact
-      @contact ||= account.contacts.find_by(phone_number: e164) ||
-                   account.contacts.create!(name: @recipient.name.presence || e164, phone_number: e164)
+      @contact ||= existing_contact || account.contacts.create!(name: @recipient.name.presence || e164, phone_number: e164)
+    end
+
+    # Reusa o contato certo p/ não duplicar (o que quebra o relay uazapi):
+    # 1) se veio de "Contatos salvos", usa o contact_id direto;
+    # 2) senão, casa o telefone considerando as variantes do 9º dígito (BR).
+    def existing_contact
+      if @recipient.contact_id.present?
+        found = account.contacts.find_by(id: @recipient.contact_id)
+        return found if found
+      end
+      phone_variants.each do |phone|
+        found = account.contacts.find_by(phone_number: phone)
+        return found if found
+      end
+      nil
+    end
+
+    # Ex.: +5571993061031 (com 9) <-> +557193061031 (sem 9)
+    def phone_variants
+      digits = @recipient.phone.to_s.gsub(/\D/, '')
+      variants = ["+#{digits}"]
+      if digits.start_with?('55')
+        rest = digits[2..].to_s # depois do DDI
+        if rest.length == 11 && rest[2] == '9'
+          variants << "+55#{rest[0, 2]}#{rest[3..]}" # remove o 9
+        elsif rest.length == 10
+          variants << "+55#{rest[0, 2]}9#{rest[2..]}" # adiciona o 9
+        end
+      end
+      variants.uniq
     end
 
     def contact_inbox
       contact.contact_inboxes.find_by(inbox_id: inbox.id) ||
-        ContactInboxBuilder.new(contact: contact, inbox: inbox, source_id: e164).perform
+        ContactInboxBuilder.new(contact: contact, inbox: inbox, source_id: contact.phone_number).perform
     end
 
     def ensure_conversation

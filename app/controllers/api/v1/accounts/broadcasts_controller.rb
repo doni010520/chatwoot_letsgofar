@@ -73,6 +73,7 @@ class Api::V1::Accounts::BroadcastsController < Api::V1::Accounts::BaseControlle
       contacts.each_with_index do |contact, index|
         @broadcast.broadcast_recipients.create!(
           account: Current.account,
+          contact_id: contact.id,
           phone: contact.phone_number.to_s.delete('+'),
           name: contact.name,
           position: index
